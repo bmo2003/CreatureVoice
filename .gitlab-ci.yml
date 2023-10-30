@@ -18,3 +18,5 @@ build_mod:
       - build/libs/*.jar
   only:
     - develop
+  tags:
+    - minecraft
