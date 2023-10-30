@@ -16,6 +16,8 @@ build_mod:
   artifacts:
     paths:
       - build/libs/*.jar
+    exclude:
+      - build/libs/*-sources.jar
   only:
     - develop
   tags:
