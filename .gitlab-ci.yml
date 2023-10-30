@@ -13,11 +13,10 @@ build_mod:
   stage: build
   script:
     - ./gradlew build
+    - find build/libs -type f -name '*sources*.jar' -exec rm {} \;
   artifacts:
     paths:
       - build/libs/*.jar
-    excludes:
-      - build/libs/*-sources.jar
   only:
     - develop
   tags:
