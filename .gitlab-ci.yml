@@ -1,0 +1,20 @@
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+stages:
+  - build
+
+build_mod:
+  stage: build
+  script:
+    - ./gradlew build
+  artifacts:
+    paths:
+      - build/libs/*.jar
+  only:
+    - develop
