@@ -1,3 +1,6 @@
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+
 plugins {
 	id 'fabric-loom' version '1.4-SNAPSHOT'
 	id 'maven-publish'
@@ -89,3 +92,47 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+task generateEntityJson {
+	doLast {
+		def resourcesDir = new File('src/main/resources/assets/mobgpt/textures/entity') // adjust the path
+		def outputJson = new File('src/main/resources/assets/mobgpt/textures/entity/textures.json') // output file
+
+		def pngFiles = resourcesDir.listFiles(new FilenameFilter() {
+			@Override
+			boolean accept(File dir, String name) {
+				return name.endsWith('.png');
+			}
+		})
+
+		def resourcesList = pngFiles.collect { it.name }
+
+		// Using GSON to write the JSON
+		Gson gson = new GsonBuilder().setPrettyPrinting().create()
+		outputJson.text = gson.toJson(resourcesList)
+	}
+}
+
+task generateUiJson {
+	doLast {
+		def resourcesDir = new File('src/main/resources/assets/mobgpt/textures/ui') // adjust the path
+		def outputJson = new File('src/main/resources/assets/mobgpt/textures/ui/textures.json') // output file
+
+		def pngFiles = resourcesDir.listFiles(new FilenameFilter() {
+			@Override
+			boolean accept(File dir, String name) {
+				return name.endsWith('.png');
+			}
+		})
+
+		def resourcesList = pngFiles.collect { it.name }
+
+		// Using GSON to write the JSON
+		Gson gson = new GsonBuilder().setPrettyPrinting().create()
+		outputJson.text = gson.toJson(resourcesList)
+	}
+}
+
+// Ensure the task runs before the build
+build.dependsOn generateEntityJson
+build.dependsOn generateUiJson

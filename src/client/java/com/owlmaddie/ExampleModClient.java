@@ -56,18 +56,7 @@ import com.google.gson.Gson;
 public class ExampleModClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     private static String funnyGreeting = "Greetings!";  // Default greeting. This will be overwritten by ChatGPT response.
-
-    private static final Identifier PIG = new Identifier("mobgpt", "textures/pig.png");
-    private static final Identifier COW = new Identifier("mobgpt", "textures/cow.png");
-    private static final Identifier WOLF = new Identifier("mobgpt", "textures/wolf.png");
-    private static final Identifier CHICKEN = new Identifier("mobgpt", "textures/chicken.png");
-    private static final Identifier ARROW1 = new Identifier("mobgpt", "textures/arrow1.png");
-    private static final Identifier ARROW2 = new Identifier("mobgpt", "textures/arrow2.png");
-    private static final Identifier TEXT_TOP = new Identifier("mobgpt", "textures/text-top.png");
-    private static final Identifier TEXT_MIDDLE = new Identifier("mobgpt", "textures/text-middle.png");
-    private static final Identifier TEXT_BOTTOM = new Identifier("mobgpt", "textures/text-bottom.png");
-    private static final Identifier KEYBOARD = new Identifier("mobgpt", "textures/keyboard.png");
-    private static final Identifier DOTDOT = new Identifier("mobgpt", "textures/dotdot.png");
+    protected static TextureLoader textures = new TextureLoader();;
 
 	@Override
     public void onInitializeClient() {
@@ -195,15 +184,14 @@ public class ExampleModClient implements ClientModInitializer {
         float z = 0.01F;
 
         // Draw UI text background
-        RenderSystem.setShaderTexture(0, TEXT_TOP);
+        RenderSystem.setShaderTexture(0, textures.Get("text-top"));
         drawTexturePart(matrices, buffer, x, y, z, width, 40);
 
-        RenderSystem.setShaderTexture(0, TEXT_MIDDLE);
+        RenderSystem.setShaderTexture(0, textures.Get("text-middle"));
         drawTexturePart(matrices, buffer, x, y + 40, z, width, height);
 
-        RenderSystem.setShaderTexture(0, TEXT_BOTTOM);
+        RenderSystem.setShaderTexture(0, textures.Get("text-bottom"));
         drawTexturePart(matrices, buffer, x, y + 40 + height, z, width, 5);
-
 
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
@@ -220,20 +208,13 @@ public class ExampleModClient implements ClientModInitializer {
 
     private void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Draw face icon
-        switch (entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)) {
-            case "pig":
-                RenderSystem.setShaderTexture(0, PIG);
-                break;
-            case "chicken":
-                RenderSystem.setShaderTexture(0, CHICKEN);
-                break;
-            case "wolf":
-                RenderSystem.setShaderTexture(0, WOLF);
-                break;
-            case "cow":
-                RenderSystem.setShaderTexture(0, COW);
-                break;
+        String entity_name = entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT);
+        Identifier entity_id = textures.Get(entity_name);
+        if (entity_id == null) {
+            return;
         }
+
+        RenderSystem.setShaderTexture(0, entity_id);
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -256,14 +237,6 @@ public class ExampleModClient implements ClientModInitializer {
 
 
     private void drawTextAboveEntities(WorldRenderContext context) {
-        MinecraftClient.getInstance().getTextureManager().bindTexture(PIG);
-        MinecraftClient.getInstance().getTextureManager().bindTexture(CHICKEN);
-        MinecraftClient.getInstance().getTextureManager().bindTexture(WOLF);
-        MinecraftClient.getInstance().getTextureManager().bindTexture(COW);
-        MinecraftClient.getInstance().getTextureManager().bindTexture(ARROW1);
-        MinecraftClient.getInstance().getTextureManager().bindTexture(ARROW2);
-
-
         Camera camera = context.camera();
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
