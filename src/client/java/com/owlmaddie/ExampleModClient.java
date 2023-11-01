@@ -184,13 +184,13 @@ public class ExampleModClient implements ClientModInitializer {
         float z = 0.01F;
 
         // Draw UI text background
-        RenderSystem.setShaderTexture(0, textures.Get("text-top"));
+        RenderSystem.setShaderTexture(0, textures.Get("ui", "text-top"));
         drawTexturePart(matrices, buffer, x, y, z, width, 40);
 
-        RenderSystem.setShaderTexture(0, textures.Get("text-middle"));
+        RenderSystem.setShaderTexture(0, textures.Get("ui", "text-middle"));
         drawTexturePart(matrices, buffer, x, y + 40, z, width, height);
 
-        RenderSystem.setShaderTexture(0, textures.Get("text-bottom"));
+        RenderSystem.setShaderTexture(0, textures.Get("ui", "text-bottom"));
         drawTexturePart(matrices, buffer, x, y + 40 + height, z, width, 5);
 
         RenderSystem.disableBlend();
@@ -209,7 +209,7 @@ public class ExampleModClient implements ClientModInitializer {
     private void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Draw face icon
         String entity_name = entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT);
-        Identifier entity_id = textures.Get(entity_name);
+        Identifier entity_id = textures.Get("entity", entity_name);
         if (entity_id == null) {
             return;
         }
