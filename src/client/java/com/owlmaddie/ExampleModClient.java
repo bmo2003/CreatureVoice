@@ -63,8 +63,8 @@ public class ExampleModClient implements ClientModInitializer {
         ClientEventHandlers.register();
         fetchGreetingFromChatGPT();
 
-        WorldRenderEvents.BEFORE_ENTITIES.register((context) -> {
-            drawTextAboveEntities(context);
+        WorldRenderEvents.LAST.register((context) -> {
+            drawTextAboveEntities(context, context.tickDelta());
         });
     }
 
@@ -236,71 +236,88 @@ public class ExampleModClient implements ClientModInitializer {
     }
 
 
-    private void drawTextAboveEntities(WorldRenderContext context) {
+    private void drawTextAboveEntities(WorldRenderContext context, float partialTicks) {
         Camera camera = context.camera();
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
-        
+
         World world = cameraEntity.getEntityWorld();
         double renderDistance = 7.0;
-        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
         // Calculate radius of entities
         Vec3d pos = cameraEntity.getPos();
         Box area = new Box(pos.x - renderDistance, pos.y - renderDistance, pos.z - renderDistance,
                            pos.x + renderDistance, pos.y + renderDistance, pos.z + renderDistance);
-        
+
+        // Init font render, matrix, and vertex producer
+        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
+        MatrixStack matrices = context.matrixStack();
+        VertexConsumerProvider immediate = context.consumers();
+
+        // Get camera position
+        Vec3d interpolatedCameraPos;
+        if (MinecraftClient.getInstance().options.getPerspective().isFirstPerson()) {
+            // 1st person, Use the cameraEntity (interpolate for smooth motion)
+            interpolatedCameraPos = new Vec3d(
+                    MathHelper.lerp(partialTicks, cameraEntity.prevX, cameraEntity.getPos().x),
+                    MathHelper.lerp(partialTicks, cameraEntity.prevY, cameraEntity.getPos().y) + cameraEntity.getHeight(),
+                    MathHelper.lerp(partialTicks, cameraEntity.prevZ, cameraEntity.getPos().z)
+            );
+        } else {
+            // Use the camera (3rd person)
+            interpolatedCameraPos = new Vec3d(camera.getPos().x,
+                    camera.getPos().y,
+                    camera.getPos().z);
+        }
+
         // Get all entities
         List<Entity> nearbyEntities = world.getOtherEntities(null, area);
 
-        // Filter out living entities
+        // Filter living entities
         List<LivingEntity> nearbyCreatures = nearbyEntities.stream()
                 .filter(entity -> entity instanceof LivingEntity)
                 .map(entity -> (LivingEntity) entity)
                 .collect(Collectors.toList());
-
-        MatrixStack matrices = context.matrixStack();
-        VertexConsumerProvider immediate = context.consumers();
 
         for (Entity entity : nearbyCreatures) {
             if (entity.getType() == EntityType.PLAYER) {
                 // Skip Player
                 continue;
             }
-            
+
+            // Generate ChatGPT random greeting
             String baseText = funnyGreeting + " - " + entity.getType().getName().getString();
             List<OrderedText> lines = fontRenderer.wrapLines(StringVisitable.plain(baseText), 20 * fontRenderer.getWidth("W"));
 
             // Push a new matrix onto the stack.
             matrices.push();
 
-            // Translate to the entity's position.
-            matrices.translate(entity.getPos().x - cameraEntity.getPos().x,
-                               entity.getPos().y - cameraEntity.getPos().y + (entity.getHeight() - 1.0F),
-                               entity.getPos().z - cameraEntity.getPos().z);
-
-
+            // Translate to the entity's position
+            double paddingAboveEntity = 1D;
+            matrices.translate(entity.getPos().x - interpolatedCameraPos.x,
+                               entity.getPos().y - interpolatedCameraPos.y + entity.getHeight() + paddingAboveEntity,
+                               entity.getPos().z - interpolatedCameraPos.z);
 
             // Calculate the difference vector (from entity to camera)
             Vec3d difference = cameraEntity.getPos().subtract(entity.getPos());
 
             // Calculate the yaw angle (just like before)
-            float yaw = -((float) Math.atan2(difference.z, difference.x) + (float) Math.PI / 2F);
+            double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
 
             // Calculate the pitch difference (using y component)
-            float pitch = (float) Math.atan2(difference.y, Math.sqrt(difference.x * difference.x + difference.z * difference.z));
+            double pitch = Math.atan2(difference.y, Math.sqrt(difference.x * difference.x + difference.z * difference.z));
 
             // Clamp the pitch to the desired range (in this case, ±X degrees converted to radians)
-            pitch = (float) MathHelper.clamp(pitch, -Math.toRadians(20), Math.toRadians(20));
+            pitch = MathHelper.clamp(pitch, -Math.toRadians(20), Math.toRadians(20));
 
             // Convert yaw and pitch to Quaternionf
-            float halfYaw = yaw * 0.5f;
-            float sinHalfYaw = MathHelper.sin(halfYaw);
-            float cosHalfYaw = MathHelper.cos(halfYaw);
+            float halfYaw = (float) yaw * 0.5f;
+            double sinHalfYaw = MathHelper.sin(halfYaw);
+            double cosHalfYaw = MathHelper.cos(halfYaw);
 
-            float halfPitch = pitch * 0.5f;
-            float sinHalfPitch = MathHelper.sin(halfPitch);
-            float cosHalfPitch = MathHelper.cos(halfPitch);
+            float halfPitch = (float) pitch * 0.5f;
+            double sinHalfPitch = MathHelper.sin(halfPitch);
+            double cosHalfPitch = MathHelper.cos(halfPitch);
 
             // Constructing the Quaternionf for yaw (around Y axis) and pitch (around X axis)
             Quaternionf yawRotation = new Quaternionf(0, sinHalfYaw, 0, cosHalfYaw);
@@ -311,10 +328,6 @@ public class ExampleModClient implements ClientModInitializer {
 
             // Now when you want to render, apply the combined rotation:
             matrices.multiply(yawRotation);
-
-
-            // Rotate the label to always face the player.
-            //matrices.multiply(camera.getRotation());
 
             // Determine max line length
             int maxLineLength = 0;
@@ -343,7 +356,6 @@ public class ExampleModClient implements ClientModInitializer {
 
             // Draw face of entity
             drawEntityIcon(matrices, entity, -60, 7, 32, 32);
-
 
             // Render each line of the text
             int fullBright = 0xF000F0;
