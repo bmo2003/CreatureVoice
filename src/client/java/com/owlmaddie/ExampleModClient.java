@@ -1,45 +1,30 @@
 package com.owlmaddie;
 
-import net.minecraft.client.MinecraftClient;
-import net.fabricmc.api.ClientModInitializer;
-
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-
+import com.google.gson.Gson;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import java.util.stream.Collectors;
-import net.minecraft.entity.LivingEntity;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 
-import net.minecraft.util.math.RotationCalculator;
-import org.joml.Matrix3f;
-import net.minecraft.util.math.MathHelper;
-import org.joml.Quaternionf;
-import net.minecraft.world.World;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.font.TextRenderer.TextLayerType;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.*;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.StringVisitable;
-import java.util.List;
-import org.joml.Matrix4f;
 import net.minecraft.util.Identifier;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +33,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Locale;
-
-import com.google.gson.Gson;
+import java.util.stream.Collectors;
 
 
 public class ExampleModClient implements ClientModInitializer {
@@ -60,7 +45,7 @@ public class ExampleModClient implements ClientModInitializer {
 
 	@Override
     public void onInitializeClient() {
-        ClientEventHandlers.register();
+        ClickHandler.register();
         fetchGreetingFromChatGPT();
 
         WorldRenderEvents.LAST.register((context) -> {
@@ -68,65 +53,6 @@ public class ExampleModClient implements ClientModInitializer {
         });
     }
 
-    public class ClientEventHandlers {
-        public static void register() {
-            ClientTickEvents.END_CLIENT_TICK.register(client -> {
-
-                // Check if the right-click action is being pressed
-                if (client.options.useKey.wasPressed()) {
-                    LOGGER.info("RIGHT CLICK DETECTED");
-
-                    // Get Nearby Entities
-                    Camera camera = client.gameRenderer.getCamera();
-                    Entity cameraEntity = camera.getFocusedEntity();
-                    if (cameraEntity == null) return;
-
-                    World world = cameraEntity.getEntityWorld();
-                    double renderDistance = 7.0;
-
-                    // Calculate radius of entities
-                    Vec3d pos = cameraEntity.getPos();
-                    Box area = new Box(pos.x - renderDistance, pos.y - renderDistance, pos.z - renderDistance,
-                            pos.x + renderDistance, pos.y + renderDistance, pos.z + renderDistance);
-
-                    // Get all entities
-                    List<Entity> nearbyEntities = world.getOtherEntities(null, area);
-
-                    // Filter out living entities
-                    List<LivingEntity> nearbyCreatures = nearbyEntities.stream()
-                            .filter(entity -> entity instanceof LivingEntity)
-                            .map(entity -> (LivingEntity) entity)
-                            .collect(Collectors.toList());
-
-                    // Get the player from the client
-                    ClientPlayerEntity player = client.player;
-
-                    // Define the start and end points of the raycast based on the player's view
-                    Vec3d startRay = player.getEyePos();
-                    Vec3d endRay = startRay.add(player.getRotationVector().multiply(5));  // 5 blocks in the direction player is looking
-
-                    // Iterate through the entities with icons to check for hits
-                    for (Entity entity : nearbyCreatures) {
-                        LOGGER.info("CHECK FOR CLICK ON ENTITY");
-                        Vec3d iconCenter = entity.getPos().add(0, entity.getHeight() + 0.5, 0);
-                        Box iconBox = new Box(
-                                iconCenter.add(-0.25, -0.25, -0.25),
-                                iconCenter.add(0.25, 0.25, 0.25)
-                        );
-
-                        if (iconBox.raycast(startRay, endRay).isPresent()) {
-                            // Handle icon click, for instance, by sending a packet to the server
-                            //CustomPacketHandler.sendEntityClickPacket(player, entity.getEntityId());
-                            LOGGER.info("CLICKED ON ICON");
-                            break; // Exit loop if an icon was clicked to avoid multi-hits
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    
     public void fetchGreetingFromChatGPT() {
         Thread thread = new Thread(() -> {
             try {
