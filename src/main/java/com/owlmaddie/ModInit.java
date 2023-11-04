@@ -29,6 +29,8 @@ public class ModInit implements ModInitializer {
 				if (entity != null) {
 					// Perform action with the clicked entity
 					LOGGER.info("Entity received: " + entity.getType().toString());
+					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
+					chatData.generateGreeting();
 				}
 			});
 		});

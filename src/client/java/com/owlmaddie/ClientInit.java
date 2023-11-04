@@ -1,8 +1,6 @@
 package com.owlmaddie;
 
-import com.google.gson.Gson;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.owlmaddie.json.ChatGPTResponse;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
@@ -25,12 +23,6 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -38,63 +30,15 @@ import java.util.stream.Collectors;
 
 public class ClientInit implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-    private static String funnyGreeting = "Greetings!";  // Default greeting. This will be overwritten by ChatGPT response.
     protected static TextureLoader textures = new TextureLoader();;
 
 	@Override
     public void onInitializeClient() {
         ClickHandler.register();
-        fetchGreetingFromChatGPT();
 
         WorldRenderEvents.LAST.register((context) -> {
             drawTextAboveEntities(context, context.tickDelta());
         });
-    }
-
-    public void fetchGreetingFromChatGPT() {
-        Thread thread = new Thread(() -> {
-            try {
-                URL url = new URL("https://api.openai.com/v1/chat/completions");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer REDACTED_API_KEY");
-                connection.setDoOutput(true);
-
-                String jsonInputString = "{"
-                        + "\"model\": \"gpt-3.5-turbo\","
-                        + "\"messages\": ["
-                        + "{ \"role\": \"system\", \"content\": \"You are a silly Minecraft entity who speaks to the player in short riddles.\" },"
-                        + "{ \"role\": \"user\", \"content\": \"Hello!\" }"
-                        + "]"
-                        + "}";
-                LOGGER.info(jsonInputString);
-
-                try(OutputStream os = connection.getOutputStream()) {
-                    byte[] input = jsonInputString.getBytes("utf-8");
-                    os.write(input, 0, input.length);           
-                }
-
-                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
-                StringBuilder response = new StringBuilder();
-                String responseLine = null;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-
-                Gson gson = new Gson();
-                ChatGPTResponse chatGPTResponse = gson.fromJson(response.toString(), ChatGPTResponse.class);
-                if(chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
-                    // Save the greeting globally
-                    LOGGER.info(chatGPTResponse.choices.get(0).message.content.replace("\n", " "));
-                    funnyGreeting = chatGPTResponse.choices.get(0).message.content.replace("\n", " ");
-                }
-
-            } catch (Exception e) {
-                LOGGER.error("Failed to fetch greeting from ChatGPT", e);
-            }
-        });
-        thread.start();
     }
 
     public void drawTextBubbleBackground(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
@@ -209,8 +153,11 @@ public class ClientInit implements ClientModInitializer {
                 continue;
             }
 
+            // Look-up greeting (if any)
+            ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entity.getId());
+
             // Generate ChatGPT random greeting
-            String baseText = funnyGreeting + " - " + entity.getType().getName().getString();
+            String baseText = chatData.currentMessage + " - " + entity.getType().getName().getString();
             List<OrderedText> lines = fontRenderer.wrapLines(StringVisitable.plain(baseText), 20 * fontRenderer.getWidth("W"));
 
             // Push a new matrix onto the stack.
