@@ -3,23 +3,24 @@
 	"id": "mobgpt",
 	"version": "${version}",
 	"name": "Mob GPT",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Elevate your Minecraft experience with Mob GPT, a cutting-edge mod that brings intelligent, dynamic conversation to Minecraft mobs! We harnesses the power of GPT (Generative Pre-trained Transformer) to make your world more interactive and communicative.",
 	"authors": [
-		"Me!"
+		"Jonathan Thomas <jonathan@openshot.org>",
+		"Owlmaddie <owlmaddie@gmail.com>"
 	],
 	"contact": {
 		"homepage": "http://owlmaddie.com",
 		"sources": "http://gitlab.openshot.org/minecraft/mobgpt"
 	},
-	"license": "CC0-1.0",
+	"license": "GPLv3",
 	"icon": "assets/mobgpt/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.owlmaddie.ExampleMod"
+			"com.owlmaddie.ModInit"
 		],
 		"client": [
-			"com.owlmaddie.ExampleModClient"
+			"com.owlmaddie.ClientInit"
 		]
 	},
 	"mixins": [

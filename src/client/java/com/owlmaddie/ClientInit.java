@@ -36,7 +36,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 
-public class ExampleModClient implements ClientModInitializer {
+public class ClientInit implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     private static String funnyGreeting = "Greetings!";  // Default greeting. This will be overwritten by ChatGPT response.
     protected static TextureLoader textures = new TextureLoader();;

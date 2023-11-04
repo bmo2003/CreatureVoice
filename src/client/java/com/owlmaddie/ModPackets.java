@@ -16,7 +16,7 @@ public class ModPackets {
         buf.writeInt(entity.getId());
 
         // Send C2S packet
-        ClientPlayNetworking.send(ExampleMod.PACKET_CLIENT_CLICK, buf);
+        ClientPlayNetworking.send(ModInit.PACKET_CLIENT_CLICK, buf);
     }
 }
 

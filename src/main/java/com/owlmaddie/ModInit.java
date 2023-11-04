@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ExampleMod implements ModInitializer {
+public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
 	public static final Identifier PACKET_CLIENT_CLICK = new Identifier("mobgpt", "packet_client_click");
 
