@@ -1,22 +1,15 @@
 package com.owlmaddie;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.resource.Resource;
 import net.minecraft.util.Identifier;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Optional;
-
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.minecraft.resource.Resource;
+
+import java.util.Optional;
 
 public class TextureLoader {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-    private static final String ASSETS_PATH = "/assets/mobgpt/";
-    private static final String ENTITY_TEXTURE_PATH = "textures/entity/";
-    private static final String UI_TEXTURE_PATH = "textures/ui/";
-    private static final Map<String, Identifier> TEXTURE_MAP = new HashMap<>();
 
     public TextureLoader() {
     }
@@ -33,7 +26,7 @@ public class TextureLoader {
             return textureId;
         } else {
             // Resource not found
-            LOGGER.info(texture_path + " was not found in mobgpt");
+            //LOGGER.info(texture_path + " was not found in mobgpt");
             return null;
         }
     }

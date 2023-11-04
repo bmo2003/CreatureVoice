@@ -7,16 +7,15 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class ClickHandler {
@@ -107,7 +106,8 @@ public class ClickHandler {
         // Handle the click for the closest entity after the loop
         if (closestEntity != null) {
             LOGGER.info("Clicked on text bubble above: " + closestEntity.getType().getName().getString());
-            client.player.sendMessage(Text.literal("Clicked on text bubble above: " + closestEntity.getType().getName().getString()), false);
+            //client.player.sendMessage(Text.literal("Clicked on text bubble above: " + closestEntity.getType().getName().getString()), false);
+            ModPackets.sendEntityClickPacket(closestEntity);
         }
 
     }

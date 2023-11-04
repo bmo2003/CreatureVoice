@@ -1,5 +1,5 @@
 // GreetingResponse.java
-package com.owlmaddie;
+package com.owlmaddie.json;
 
 public class GreetingResponse {
     private String greeting;

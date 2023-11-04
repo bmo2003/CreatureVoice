@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.json;
 
 import java.util.List;
 

@@ -1,15 +1,16 @@
 package com.owlmaddie;
 
 import net.fabricmc.api.ModInitializer;
-
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 public class ExampleMod implements ModInitializer {
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
+	public static final Identifier PACKET_CLIENT_CLICK = new Identifier("mobgpt", "packet_client_click");
 
 	@Override
 	public void onInitialize() {
@@ -17,6 +18,20 @@ public class ExampleMod implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Hello COW TEXT world!");
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_CLIENT_CLICK, (server, player, handler, buf, responseSender) -> {
+			int entityId = buf.readInt();
+
+			// Ensure that the task is synced with the server thread
+			server.execute(() -> {
+				// Your logic here, e.g., handle the entity click
+				Entity entity = player.getServerWorld().getEntityById(entityId);
+				if (entity != null) {
+					// Perform action with the clicked entity
+					LOGGER.info("Entity received: " + entity.getType().toString());
+				}
+			});
+		});
+
+		LOGGER.info("MobGPT Initialized!");
 	}
 }
