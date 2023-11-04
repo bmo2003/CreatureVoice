@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,15 @@ public class ModInit implements ModInitializer {
 					LOGGER.info("Entity received: " + entity.getType().toString());
 				}
 			});
+		});
+
+		ServerWorldEvents.LOAD.register((server, world) -> {
+			// Load chat data...
+			LOGGER.info("LOAD chat data from NBT: " + world.getRegistryKey().getValue());
+		});
+		ServerWorldEvents.UNLOAD.register((server, world) -> {
+			// Save chat data...
+			LOGGER.info("SAVE chat data to NBT: " + world.getRegistryKey().getValue());
 		});
 
 		LOGGER.info("MobGPT Initialized!");
