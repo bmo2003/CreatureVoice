@@ -3,6 +3,9 @@ package com.owlmaddie;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.Identifier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import org.slf4j.Logger;
@@ -30,6 +33,9 @@ public class ModInit implements ModInitializer {
 				Entity entity = player.getServerWorld().getEntityById(entityId);
 				if (entity != null) {
 					// Perform action with the clicked entity
+					// Slow entity
+					SlowEntity((LivingEntity) entity, 3.5F);
+
 					LOGGER.info("Generate greeting for: " + entity.getType().toString());
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
 					chatData.generateGreeting();
@@ -48,6 +54,9 @@ public class ModInit implements ModInitializer {
 				Entity entity = player.getServerWorld().getEntityById(entityId);
 				if (entity != null) {
 					// Perform action with the clicked entity
+					// Slow entity
+					SlowEntity((LivingEntity) entity, 3.5F);
+
 					LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
 					chatData.setLineNumber(lineNumber);
@@ -65,5 +74,15 @@ public class ModInit implements ModInitializer {
 		});
 
 		LOGGER.info("MobGPT Initialized!");
+	}
+
+	public void SlowEntity(LivingEntity entity, float numSeconds) {
+		// Slow the entity temporarily (so they don't run away)
+		// Apply a slowness effect with a high amplifier for a short duration
+		// (Amplifier value must be between 0 and 127)
+		float TPS = 20F; // ticks per second
+		StatusEffectInstance slowness = new StatusEffectInstance(StatusEffects.SLOWNESS, Math.round(numSeconds * TPS),
+				127, false, false);
+		entity.addStatusEffect(slowness);
 	}
 }
