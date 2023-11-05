@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 
 public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-	public static final Identifier PACKET_CLIENT_GREETING = new Identifier("mobgpt", "packet_client_greeting");
-	public static final Identifier PACKET_CLIENT_READ_NEXT = new Identifier("mobgpt", "packet_client_read_next");
+	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
+	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
 
 	@Override
 	public void onInitialize() {
@@ -24,7 +24,7 @@ public class ModInit implements ModInitializer {
 		// Proceed with mild caution.
 
 		// Handle packet for Greeting
-		ServerPlayNetworking.registerGlobalReceiver(PACKET_CLIENT_GREETING, (server, player, handler, buf, responseSender) -> {
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_GREETING, (server, player, handler, buf, responseSender) -> {
 			int entityId = buf.readInt();
 
 			// Ensure that the task is synced with the server thread
@@ -44,7 +44,7 @@ public class ModInit implements ModInitializer {
 		});
 
 		// Handle packet for reading lines of message
-		ServerPlayNetworking.registerGlobalReceiver(PACKET_CLIENT_READ_NEXT, (server, player, handler, buf, responseSender) -> {
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_READ_NEXT, (server, player, handler, buf, responseSender) -> {
 			int entityId = buf.readInt();
 			int lineNumber = buf.readInt();
 

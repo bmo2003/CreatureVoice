@@ -16,7 +16,7 @@ public class ModPackets {
         buf.writeInt(entity.getId());
 
         // Send C2S packet
-        ClientPlayNetworking.send(ModInit.PACKET_CLIENT_GREETING, buf);
+        ClientPlayNetworking.send(ModInit.PACKET_C2S_GREETING, buf);
     }
 
     public static void sendUpdateLineNumber(Entity entity, Integer lineNumber) {
@@ -25,7 +25,7 @@ public class ModPackets {
         buf.writeInt(lineNumber);
 
         // Send C2S packet
-        ClientPlayNetworking.send(ModInit.PACKET_CLIENT_READ_NEXT, buf);
+        ClientPlayNetworking.send(ModInit.PACKET_C2S_READ_NEXT, buf);
     }
 }
 
