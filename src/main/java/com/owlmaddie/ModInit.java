@@ -11,7 +11,8 @@ import org.slf4j.LoggerFactory;
 
 public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-	public static final Identifier PACKET_CLIENT_CLICK = new Identifier("mobgpt", "packet_client_click");
+	public static final Identifier PACKET_CLIENT_GREETING = new Identifier("mobgpt", "packet_client_greeting");
+	public static final Identifier PACKET_CLIENT_READ_NEXT = new Identifier("mobgpt", "packet_client_read_next");
 
 	@Override
 	public void onInitialize() {
@@ -19,7 +20,8 @@ public class ModInit implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		ServerPlayNetworking.registerGlobalReceiver(PACKET_CLIENT_CLICK, (server, player, handler, buf, responseSender) -> {
+		// Handle packet for Greeting
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_CLIENT_GREETING, (server, player, handler, buf, responseSender) -> {
 			int entityId = buf.readInt();
 
 			// Ensure that the task is synced with the server thread
@@ -28,9 +30,27 @@ public class ModInit implements ModInitializer {
 				Entity entity = player.getServerWorld().getEntityById(entityId);
 				if (entity != null) {
 					// Perform action with the clicked entity
-					LOGGER.info("Entity received: " + entity.getType().toString());
+					LOGGER.info("Generate greeting for: " + entity.getType().toString());
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
 					chatData.generateGreeting();
+				}
+			});
+		});
+
+		// Handle packet for reading lines of message
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_CLIENT_READ_NEXT, (server, player, handler, buf, responseSender) -> {
+			int entityId = buf.readInt();
+			int lineNumber = buf.readInt();
+
+			// Ensure that the task is synced with the server thread
+			server.execute(() -> {
+				// Your logic here, e.g., handle the entity click
+				Entity entity = player.getServerWorld().getEntityById(entityId);
+				if (entity != null) {
+					// Perform action with the clicked entity
+					LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());
+					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
+					chatData.setLineNumber(lineNumber);
 				}
 			});
 		});

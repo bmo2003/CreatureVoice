@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public class ClientInit implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     protected static TextureLoader textures = new TextureLoader();;
+    public static int DISPLAY_NUM_LINES = 3;
+    public static int DISPLAY_PADDING = 2;
 
 	@Override
     public void onInitializeClient() {
@@ -74,6 +76,30 @@ public class ClientInit implements ClientModInitializer {
         Tessellator.getInstance().draw();
     }
 
+    private void drawStartIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+        // Draw button icon
+        Identifier button_texture = textures.Get("ui", "button-chat");
+        RenderSystem.setShaderTexture(0, button_texture);
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+        float z = -0.01F;
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(0, 1).next();  // bottom left
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(1, 1).next();   // bottom right
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(1, 0).next();  // top right
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(0, 0).next(); // top left
+        tessellator.draw();
+
+        RenderSystem.disableBlend();
+        RenderSystem.disableDepthTest();
+    }
+
     private void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Draw face icon
         String entity_name = entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT);
@@ -102,7 +128,6 @@ public class ClientInit implements ClientModInitializer {
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }
-
 
     private void drawTextAboveEntities(WorldRenderContext context, float partialTicks) {
         Camera camera = context.camera();
@@ -155,10 +180,11 @@ public class ClientInit implements ClientModInitializer {
 
             // Look-up greeting (if any)
             ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entity.getId());
+            List<String> lines = chatData.getWrappedLines();
 
-            // Generate ChatGPT random greeting
-            String baseText = chatData.currentMessage + " - " + entity.getType().getName().getString();
-            List<OrderedText> lines = fontRenderer.wrapLines(StringVisitable.plain(baseText), 20 * fontRenderer.getWidth("W"));
+            // Set the range of lines to display
+            int starting_line = chatData.currentLineNumber;
+            int ending_line = Math.min(chatData.currentLineNumber + DISPLAY_NUM_LINES, lines.size());
 
             // Push a new matrix onto the stack.
             matrices.push();
@@ -201,20 +227,16 @@ public class ClientInit implements ClientModInitializer {
             matrices.multiply(yawRotation);
 
             // Determine max line length
-            int maxLineLength = 0;
+            float linesDisplayed = ending_line - starting_line;
             float lineSpacing = 1F;
             float textHeaderHeight = 40F;
             float textFooterHeight = 5F;
-            for (OrderedText lineText : lines) {
-                int lineLength = fontRenderer.getWidth(lineText);
-                if (lineLength > maxLineLength) {
-                    maxLineLength = lineLength;
-                }
-            }
+
 
             // Calculate size of text scaled to world
-            float scaledTextHeight = (float) lines.size() * (fontRenderer.fontHeight + lineSpacing);
-            scaledTextHeight = Math.max(scaledTextHeight, 50F);
+            float scaledTextHeight = linesDisplayed * (fontRenderer.fontHeight + lineSpacing);
+            float minTextHeight = (DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
+            scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
 
             // Scale down before rendering textures (otherwise font is huge)
             matrices.scale(-0.02F, -0.02F, 0.02F);
@@ -222,20 +244,44 @@ public class ClientInit implements ClientModInitializer {
             // Translate above the entity
             matrices.translate(0F, -scaledTextHeight + -textHeaderHeight + -textFooterHeight, 0F);
 
-            // Draw text background (no smaller than 50F tall)
-            drawTextBubbleBackground(matrices, entity, -64, 0, 128, scaledTextHeight);
+            // Check if conversation has started
+            if (chatData.currentMessage.isEmpty()) {
+                // Draw 'start' button
+                drawStartIcon(matrices, entity, 0, textHeaderHeight, 32, 17);
 
-            // Draw face of entity
-            drawEntityIcon(matrices, entity, -60, 7, 32, 32);
+            } else {
+                // Draw text background (no smaller than 50F tall)
+                drawTextBubbleBackground(matrices, entity, -64, 0, 128, scaledTextHeight);
 
-            // Render each line of the text
-            int fullBright = 0xF000F0;
-            Matrix4f matrix = matrices.peek().getPositionMatrix();
-            float yOffset = 42.0F;
-            for (OrderedText lineText : lines) {
-                fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
-                        false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
-                yOffset += fontRenderer.fontHeight + lineSpacing;
+                // Draw face of entity
+                drawEntityIcon(matrices, entity, -60, 7, 32, 32);
+
+                // Render each line of the text
+                int fullBright = 0xF000F0;
+                Matrix4f matrix = matrices.peek().getPositionMatrix();
+                float yOffset = 40.0F + DISPLAY_PADDING;
+                int currentLineIndex = 0; // We'll use this to track which line we're on
+
+                for (String lineText : lines) {
+                    // Only draw lines that are within the specified range
+                    if (currentLineIndex >= starting_line && currentLineIndex < ending_line) {
+                        fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
+                                false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+                        yOffset += fontRenderer.fontHeight + lineSpacing;
+                    }
+                    currentLineIndex++;
+
+                    if (currentLineIndex > ending_line) {
+                        break;
+                    }
+                }
+
+                // Add end of message
+                if (starting_line > 0 && starting_line == ending_line) {
+                    String lineText = "<end of message>";
+                    fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset + 10F, 0xffffff,
+                            false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+                }
             }
 
             // Pop the matrix to return to the original state.

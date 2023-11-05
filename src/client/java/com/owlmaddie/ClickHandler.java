@@ -105,9 +105,16 @@ public class ClickHandler {
 
         // Handle the click for the closest entity after the loop
         if (closestEntity != null) {
-            LOGGER.info("Clicked on text bubble above: " + closestEntity.getType().getName().getString());
-            //client.player.sendMessage(Text.literal("Clicked on text bubble above: " + closestEntity.getType().getName().getString()), false);
-            ModPackets.sendEntityClickPacket(closestEntity);
+            // Look-up conversation
+            ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(closestEntity.getId());
+
+            if (chatData.currentMessage.isEmpty()) {
+                // Start conversation
+                ModPackets.sendGenerateGreeting(closestEntity);
+            } else {
+                // Update lines read
+                ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + ClientInit.DISPLAY_NUM_LINES);
+            }
         }
 
     }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class ChatDataManager {
     // Use a static instance to manage our data globally
     private static final ChatDataManager INSTANCE = new ChatDataManager();
+    public static int MAX_CHAR_PER_LINE = 22;
 
     // HashMap to associate unique entity IDs with their chat data
     private HashMap<Integer, EntityChatData> entityChatDataMap;
@@ -15,11 +16,13 @@ public class ChatDataManager {
     // Inner class to hold entity-specific data
     public static class EntityChatData {
         public String currentMessage;
+        public int currentLineNumber;
         public List<String> previousMessages;
         public String characterSheet;
 
         public EntityChatData() {
             this.currentMessage = "";
+            this.currentLineNumber = 0;
             this.previousMessages = new ArrayList<>();
             this.characterSheet = "";
         }
@@ -28,7 +31,7 @@ public class ChatDataManager {
         public void generateGreeting() {
             ChatGPTRequest.fetchGreetingFromChatGPT().thenAccept(greeting -> {
                 if (greeting != null) {
-                    this.currentMessage = greeting;
+                    this.addMessage(greeting);
                 }
             });
         }
@@ -39,6 +42,20 @@ public class ChatDataManager {
                 previousMessages.add(currentMessage);
             }
             currentMessage = message;
+
+            // Set line number of displayed text
+            this.currentLineNumber = 0;
+        }
+
+        // Get wrapped lines
+        public List<String> getWrappedLines() {
+            return LineWrapper.wrapLines(this.currentMessage, MAX_CHAR_PER_LINE);
+        }
+
+        // Update starting line number of displayed text
+        public void setLineNumber(Integer lineNumber) {
+            // Update displayed starting line # (between 0 and # of lines)
+            this.currentLineNumber = Math.min(Math.max(lineNumber, 0), this.getWrappedLines().size());
         }
     }
 
