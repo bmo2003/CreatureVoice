@@ -45,7 +45,7 @@ public class ClickHandler {
         if (cameraEntity == null) return;
 
         World world = cameraEntity.getEntityWorld();
-        double renderDistance = 7.0;
+        double renderDistance = 9.0;
 
         // Calculate radius of entities
         Vec3d pos = cameraEntity.getPos();
@@ -69,7 +69,7 @@ public class ClickHandler {
 
         // Use the player's looking direction to define the ray's direction
         Vec3d lookVec = player.getRotationVec(1.0F);
-        Vec3d endRay = startRay.add(lookVec.normalize().multiply(7));  // 7 blocks in the direction the camera is looking
+        Vec3d endRay = startRay.add(lookVec.normalize().multiply(renderDistance));
 
         Entity closestEntity = null;
         double closestDistance = Double.MAX_VALUE; // Start with the largest possible distance
@@ -82,7 +82,7 @@ public class ClickHandler {
             }
 
             Vec3d entityPos = entity.getPos();
-            double extraHeight = 1D; // Calculate how much higher the text bubble is above the entity
+            double extraHeight = 0.5D; // Calculate how much higher the text bubble is above the entity
             Vec3d iconCenter = entityPos.add(0, entity.getHeight() + extraHeight, 0);
 
             // Define a bounding box that accurately represents the text bubble

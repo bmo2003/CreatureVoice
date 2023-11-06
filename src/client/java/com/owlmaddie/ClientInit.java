@@ -135,7 +135,7 @@ public class ClientInit implements ClientModInitializer {
         if (cameraEntity == null) return;
 
         World world = cameraEntity.getEntityWorld();
-        double renderDistance = 7.0;
+        double renderDistance = 9.0;
 
         // Calculate radius of entities
         Vec3d pos = cameraEntity.getPos();
@@ -190,7 +190,7 @@ public class ClientInit implements ClientModInitializer {
             matrices.push();
 
             // Translate to the entity's position
-            double paddingAboveEntity = 1D;
+            double paddingAboveEntity = 0.5D;
             matrices.translate(entity.getPos().x - interpolatedCameraPos.x,
                                entity.getPos().y - interpolatedCameraPos.y + entity.getHeight() + paddingAboveEntity,
                                entity.getPos().z - interpolatedCameraPos.z);
@@ -247,7 +247,7 @@ public class ClientInit implements ClientModInitializer {
             // Check if conversation has started
             if (chatData.currentMessage.isEmpty()) {
                 // Draw 'start' button
-                drawStartIcon(matrices, entity, 0, textHeaderHeight, 32, 17);
+                drawStartIcon(matrices, entity, -16, textHeaderHeight, 32, 17);
 
             } else {
                 // Draw text background (no smaller than 50F tall)
