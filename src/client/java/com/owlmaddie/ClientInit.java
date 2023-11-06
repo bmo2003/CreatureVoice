@@ -254,7 +254,7 @@ public class ClientInit implements ClientModInitializer {
                 drawTextBubbleBackground(matrices, entity, -64, 0, 128, scaledTextHeight);
 
                 // Draw face of entity
-                drawEntityIcon(matrices, entity, -60, 7, 32, 32);
+                drawEntityIcon(matrices, entity, -59, 7, 32, 32);
 
                 // Render each line of the text
                 int fullBright = 0xF000F0;
