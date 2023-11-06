@@ -198,33 +198,31 @@ public class ClientInit implements ClientModInitializer {
             // Calculate the difference vector (from entity to camera)
             Vec3d difference = cameraEntity.getPos().subtract(entity.getPos());
 
-            // Calculate the yaw angle (just like before)
+            // Calculate the yaw angle
             double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
 
-            // Calculate the pitch difference (using y component)
-            double pitch = Math.atan2(difference.y, Math.sqrt(difference.x * difference.x + difference.z * difference.z));
-
-            // Clamp the pitch to the desired range (in this case, ±X degrees converted to radians)
-            pitch = MathHelper.clamp(pitch, -Math.toRadians(20), Math.toRadians(20));
-
-            // Convert yaw and pitch to Quaternionf
+            // Convert yaw to Quaternion
             float halfYaw = (float) yaw * 0.5f;
             double sinHalfYaw = MathHelper.sin(halfYaw);
             double cosHalfYaw = MathHelper.cos(halfYaw);
+            Quaternionf yawRotation = new Quaternionf(0, sinHalfYaw, 0, cosHalfYaw);
 
+            // Apply the yaw rotation to the matrix stack
+            matrices.multiply(yawRotation);
+
+            // Obtain the horizontal distance to the entity
+            double horizontalDistance = Math.sqrt(difference.x * difference.x + difference.z * difference.z);
+            // Calculate the pitch angle based on the horizontal distance and the y difference
+            double pitch = Math.atan2(difference.y, horizontalDistance);
+
+            // Convert pitch to Quaternion
             float halfPitch = (float) pitch * 0.5f;
             double sinHalfPitch = MathHelper.sin(halfPitch);
             double cosHalfPitch = MathHelper.cos(halfPitch);
-
-            // Constructing the Quaternionf for yaw (around Y axis) and pitch (around X axis)
-            Quaternionf yawRotation = new Quaternionf(0, sinHalfYaw, 0, cosHalfYaw);
             Quaternionf pitchRotation = new Quaternionf(sinHalfPitch, 0, 0, cosHalfPitch);
 
-            // Combine the rotations
-            yawRotation.mul(pitchRotation);
-
-            // Now when you want to render, apply the combined rotation:
-            matrices.multiply(yawRotation);
+            // Apply the pitch rotation to the matrix stack
+            matrices.multiply(pitchRotation);
 
             // Determine max line length
             float linesDisplayed = ending_line - starting_line;
