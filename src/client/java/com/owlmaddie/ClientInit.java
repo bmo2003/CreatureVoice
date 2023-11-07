@@ -189,14 +189,21 @@ public class ClientInit implements ClientModInitializer {
             // Push a new matrix onto the stack.
             matrices.push();
 
-            // Translate to the entity's position
+            // Interpolate entity position (smooth motion)
             double paddingAboveEntity = 0.5D;
-            matrices.translate(entity.getPos().x - interpolatedCameraPos.x,
-                               entity.getPos().y - interpolatedCameraPos.y + entity.getHeight() + paddingAboveEntity,
-                               entity.getPos().z - interpolatedCameraPos.z);
+            Vec3d interpolatedEntityPos = new Vec3d(
+                    MathHelper.lerp(partialTicks, entity.prevX, entity.getPos().x),
+                    MathHelper.lerp(partialTicks, entity.prevY, entity.getPos().y),
+                    MathHelper.lerp(partialTicks, entity.prevZ, entity.getPos().z)
+            );
+
+            // Translate to the entity's position
+            matrices.translate(interpolatedEntityPos.x - interpolatedCameraPos.x,
+                               interpolatedEntityPos.y - interpolatedCameraPos.y + entity.getHeight() + paddingAboveEntity,
+                               interpolatedEntityPos.z - interpolatedCameraPos.z);
 
             // Calculate the difference vector (from entity to camera)
-            Vec3d difference = cameraEntity.getPos().subtract(entity.getPos());
+            Vec3d difference = interpolatedCameraPos.subtract(interpolatedEntityPos);
 
             // Calculate the yaw angle
             double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
