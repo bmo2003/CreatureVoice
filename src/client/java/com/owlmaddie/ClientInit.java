@@ -150,9 +150,14 @@ public class ClientInit implements ClientModInitializer {
         // Get camera position
         Vec3d interpolatedCameraPos;
         double cameraHeight = 0D;
+        double sneakHeight = 0.3D;
         if (MinecraftClient.getInstance().options.getPerspective().isFirstPerson()) {
             // 1st person, Use the cameraEntity (interpolate for smooth motion)
-            cameraHeight = cameraEntity.getHeight();
+            if (cameraEntity.isSneaking()) {
+                cameraHeight = cameraEntity.getHeight() + sneakHeight;
+            } else {
+                cameraHeight = cameraEntity.getHeight();
+            }
             interpolatedCameraPos = new Vec3d(
                     MathHelper.lerp(partialTicks, cameraEntity.prevX, cameraEntity.getPos().x),
                     MathHelper.lerp(partialTicks, cameraEntity.prevY, cameraEntity.getPos().y),
