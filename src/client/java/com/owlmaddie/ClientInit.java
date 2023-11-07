@@ -167,7 +167,7 @@ public class ClientInit implements ClientModInitializer {
             }
 
             // Look-up greeting (if any)
-            ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entity.getId());
+            ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getId());
             List<String> lines = chatData.getWrappedLines();
 
             // Set the range of lines to display

@@ -36,7 +36,7 @@ public class ModInit implements ModInitializer {
 					// Slow entity
 					SlowEntity((LivingEntity) entity, 3.5F);
 
-					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
+					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entityId);
 					if (chatData.status == ChatDataManager.ChatStatus.NONE ||
 							chatData.status == ChatDataManager.ChatStatus.END) {
 						// Only generate a new greeting if not already doing so
@@ -61,7 +61,7 @@ public class ModInit implements ModInitializer {
 					// Slow entity
 					SlowEntity((LivingEntity) entity, 3.5F);
 
-					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
+					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entityId);
 					if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
 						// Only set line number if status allows
 						LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());

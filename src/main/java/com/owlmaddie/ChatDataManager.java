@@ -7,7 +7,8 @@ import java.util.ArrayList;
 
 public class ChatDataManager {
     // Use a static instance to manage our data globally
-    private static final ChatDataManager INSTANCE = new ChatDataManager();
+    private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager();
+    private static final ChatDataManager CLIENT_INSTANCE = new ChatDataManager();
     public static int MAX_CHAR_PER_LINE = 22;
 
     public enum ChatStatus {
@@ -77,9 +78,14 @@ public class ChatDataManager {
         entityChatDataMap = new HashMap<>();
     }
 
-    // Method to get the global instance of the data manager
-    public static ChatDataManager getInstance() {
-        return INSTANCE;
+    // Method to get the global instance of the server data manager
+    public static ChatDataManager getServerInstance() {
+        return SERVER_INSTANCE;
+    }
+
+    // Method to get the global instance of the client data manager (synced from server)
+    public static ChatDataManager getClientInstance() {
+        return CLIENT_INSTANCE;
     }
 
     // Retrieve chat data for a specific entity, or create it if it doesn't exist

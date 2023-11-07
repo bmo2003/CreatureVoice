@@ -106,7 +106,7 @@ public class ClickHandler {
         // Handle the click for the closest entity after the loop
         if (closestEntity != null) {
             // Look-up conversation
-            ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(closestEntity.getId());
+            ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntity.getId());
 
             if (chatData.currentMessage.isEmpty()) {
                 // Start conversation
