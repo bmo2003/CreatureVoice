@@ -36,9 +36,13 @@ public class ModInit implements ModInitializer {
 					// Slow entity
 					SlowEntity((LivingEntity) entity, 3.5F);
 
-					LOGGER.info("Generate greeting for: " + entity.getType().toString());
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
-					chatData.generateGreeting();
+					if (chatData.status == ChatDataManager.ChatStatus.NONE ||
+							chatData.status == ChatDataManager.ChatStatus.END) {
+						// Only generate a new greeting if not already doing so
+						LOGGER.info("Generate greeting for: " + entity.getType().toString());
+						chatData.generateGreeting();
+					}
 				}
 			});
 		});
@@ -57,9 +61,12 @@ public class ModInit implements ModInitializer {
 					// Slow entity
 					SlowEntity((LivingEntity) entity, 3.5F);
 
-					LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getInstance().getOrCreateChatData(entityId);
-					chatData.setLineNumber(lineNumber);
+					if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
+						// Only set line number if status allows
+						LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());
+						chatData.setLineNumber(lineNumber);
+					}
 				}
 			});
 		});
@@ -80,6 +87,7 @@ public class ModInit implements ModInitializer {
 		// Slow the entity temporarily (so they don't run away)
 		// Apply a slowness effect with a high amplifier for a short duration
 		// (Amplifier value must be between 0 and 127)
+		LOGGER.info("Apply SLOWNESS status effect to: " + entity.getType().toString());
 		float TPS = 20F; // ticks per second
 		StatusEffectInstance slowness = new StatusEffectInstance(StatusEffects.SLOWNESS, Math.round(numSeconds * TPS),
 				127, false, false);

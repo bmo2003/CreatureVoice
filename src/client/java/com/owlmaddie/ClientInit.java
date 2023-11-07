@@ -76,9 +76,9 @@ public class ClientInit implements ClientModInitializer {
         Tessellator.getInstance().draw();
     }
 
-    private void drawStartIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+    private void drawIcon(String ui_icon_name, MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Draw button icon
-        Identifier button_texture = textures.Get("ui", "button-chat");
+        Identifier button_texture = textures.Get("ui", ui_icon_name);
         RenderSystem.setShaderTexture(0, button_texture);
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
@@ -238,9 +238,13 @@ public class ClientInit implements ClientModInitializer {
             matrices.translate(0F, -scaledTextHeight + -textHeaderHeight + -textFooterHeight, 0F);
 
             // Check if conversation has started
-            if (chatData.currentMessage.isEmpty()) {
-                // Draw 'start' button
-                drawStartIcon(matrices, entity, -16, textHeaderHeight, 32, 17);
+            if (chatData.status == ChatDataManager.ChatStatus.NONE) {
+                // Draw 'start chat' button
+                drawIcon("button-chat", matrices, entity, -16, textHeaderHeight, 32, 17);
+
+            } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
+                // Draw 'pending' button
+                drawIcon("button-dotdot", matrices, entity, -16, textHeaderHeight, 32, 17);
 
             } else {
                 // Draw text background (no smaller than 50F tall)

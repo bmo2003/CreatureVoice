@@ -10,6 +10,13 @@ public class ChatDataManager {
     private static final ChatDataManager INSTANCE = new ChatDataManager();
     public static int MAX_CHAR_PER_LINE = 22;
 
+    public enum ChatStatus {
+        NONE,       // No chat status yet
+        PENDING,    // Chat is pending (e.g., awaiting response or processing)
+        DISPLAY,    // Chat is currently being displayed
+        END         // Chat has ended or been dismissed
+    }
+
     // HashMap to associate unique entity IDs with their chat data
     private HashMap<Integer, EntityChatData> entityChatDataMap;
 
@@ -17,6 +24,7 @@ public class ChatDataManager {
     public static class EntityChatData {
         public String currentMessage;
         public int currentLineNumber;
+        public ChatStatus status;
         public List<String> previousMessages;
         public String characterSheet;
 
@@ -25,10 +33,12 @@ public class ChatDataManager {
             this.currentLineNumber = 0;
             this.previousMessages = new ArrayList<>();
             this.characterSheet = "";
+            this.status = ChatStatus.NONE;
         }
 
         // Generate greeting
         public void generateGreeting() {
+            this.status = ChatStatus.PENDING;
             ChatGPTRequest.fetchGreetingFromChatGPT().thenAccept(greeting -> {
                 if (greeting != null) {
                     this.addMessage(greeting);
@@ -45,6 +55,7 @@ public class ChatDataManager {
 
             // Set line number of displayed text
             this.currentLineNumber = 0;
+            this.status = ChatStatus.DISPLAY;
         }
 
         // Get wrapped lines
@@ -56,6 +67,9 @@ public class ChatDataManager {
         public void setLineNumber(Integer lineNumber) {
             // Update displayed starting line # (between 0 and # of lines)
             this.currentLineNumber = Math.min(Math.max(lineNumber, 0), this.getWrappedLines().size());
+            if (lineNumber == this.getWrappedLines().size()) {
+                this.status = ChatStatus.END;
+            }
         }
     }
 
