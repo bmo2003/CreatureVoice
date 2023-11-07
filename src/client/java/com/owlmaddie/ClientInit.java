@@ -149,18 +149,18 @@ public class ClientInit implements ClientModInitializer {
 
         // Get camera position
         Vec3d interpolatedCameraPos;
+        double cameraHeight = 0D;
         if (MinecraftClient.getInstance().options.getPerspective().isFirstPerson()) {
             // 1st person, Use the cameraEntity (interpolate for smooth motion)
+            cameraHeight = cameraEntity.getHeight();
             interpolatedCameraPos = new Vec3d(
                     MathHelper.lerp(partialTicks, cameraEntity.prevX, cameraEntity.getPos().x),
-                    MathHelper.lerp(partialTicks, cameraEntity.prevY, cameraEntity.getPos().y) + cameraEntity.getHeight(),
+                    MathHelper.lerp(partialTicks, cameraEntity.prevY, cameraEntity.getPos().y),
                     MathHelper.lerp(partialTicks, cameraEntity.prevZ, cameraEntity.getPos().z)
             );
         } else {
             // Use the camera (3rd person)
-            interpolatedCameraPos = new Vec3d(camera.getPos().x,
-                    camera.getPos().y,
-                    camera.getPos().z);
+            interpolatedCameraPos = new Vec3d(camera.getPos().x, camera.getPos().y, camera.getPos().z);
         }
 
         // Get all entities
@@ -199,8 +199,8 @@ public class ClientInit implements ClientModInitializer {
 
             // Translate to the entity's position
             matrices.translate(interpolatedEntityPos.x - interpolatedCameraPos.x,
-                               interpolatedEntityPos.y - interpolatedCameraPos.y + entity.getHeight() + paddingAboveEntity,
-                               interpolatedEntityPos.z - interpolatedCameraPos.z);
+                                (interpolatedEntityPos.y + entity.getHeight()) - (interpolatedCameraPos.y + cameraHeight) + paddingAboveEntity,
+                                interpolatedEntityPos.z - interpolatedCameraPos.z);
 
             // Calculate the difference vector (from entity to camera)
             Vec3d difference = interpolatedCameraPos.subtract(interpolatedEntityPos);
