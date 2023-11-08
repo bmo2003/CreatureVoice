@@ -8,14 +8,20 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.Identifier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
+	private static MinecraftServer serverInstance;
 	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
 	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
+	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("mobgpt", "packet_s2c_message");
 
 	@Override
 	public void onInitialize() {
@@ -29,10 +35,8 @@ public class ModInit implements ModInitializer {
 
 			// Ensure that the task is synced with the server thread
 			server.execute(() -> {
-				// Your logic here, e.g., handle the entity click
 				Entity entity = player.getServerWorld().getEntityById(entityId);
 				if (entity != null) {
-					// Perform action with the clicked entity
 					// Slow entity
 					SlowEntity((LivingEntity) entity, 3.5F);
 
@@ -54,10 +58,8 @@ public class ModInit implements ModInitializer {
 
 			// Ensure that the task is synced with the server thread
 			server.execute(() -> {
-				// Your logic here, e.g., handle the entity click
 				Entity entity = player.getServerWorld().getEntityById(entityId);
 				if (entity != null) {
-					// Perform action with the clicked entity
 					// Slow entity
 					SlowEntity((LivingEntity) entity, 3.5F);
 
@@ -74,13 +76,36 @@ public class ModInit implements ModInitializer {
 		ServerWorldEvents.LOAD.register((server, world) -> {
 			// Load chat data...
 			LOGGER.info("LOAD chat data from NBT: " + world.getRegistryKey().getValue());
+			serverInstance = server;
 		});
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
 			// Save chat data...
 			LOGGER.info("SAVE chat data to NBT: " + world.getRegistryKey().getValue());
+			serverInstance = null;
 		});
 
 		LOGGER.info("MobGPT Initialized!");
+	}
+
+	// Send new message to all connected players
+	public static void BroadcastPacketMessage(ChatDataManager.EntityChatData chatData) {
+		// TODO: Fix static OVERWORLD reference
+		Entity entity = serverInstance.getOverworld().getEntityById(chatData.entityId);
+		if (entity != null) {
+			PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+
+			// Write the entity's chat updated data
+			buffer.writeInt(entity.getId());
+			buffer.writeString(chatData.currentMessage);
+			buffer.writeInt(chatData.currentLineNumber);
+			buffer.writeString(chatData.status.toString());
+
+			// Iterate over all players and send the packet
+			for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
+				LOGGER.info("Server send message packet to player: " + player.getName().getString());
+				ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
+			}
+		}
 	}
 
 	public void SlowEntity(LivingEntity entity, float numSeconds) {

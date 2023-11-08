@@ -3,6 +3,7 @@ package com.owlmaddie;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -23,7 +24,6 @@ public class ClickHandler {
     private static boolean wasClicked = false;
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-
             if (client.options.useKey.isPressed()) {
                 if (!wasClicked) {
                     // The key has just been pressed down, so handle the 'click'
@@ -34,8 +34,31 @@ public class ClickHandler {
                 // The key has been released, so reset the wasClicked flag
                 wasClicked = false;
             }
-
         });
+
+        // Client-side packet handler, message sync
+        ClientPlayNetworking.registerGlobalReceiver(ModInit.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
+            // Read the data from the server packet
+            int entityId = buffer.readInt();
+            String message = buffer.readString(32767);
+            int line = buffer.readInt();
+            String status_name = buffer.readString(32767);
+
+            // Update the chat data manager on the client-side
+            client.execute(() -> { // Make sure to run on the client thread
+                Entity entity = client.world.getEntityById(entityId);
+                if (entity != null) {
+                    ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
+                    ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entityId);
+                    if (!message.isEmpty()) {
+                        chatData.currentMessage = message;
+                    }
+                    chatData.currentLineNumber = line;
+                    chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
+                }
+            });
+        });
+
     }
 
     public static void handleUseKeyClick(MinecraftClient client) {

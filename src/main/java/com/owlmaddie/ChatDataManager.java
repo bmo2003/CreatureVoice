@@ -23,13 +23,15 @@ public class ChatDataManager {
 
     // Inner class to hold entity-specific data
     public static class EntityChatData {
+        public int entityId;
         public String currentMessage;
         public int currentLineNumber;
         public ChatStatus status;
         public List<String> previousMessages;
         public String characterSheet;
 
-        public EntityChatData() {
+        public EntityChatData(int entityId) {
+            this.entityId = entityId;
             this.currentMessage = "";
             this.currentLineNumber = 0;
             this.previousMessages = new ArrayList<>();
@@ -45,6 +47,9 @@ public class ChatDataManager {
                     this.addMessage(greeting);
                 }
             });
+
+            // Broadcast to all players
+            ModInit.BroadcastPacketMessage(this);
         }
 
         // Add a message to the history and update the current message
@@ -55,8 +60,11 @@ public class ChatDataManager {
             currentMessage = message;
 
             // Set line number of displayed text
-            this.currentLineNumber = 0;
-            this.status = ChatStatus.DISPLAY;
+            currentLineNumber = 0;
+            status = ChatStatus.DISPLAY;
+
+            // Broadcast to all players
+            ModInit.BroadcastPacketMessage(this);
         }
 
         // Get wrapped lines
@@ -67,10 +75,13 @@ public class ChatDataManager {
         // Update starting line number of displayed text
         public void setLineNumber(Integer lineNumber) {
             // Update displayed starting line # (between 0 and # of lines)
-            this.currentLineNumber = Math.min(Math.max(lineNumber, 0), this.getWrappedLines().size());
+            currentLineNumber = Math.min(Math.max(lineNumber, 0), this.getWrappedLines().size());
             if (lineNumber == this.getWrappedLines().size()) {
-                this.status = ChatStatus.END;
+                status = ChatStatus.END;
             }
+
+            // Broadcast to all players
+            ModInit.BroadcastPacketMessage(this);
         }
     }
 
@@ -90,6 +101,6 @@ public class ChatDataManager {
 
     // Retrieve chat data for a specific entity, or create it if it doesn't exist
     public EntityChatData getOrCreateChatData(int entityId) {
-        return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData());
+        return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId));
     }
 }
