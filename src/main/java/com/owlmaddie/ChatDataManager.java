@@ -85,6 +85,11 @@ public class ChatDataManager {
         }
     }
 
+    public void clearData() {
+        // Clear the chat data for the previous session
+        entityChatDataMap.clear();
+    }
+
     private ChatDataManager() {
         entityChatDataMap = new HashMap<>();
     }

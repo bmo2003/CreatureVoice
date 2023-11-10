@@ -2,6 +2,7 @@ package com.owlmaddie;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
@@ -36,9 +37,23 @@ public class ClientInit implements ClientModInitializer {
     public void onInitializeClient() {
         ClickHandler.register();
 
+        // Register an event callback to render text bubbles
         WorldRenderEvents.LAST.register((context) -> {
             drawTextAboveEntities(context, context.tickDelta());
         });
+
+        // Register an event callback for when the client disconnects from a server or changes worlds
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            // Clear or reset the ChatDataManager
+            ChatDataManager.getClientInstance().clearData();
+        });
+
+        // Register an event callback for when the player joins a server or world
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            // Possibly re-initialize or prepare the ChatDataManager for the new session
+            ChatDataManager.getClientInstance().clearData();
+        });
+
     }
 
     public void drawTextBubbleBackground(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
