@@ -1,17 +1,18 @@
 package com.owlmaddie;
 
+import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.util.Identifier;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
-import io.netty.buffer.Unpooled;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,21 +90,23 @@ public class ModInit implements ModInitializer {
 
 	// Send new message to all connected players
 	public static void BroadcastPacketMessage(ChatDataManager.EntityChatData chatData) {
-		// TODO: Fix static OVERWORLD reference
-		Entity entity = serverInstance.getOverworld().getEntityById(chatData.entityId);
-		if (entity != null) {
-			PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+		for (ServerWorld world : serverInstance.getWorlds()) {
+			Entity entity = world.getEntityById(chatData.entityId);
+			if (entity != null) {
+				PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 
-			// Write the entity's chat updated data
-			buffer.writeInt(entity.getId());
-			buffer.writeString(chatData.currentMessage);
-			buffer.writeInt(chatData.currentLineNumber);
-			buffer.writeString(chatData.status.toString());
+				// Write the entity's chat updated data
+				buffer.writeInt(entity.getId());
+				buffer.writeString(chatData.currentMessage);
+				buffer.writeInt(chatData.currentLineNumber);
+				buffer.writeString(chatData.status.toString());
 
-			// Iterate over all players and send the packet
-			for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-				LOGGER.info("Server send message packet to player: " + player.getName().getString());
-				ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
+				// Iterate over all players and send the packet
+				for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
+					LOGGER.info("Server send message packet to player: " + player.getName().getString());
+					ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
+				}
+				break;
 			}
 		}
 	}
