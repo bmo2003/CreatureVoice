@@ -22,6 +22,8 @@ public class ModInit implements ModInitializer {
 	private static MinecraftServer serverInstance;
 	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
 	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
+	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
+	public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("mobgpt", "packet_c2s_send_chat");
 	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("mobgpt", "packet_s2c_message");
 
 	@Override
@@ -46,7 +48,7 @@ public class ModInit implements ModInitializer {
 							chatData.status == ChatDataManager.ChatStatus.END) {
 						// Only generate a new greeting if not already doing so
 						LOGGER.info("Generate greeting for: " + entity.getType().toString());
-						chatData.generateGreeting();
+						chatData.generateMessage("Hello!");
 					}
 				}
 			});
@@ -69,6 +71,42 @@ public class ModInit implements ModInitializer {
 						// Only set line number if status allows
 						LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());
 						chatData.setLineNumber(lineNumber);
+					}
+				}
+			});
+		});
+
+		// Handle packet for Start Chat
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_START_CHAT, (server, player, handler, buf, responseSender) -> {
+			int entityId = buf.readInt();
+
+			// Ensure that the task is synced with the server thread
+			server.execute(() -> {
+				Entity entity = player.getServerWorld().getEntityById(entityId);
+				if (entity != null) {
+					// Slow entity, so it does NOT walk away during player typing
+					SlowEntity((LivingEntity) entity, 7F);
+				}
+			});
+		});
+
+		// Handle packet for new chat message
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_SEND_CHAT, (server, player, handler, buf, responseSender) -> {
+			int entityId = buf.readInt();
+			String message = buf.readString(32767);
+
+			// Ensure that the task is synced with the server thread
+			server.execute(() -> {
+				Entity entity = player.getServerWorld().getEntityById(entityId);
+				if (entity != null) {
+					// Slow entity
+					SlowEntity((LivingEntity) entity, 3.5F);
+
+					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entityId);
+					if (chatData.status == ChatDataManager.ChatStatus.END) {
+						// Add new message
+						LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
+						chatData.generateMessage(message);
 					}
 				}
 			});
@@ -100,6 +138,7 @@ public class ModInit implements ModInitializer {
 				buffer.writeString(chatData.currentMessage);
 				buffer.writeInt(chatData.currentLineNumber);
 				buffer.writeString(chatData.status.toString());
+				buffer.writeString(chatData.sender.toString());
 
 				// Iterate over all players and send the packet
 				for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {

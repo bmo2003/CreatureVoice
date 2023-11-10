@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 public class ChatGPTRequest {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
 
-    public static CompletableFuture<String> fetchGreetingFromChatGPT() {
+    public static CompletableFuture<String> fetchMessageFromChatGPT(String user_message) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 URL url = new URL("https://api.openai.com/v1/chat/completions");
@@ -30,7 +30,7 @@ public class ChatGPTRequest {
                         + "\"model\": \"gpt-3.5-turbo\","
                         + "\"messages\": ["
                         + "{ \"role\": \"system\", \"content\": \"You are a silly Minecraft entity who speaks to the player in short riddles.\" },"
-                        + "{ \"role\": \"user\", \"content\": \"Hello!\" }"
+                        + "{ \"role\": \"user\", \"content\": \"" + user_message.replace("\"", "") + "\" }"
                         + "]"
                         + "}";
                 LOGGER.info(jsonInputString);

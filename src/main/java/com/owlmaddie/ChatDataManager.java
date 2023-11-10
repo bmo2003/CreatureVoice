@@ -18,6 +18,12 @@ public class ChatDataManager {
         END         // Chat has ended or been dismissed
     }
 
+    public enum ChatSender {
+        NONE,      // A blank chat message
+        USER,      // A user chat message
+        ASSISTANT  // A GPT generated message
+    }
+
     // HashMap to associate unique entity IDs with their chat data
     private HashMap<Integer, EntityChatData> entityChatDataMap;
 
@@ -29,6 +35,7 @@ public class ChatDataManager {
         public ChatStatus status;
         public List<String> previousMessages;
         public String characterSheet;
+        public ChatSender sender;
 
         public EntityChatData(int entityId) {
             this.entityId = entityId;
@@ -37,14 +44,19 @@ public class ChatDataManager {
             this.previousMessages = new ArrayList<>();
             this.characterSheet = "";
             this.status = ChatStatus.NONE;
+            this.sender = ChatSender.NONE;
         }
 
         // Generate greeting
-        public void generateGreeting() {
+        public void generateMessage(String user_message) {
             this.status = ChatStatus.PENDING;
-            ChatGPTRequest.fetchGreetingFromChatGPT().thenAccept(greeting -> {
-                if (greeting != null) {
-                    this.addMessage(greeting);
+            // Add USER Message
+            //this.addMessage(user_message, ChatSender.USER);
+
+            ChatGPTRequest.fetchMessageFromChatGPT(user_message).thenAccept(output_message -> {
+                if (output_message != null) {
+                    // Add ASSISTANT message
+                    this.addMessage(output_message, ChatSender.ASSISTANT);
                 }
             });
 
@@ -53,9 +65,9 @@ public class ChatDataManager {
         }
 
         // Add a message to the history and update the current message
-        public void addMessage(String message) {
+        public void addMessage(String message, ChatSender sender) {
             if (!currentMessage.isEmpty()) {
-                previousMessages.add(currentMessage);
+                previousMessages.add(sender.toString() + ": " + currentMessage);
             }
             currentMessage = message;
 
@@ -76,7 +88,7 @@ public class ChatDataManager {
         public void setLineNumber(Integer lineNumber) {
             // Update displayed starting line # (between 0 and # of lines)
             currentLineNumber = Math.min(Math.max(lineNumber, 0), this.getWrappedLines().size());
-            if (lineNumber == this.getWrappedLines().size()) {
+            if (currentLineNumber >= this.getWrappedLines().size()) {
                 status = ChatStatus.END;
             }
 

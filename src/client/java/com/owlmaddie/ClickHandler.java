@@ -43,6 +43,7 @@ public class ClickHandler {
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
+            String sender_name = buffer.readString(32767);
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
@@ -55,6 +56,7 @@ public class ClickHandler {
                     }
                     chatData.currentLineNumber = line;
                     chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
+                    chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
                 }
             });
         });
@@ -131,12 +133,16 @@ public class ClickHandler {
             // Look-up conversation
             ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntity.getId());
 
-            if (chatData.currentMessage.isEmpty()) {
+            if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Start conversation
                 ModPackets.sendGenerateGreeting(closestEntity);
-            } else {
+            } else if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
                 // Update lines read
                 ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + ClientInit.DISPLAY_NUM_LINES);
+            } else if (chatData.status == ChatDataManager.ChatStatus.END) {
+                // End of chat (open player chat screen)
+                ModPackets.sendStartChat(closestEntity); // Slow down entity while chat screen is open
+                client.setScreen(new ChatScreen(closestEntity));
             }
         }
 

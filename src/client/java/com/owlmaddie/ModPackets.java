@@ -27,5 +27,22 @@ public class ModPackets {
         // Send C2S packet
         ClientPlayNetworking.send(ModInit.PACKET_C2S_READ_NEXT, buf);
     }
+
+    public static void sendStartChat(Entity entity) {
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        buf.writeInt(entity.getId());
+
+        // Send C2S packet
+        ClientPlayNetworking.send(ModInit.PACKET_C2S_START_CHAT, buf);
+    }
+
+    public static void sendChat(Entity entity, String message) {
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        buf.writeInt(entity.getId());
+        buf.writeString(message);
+
+        // Send C2S packet
+        ClientPlayNetworking.send(ModInit.PACKET_C2S_SEND_CHAT, buf);
+    }
 }
 
