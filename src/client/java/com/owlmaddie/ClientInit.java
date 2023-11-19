@@ -259,7 +259,7 @@ public class ClientInit implements ClientModInitializer {
                 // Draw 'pending' button
                 drawIcon("button-dotdot", matrices, entity, -16, textHeaderHeight, 32, 17);
 
-            } else {
+            } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
                 // Draw text background (no smaller than 50F tall)
                 drawTextBubbleBackground(matrices, entity, -64, 0, 128, scaledTextHeight);
 

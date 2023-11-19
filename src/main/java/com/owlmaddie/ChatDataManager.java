@@ -26,7 +26,6 @@ public class ChatDataManager {
     }
 
     public enum ChatSender {
-        NONE,      // A blank chat message
         USER,      // A user chat message
         ASSISTANT  // A GPT generated message
     }
@@ -34,13 +33,23 @@ public class ChatDataManager {
     // HashMap to associate unique entity IDs with their chat data
     private HashMap<Integer, EntityChatData> entityChatDataMap;
 
+    public static class ChatMessage {
+        public String message;
+        public ChatSender sender;
+
+        public ChatMessage(String message, ChatSender sender) {
+            this.message = message;
+            this.sender = sender;
+        }
+    }
+
     // Inner class to hold entity-specific data
     public static class EntityChatData {
         public int entityId;
         public String currentMessage;
         public int currentLineNumber;
         public ChatStatus status;
-        public List<String> previousMessages;
+        public List<ChatMessage> previousMessages;
         public String characterSheet;
         public ChatSender sender;
 
@@ -51,7 +60,7 @@ public class ChatDataManager {
             this.previousMessages = new ArrayList<>();
             this.characterSheet = "";
             this.status = ChatStatus.NONE;
-            this.sender = ChatSender.NONE;
+            this.sender = ChatSender.USER;
         }
 
         public static String extractGreeting(String inputText) {
@@ -71,11 +80,10 @@ public class ChatDataManager {
         public void generateMessage(ServerPlayerEntity player, String systemPrompt, String user_message) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
-            //this.addMessage(user_message, ChatSender.USER);
+            this.addMessage(user_message, ChatSender.USER);
 
             // Add PLAYER context information
             Map<String, String> contextData = new HashMap<>();
-            contextData.put("message", user_message);
             contextData.put("player_name", player.getDisplayName().getString());
             contextData.put("player_health", String.valueOf(player.getHealth()));
             contextData.put("player_hunger", String.valueOf(player.getHungerManager().getFoodLevel()));
@@ -107,7 +115,7 @@ public class ChatDataManager {
             contextData.put("entity_character_sheet", characterSheet);
 
             // fetch HTTP response from ChatGPT
-            ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData).thenAccept(output_message -> {
+            ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages).thenAccept(output_message -> {
                 if (output_message != null && systemPrompt == "system-character") {
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
@@ -125,15 +133,21 @@ public class ChatDataManager {
         }
 
         // Add a message to the history and update the current message
-        public void addMessage(String message, ChatSender sender) {
-            if (!currentMessage.isEmpty()) {
-                previousMessages.add(sender.toString() + ": " + currentMessage);
-            }
-            currentMessage = message;
+        public void addMessage(String message, ChatSender messageSender) {
+            // Add message to history
+            previousMessages.add(new ChatMessage(message, messageSender));
 
-            // Set line number of displayed text
+            // Set new message and reset line number of displayed text
+            currentMessage = message;
             currentLineNumber = 0;
-            status = ChatStatus.DISPLAY;
+            if (messageSender == ChatSender.ASSISTANT) {
+                // Show new generated message
+                status = ChatStatus.DISPLAY;
+            } else if (messageSender == ChatSender.USER) {
+                // Show pending icon
+                status = ChatStatus.PENDING;
+            }
+            sender = messageSender;
 
             // Broadcast to all players
             ModInit.BroadcastPacketMessage(this);

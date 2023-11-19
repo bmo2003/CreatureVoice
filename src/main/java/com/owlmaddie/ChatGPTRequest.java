@@ -70,12 +70,9 @@ public class ChatGPTRequest {
         return result.replace("\"", "") ;
     }
 
-    public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context) {
+    public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Get user message
-                String userMessage = context.get("message");
-
                 // Load and prepare the system prompt template
                 String systemMessage = "";
                 if (!systemPrompt.isEmpty()) {
@@ -85,7 +82,6 @@ public class ChatGPTRequest {
 
                 // Replace placeholders (if any)
                 systemMessage = replacePlaceholders(systemMessage, context);
-                userMessage = replacePlaceholders(userMessage, context);
 
                 URL url = new URL("https://api.openai.com/v1/chat/completions");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -94,13 +90,17 @@ public class ChatGPTRequest {
                 connection.setRequestProperty("Authorization", "Bearer REDACTED_API_KEY");
                 connection.setDoOutput(true);
 
-                // Build JSON payload for ChatGPT
+                // Build JSON payload for ChatGPT (with previous messages)
                 List<ChatGPTRequestMessage> messages = new ArrayList<>();
                 messages.add(new ChatGPTRequestMessage("system", systemMessage));
-                messages.add(new ChatGPTRequestMessage("user", userMessage));
+                for (ChatDataManager.ChatMessage chatMessage : messageHistory) {
+                    String senderName = chatMessage.sender.toString().toLowerCase();
+                    String messageText = replacePlaceholders(chatMessage.message, context);
+                    messages.add(new ChatGPTRequestMessage(senderName, messageText));
+                }
 
                 // Convert JSON to String
-                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo", messages);
+                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo-1106", messages);
                 Gson gsonInput = new Gson();
                 String jsonInputString = gsonInput.toJson(payload);
 
