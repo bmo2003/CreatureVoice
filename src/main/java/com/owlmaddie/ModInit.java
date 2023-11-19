@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-	private static MinecraftServer serverInstance;
+	public static MinecraftServer serverInstance;
 	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
 	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
 	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
@@ -48,7 +48,7 @@ public class ModInit implements ModInitializer {
 							chatData.status == ChatDataManager.ChatStatus.END) {
 						// Only generate a new greeting if not already doing so
 						LOGGER.info("Generate greeting for: " + entity.getType().toString());
-						chatData.generateMessage("Hello!");
+						chatData.generateMessage(player, "Hello!");
 					}
 				}
 			});
@@ -106,7 +106,7 @@ public class ModInit implements ModInitializer {
 					if (chatData.status == ChatDataManager.ChatStatus.END) {
 						// Add new message
 						LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
-						chatData.generateMessage(message);
+						chatData.generateMessage(player, message);
 					}
 				}
 			});

@@ -1,8 +1,13 @@
 package com.owlmaddie;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Map;
 
 
 public class ChatDataManager {
@@ -48,12 +53,45 @@ public class ChatDataManager {
         }
 
         // Generate greeting
-        public void generateMessage(String user_message) {
+        public void generateMessage(ServerPlayerEntity player, String user_message) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
             //this.addMessage(user_message, ChatSender.USER);
 
-            ChatGPTRequest.fetchMessageFromChatGPT(user_message).thenAccept(output_message -> {
+            // Add PLAYER context information
+            Map<String, String> contextData = new HashMap<>();
+            contextData.put("message", user_message);
+            contextData.put("player_name", player.getDisplayName().getString());
+            contextData.put("player_health", String.valueOf(player.getHealth()));
+            contextData.put("player_hunger", String.valueOf(player.getHungerManager().getFoodLevel()));
+            contextData.put("player_held_item", String.valueOf(player.getMainHandStack().getItem().toString()));
+            contextData.put("player_biome", player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath());
+
+            ItemStack feetArmor = player.getInventory().armor.get(0);
+            ItemStack legsArmor = player.getInventory().armor.get(1);
+            ItemStack chestArmor = player.getInventory().armor.get(2);
+            ItemStack headArmor = player.getInventory().armor.get(3);
+            contextData.put("player_armor_head", headArmor.getItem().toString());
+            contextData.put("player_armor_chest", chestArmor.getItem().toString());
+            contextData.put("player_armor_legs", legsArmor.getItem().toString());
+            contextData.put("player_armor_feet", feetArmor.getItem().toString());
+
+            // Get World time (as 24 hour value)
+            int hours = (int) ((player.getWorld().getTimeOfDay() / 1000 + 6) % 24); // Minecraft day starts at 6 AM
+            int minutes = (int) (((player.getWorld().getTimeOfDay() % 1000) / 1000.0) * 60);
+            contextData.put("world_time", String.format("%02d:%02d", hours, minutes));
+
+            // Get Entity details
+            Entity entity = player.getServerWorld().getEntityById(entityId);
+            if (entity.getCustomName() == null) {
+                contextData.put("entity_name", "Un-named");
+            } else {
+                contextData.put("entity_name", entity.getCustomName().toString());
+            }
+            contextData.put("entity_type", entity.getType().getName().getString().toString());
+
+            // fetch HTTP response from ChatGPT
+            ChatGPTRequest.fetchMessageFromChatGPT("chat", contextData).thenAccept(output_message -> {
                 if (output_message != null) {
                     // Add ASSISTANT message
                     this.addMessage(output_message, ChatSender.ASSISTANT);
