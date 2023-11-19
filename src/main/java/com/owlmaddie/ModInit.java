@@ -48,7 +48,7 @@ public class ModInit implements ModInitializer {
 							chatData.status == ChatDataManager.ChatStatus.END) {
 						// Only generate a new greeting if not already doing so
 						LOGGER.info("Generate greeting for: " + entity.getType().toString());
-						chatData.generateMessage(player, "Hello!");
+						chatData.generateMessage(player, "system-character", "Please generate a new background character who lives near the {{player_biome}}");
 					}
 				}
 			});
@@ -106,7 +106,7 @@ public class ModInit implements ModInitializer {
 					if (chatData.status == ChatDataManager.ChatStatus.END) {
 						// Add new message
 						LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
-						chatData.generateMessage(player, message);
+						chatData.generateMessage(player, "system-chat", message);
 					}
 				}
 			});

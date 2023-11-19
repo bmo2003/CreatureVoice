@@ -70,21 +70,22 @@ public class ChatGPTRequest {
         return result.replace("\"", "") ;
     }
 
-    public static CompletableFuture<String> fetchMessageFromChatGPT(String promptFileName, Map<String, String> context) {
+    public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Load and prepare the prompt template
-                String template = "";
-                if (!promptFileName.isEmpty()) {
+                // Get user message
+                String userMessage = context.get("message");
+
+                // Load and prepare the system prompt template
+                String systemMessage = "";
+                if (!systemPrompt.isEmpty()) {
                     // Load prompt from resources
-                    template = loadPromptFromResource(ModInit.serverInstance.getResourceManager(), "prompts/" + promptFileName);
-                } else if (context.containsKey("user_message")) {
-                    // Use 'user_message' as prompt if no template specified
-                    template = context.get("user_message");
+                    systemMessage = loadPromptFromResource(ModInit.serverInstance.getResourceManager(), "prompts/" + systemPrompt);
                 }
 
                 // Replace placeholders (if any)
-                String prompt = replacePlaceholders(template, context);
+                systemMessage = replacePlaceholders(systemMessage, context);
+                userMessage = replacePlaceholders(userMessage, context);
 
                 URL url = new URL("https://api.openai.com/v1/chat/completions");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -95,8 +96,8 @@ public class ChatGPTRequest {
 
                 // Build JSON payload for ChatGPT
                 List<ChatGPTRequestMessage> messages = new ArrayList<>();
-                messages.add(new ChatGPTRequestMessage("system", "You are a silly Minecraft entity who speaks to the player in short riddles."));
-                messages.add(new ChatGPTRequestMessage("user", prompt));
+                messages.add(new ChatGPTRequestMessage("system", systemMessage));
+                messages.add(new ChatGPTRequestMessage("user", userMessage));
 
                 // Convert JSON to String
                 ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo", messages);
@@ -118,7 +119,7 @@ public class ChatGPTRequest {
                     Gson gsonOutput = new Gson();
                     ChatGPTResponse chatGPTResponse = gsonOutput.fromJson(response.toString(), ChatGPTResponse.class);
                     if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
-                        String content = chatGPTResponse.choices.get(0).message.content.replace("\n", " ");
+                        String content = chatGPTResponse.choices.get(0).message.content;
                         LOGGER.info(content);
                         return content;
                     }

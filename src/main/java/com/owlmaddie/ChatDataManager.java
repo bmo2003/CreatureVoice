@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class ChatDataManager {
@@ -52,8 +54,21 @@ public class ChatDataManager {
             this.sender = ChatSender.NONE;
         }
 
+        public static String extractGreeting(String inputText) {
+            // Regex pattern to match the "Short Greeting" line and capture the greeting text
+            Pattern pattern = Pattern.compile("- Short Greeting: \"?([^\"]+)\"?");
+            Matcher matcher = pattern.matcher(inputText);
+
+            if (matcher.find()) {
+                // Return the captured group (greeting text), removing any quotes
+                return matcher.group(1).replace("\"", "");
+            }
+
+            return "Umm... hello... ugh..."; // Return a default string if no match is found
+        }
+
         // Generate greeting
-        public void generateMessage(ServerPlayerEntity player, String user_message) {
+        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String user_message) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
             //this.addMessage(user_message, ChatSender.USER);
@@ -89,12 +104,19 @@ public class ChatDataManager {
                 contextData.put("entity_name", entity.getCustomName().toString());
             }
             contextData.put("entity_type", entity.getType().getName().getString().toString());
+            contextData.put("entity_character_sheet", characterSheet);
 
             // fetch HTTP response from ChatGPT
-            ChatGPTRequest.fetchMessageFromChatGPT("chat", contextData).thenAccept(output_message -> {
-                if (output_message != null) {
+            ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData).thenAccept(output_message -> {
+                if (output_message != null && systemPrompt == "system-character") {
+                    // Add NEW CHARACTER sheet & greeting
+                    this.characterSheet = output_message;
+                    String shortGreeting = extractGreeting(output_message);
+                    this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT);
+
+                } else if (output_message != null && systemPrompt == "system-chat") {
                     // Add ASSISTANT message
-                    this.addMessage(output_message, ChatSender.ASSISTANT);
+                    this.addMessage(output_message.replace("\n", " "), ChatSender.ASSISTANT);
                 }
             });
 
