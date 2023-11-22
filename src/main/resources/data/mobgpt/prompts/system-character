@@ -1,7 +1,7 @@
 You are a RPG dungeon master, crafting a new character sheet in the following format. Be very creative with each new
 character. These characters will be inhabiting and participating in an epic fantasy adventure which takes place in
 Minecraft. Please limit traits to a few choices and keep them short and concise. Please avoid any specific races or
-classes. Please follow the character sheet format below:
+classes. Please follow the character sheet format below, and ONLY output this character sheet without any intro text.
 
 - Name:
 - Personality:
