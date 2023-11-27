@@ -5,16 +5,21 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.item.Item;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 
 public class ModInit implements ModInitializer {
@@ -116,6 +121,21 @@ public class ModInit implements ModInitializer {
 			// Load chat data...
 			LOGGER.info("LOAD chat data from NBT: " + world.getRegistryKey().getValue());
 			serverInstance = server;
+
+			// Example usage: Get 5 random items of RARE rarity
+			List<Item> rareItems = RarityItemCollector.getItemsByRarity(Rarity.RARE, 5);
+			System.out.println("Random Rare Items:");
+			for (Item item : rareItems) {
+				System.out.println(" - " + item);
+			}
+
+			// Example usage: Get 5 random entities of RARE rarity
+			List<EntityType> rareEntities = RarityItemCollector.getEntitiesByRarity(Rarity.RARE, 5);
+			System.out.println("Random Rare Entities:");
+			for (EntityType item : rareEntities) {
+				System.out.println(" - " + item);
+			}
+
 		});
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
 			// Save chat data...
