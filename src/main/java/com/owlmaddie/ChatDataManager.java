@@ -1,5 +1,6 @@
 package com.owlmaddie;
 
+import com.owlmaddie.json.QuestJson;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -10,13 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.google.gson.Gson;
+import net.minecraft.util.Rarity;
 
 
 public class ChatDataManager {
     // Use a static instance to manage our data globally
-    private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager();
-    private static final ChatDataManager CLIENT_INSTANCE = new ChatDataManager();
+    private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager(true);
+    private static final ChatDataManager CLIENT_INSTANCE = new ChatDataManager(false);
     public static int MAX_CHAR_PER_LINE = 22;
+    public QuestJson quest = null;
 
     public enum ChatStatus {
         NONE,       // No chat status yet
@@ -76,12 +80,8 @@ public class ChatDataManager {
             return "Umm... hello... ugh..."; // Return a default string if no match is found
         }
 
-        // Generate greeting
-        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String user_message) {
-            this.status = ChatStatus.PENDING;
-            // Add USER Message
-            this.addMessage(user_message, ChatSender.USER);
-
+        // Generate context object
+        public Map<String, String> getPlayerContext(ServerPlayerEntity player) {
             // Add PLAYER context information
             Map<String, String> contextData = new HashMap<>();
             contextData.put("player_name", player.getDisplayName().getString());
@@ -113,6 +113,18 @@ public class ChatDataManager {
             }
             contextData.put("entity_type", entity.getType().getName().getString().toString());
             contextData.put("entity_character_sheet", characterSheet);
+
+            return contextData;
+        }
+
+        // Generate greeting
+        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String user_message) {
+            this.status = ChatStatus.PENDING;
+            // Add USER Message
+            this.addMessage(user_message, ChatSender.USER);
+
+            // Add PLAYER context information
+            Map<String, String> contextData = getPlayerContext(player);
 
             // fetch HTTP response from ChatGPT
             ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages).thenAccept(output_message -> {
@@ -176,8 +188,15 @@ public class ChatDataManager {
         entityChatDataMap.clear();
     }
 
-    private ChatDataManager() {
+    private ChatDataManager(Boolean server_only) {
+        // Constructor
         entityChatDataMap = new HashMap<>();
+
+        if (server_only) {
+            // Generate initial quest
+            // TODO: Complete the quest flow
+            //generateQuest();
+        }
     }
 
     // Method to get the global instance of the server data manager
@@ -193,5 +212,38 @@ public class ChatDataManager {
     // Retrieve chat data for a specific entity, or create it if it doesn't exist
     public EntityChatData getOrCreateChatData(int entityId) {
         return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId));
+    }
+
+    // Generate quest data for this server session
+    public void generateQuest() {
+        // Get items needed for Quest prompt
+        List<String> commonItems = RarityItemCollector.getItemsByRarity(Rarity.COMMON, 5);
+        List<String> uncommonItems = RarityItemCollector.getItemsByRarity(Rarity.UNCOMMON, 5);
+        List<String> rareItems = RarityItemCollector.getItemsByRarity(Rarity.RARE, 5);
+
+        // Get entities needed for Quest prompt
+        List<String> commonEntities = RarityItemCollector.getEntitiesByRarity(Rarity.COMMON, 5);
+        List<String> uncommonEntities = RarityItemCollector.getEntitiesByRarity(Rarity.UNCOMMON, 5);
+        List<String> rareEntities = RarityItemCollector.getEntitiesByRarity(Rarity.RARE, 5);
+
+        // Add context information for prompt
+        Map<String, String> contextData = new HashMap<>();
+        contextData.put("items_common", String.join("\n", commonItems));
+        contextData.put("items_uncommon", String.join("\n", uncommonItems));
+        contextData.put("items_rare", String.join("\n", rareItems));
+        contextData.put("entities_common", String.join("\n", commonEntities));
+        contextData.put("entities_uncommon", String.join("\n", uncommonEntities));
+        contextData.put("entities_rare", String.join("\n", rareEntities));
+
+        // Add message
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(new ChatMessage("Generate me a new fantasy story with ONLY the 1st character in the story", ChatSender.USER));
+
+        // Generate Quest: fetch HTTP response from ChatGPT
+        ChatGPTRequest.fetchMessageFromChatGPT("system-quest", contextData, messages).thenAccept(output_message -> {
+            // New Quest
+            Gson gson = new Gson();
+            quest = gson.fromJson(output_message, QuestJson.class);
+        });
     }
 }

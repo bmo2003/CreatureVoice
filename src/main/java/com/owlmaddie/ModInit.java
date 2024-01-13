@@ -121,21 +121,6 @@ public class ModInit implements ModInitializer {
 			// Load chat data...
 			LOGGER.info("LOAD chat data from NBT: " + world.getRegistryKey().getValue());
 			serverInstance = server;
-
-			// Example usage: Get 5 random items of RARE rarity
-			List<Item> rareItems = RarityItemCollector.getItemsByRarity(Rarity.RARE, 5);
-			System.out.println("Random Rare Items:");
-			for (Item item : rareItems) {
-				System.out.println(" - " + item);
-			}
-
-			// Example usage: Get 5 random entities of RARE rarity
-			List<EntityType> rareEntities = RarityItemCollector.getEntitiesByRarity(Rarity.RARE, 5);
-			System.out.println("Random Rare Entities:");
-			for (EntityType item : rareEntities) {
-				System.out.println(" - " + item);
-			}
-
 		});
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
 			// Save chat data...

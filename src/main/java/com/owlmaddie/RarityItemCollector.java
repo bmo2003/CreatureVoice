@@ -11,8 +11,8 @@ import java.util.*;
 
 public class RarityItemCollector {
 
-    public static List<Item> getItemsByRarity(Rarity rarity, int quantity) {
-        List<Item> itemsOfSpecificRarity = new ArrayList<>();
+    public static List<String> getItemsByRarity(Rarity rarity, int quantity) {
+        List<String> itemsOfSpecificRarity = new ArrayList<>();
 
         for (Item item : Registries.ITEM) {
             ItemStack stack = new ItemStack(item);
@@ -20,7 +20,7 @@ public class RarityItemCollector {
                     !item.getName().toString().contains("spawn_egg") &&
                     !item.getName().toString().contains("jukebox") &&
                     !item.getName().toString().contains("slab")) {
-                itemsOfSpecificRarity.add(item);
+                itemsOfSpecificRarity.add(item.getTranslationKey());
             }
         }
 
@@ -40,11 +40,11 @@ public class RarityItemCollector {
     Categorize all entities and return a random list filtered by rarity. Rarity is calculated mostly with
     Spawn Group, with a few manual exclusions.
      */
-    public static List<EntityType> getEntitiesByRarity(Rarity rarity, int quantity) {
-        List<EntityType> categoryCommonEntities = new ArrayList<>();
-        List<EntityType> categoryUncommonEntities = new ArrayList<>();
-        List<EntityType> categoryRareEntities = new ArrayList<>();
-        List<EntityType> entitiesOfSpecificRarity = new ArrayList<>();
+    public static List<String> getEntitiesByRarity(Rarity rarity, int quantity) {
+        List<String> categoryCommonEntities = new ArrayList<>();
+        List<String> categoryUncommonEntities = new ArrayList<>();
+        List<String> categoryRareEntities = new ArrayList<>();
+        List<String> entitiesOfSpecificRarity = new ArrayList<>();
 
         // Categorize spawn groups & entity types into rarity
         Set<String> commonEntities = new HashSet<>(Arrays.asList("creature"));
@@ -63,11 +63,11 @@ public class RarityItemCollector {
 
             if (!excludedMonsters.contains(entityName)) {
                 if (commonEntities.contains(spawnGroup) || commonEntities.contains(entityName)) {
-                    categoryCommonEntities.add(entityType);
+                    categoryCommonEntities.add(entityName);
                 } else if (unCommonEntities.contains(spawnGroup) || unCommonEntities.contains(entityName)) {
-                    categoryUncommonEntities.add(entityType);
+                    categoryUncommonEntities.add(entityName);
                 } else if (rareEntities.contains(spawnGroup) || rareEntities.contains(entityName)) {
-                    categoryRareEntities.add(entityType);
+                    categoryRareEntities.add(entityName);
                 }
             }
         }

@@ -36,10 +36,20 @@ public class ChatGPTRequest {
     static class ChatGPTRequestPayload {
         String model;
         List<ChatGPTRequestMessage> messages;
+        ResponseFormat response_format;
 
         public ChatGPTRequestPayload(String model, List<ChatGPTRequestMessage> messages) {
             this.model = model;
             this.messages = messages;
+            this.response_format = new ResponseFormat("json_object");
+        }
+    }
+
+    static class ResponseFormat {
+        String type;
+
+        public ResponseFormat(String type) {
+            this.type = type;
         }
     }
 
