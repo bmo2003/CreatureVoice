@@ -4,6 +4,7 @@ import com.owlmaddie.json.QuestJson;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.WorldSavePath;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,13 +15,23 @@ import java.util.regex.Pattern;
 import com.google.gson.Gson;
 import net.minecraft.util.Rarity;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import net.minecraft.server.MinecraftServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChatDataManager {
     // Use a static instance to manage our data globally
     private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager(true);
     private static final ChatDataManager CLIENT_INSTANCE = new ChatDataManager(false);
+    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     public static int MAX_CHAR_PER_LINE = 22;
     public QuestJson quest = null;
+    private static final Gson GSON = new Gson();
 
     public enum ChatStatus {
         NONE,       // No chat status yet
@@ -118,16 +129,16 @@ public class ChatDataManager {
         }
 
         // Generate greeting
-        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String user_message) {
+        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
-            this.addMessage(user_message, ChatSender.USER);
+            this.addMessage(userMessage, ChatSender.USER);
 
             // Add PLAYER context information
             Map<String, String> contextData = getPlayerContext(player);
 
             // fetch HTTP response from ChatGPT
-            ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages).thenAccept(output_message -> {
+            ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages, false).thenAccept(output_message -> {
                 if (output_message != null && systemPrompt == "system-character") {
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
@@ -195,7 +206,7 @@ public class ChatDataManager {
         if (server_only) {
             // Generate initial quest
             // TODO: Complete the quest flow
-            //generateQuest();
+            generateQuest();
         }
     }
 
@@ -240,10 +251,40 @@ public class ChatDataManager {
         messages.add(new ChatMessage("Generate me a new fantasy story with ONLY the 1st character in the story", ChatSender.USER));
 
         // Generate Quest: fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT("system-quest", contextData, messages).thenAccept(output_message -> {
+        ChatGPTRequest.fetchMessageFromChatGPT("system-quest", contextData, messages, true).thenAccept(output_message -> {
             // New Quest
             Gson gson = new Gson();
             quest = gson.fromJson(output_message, QuestJson.class);
         });
+    }
+
+    // Save chat data to file
+    public void saveChatData(MinecraftServer server) {
+        try {
+            File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
+            LOGGER.info("Save chat data to " + saveFile.getAbsolutePath());
+            try (FileWriter writer = new FileWriter(saveFile)) {
+                GSON.toJson(this.entityChatDataMap, writer);
+            }
+        } catch (Exception e) {
+            // Handle exceptions
+        }
+    }
+
+    // Load chat data from file
+    @SuppressWarnings("unchecked")
+    public void loadChatData(MinecraftServer server) {
+        try {
+            File loadFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
+            LOGGER.info("Load chat data from " + loadFile.getAbsolutePath());
+            if (loadFile.exists()) {
+                Type type = new TypeToken<HashMap<Integer, EntityChatData>>(){}.getType();
+                try (FileReader reader = new FileReader(loadFile)) {
+                    this.entityChatDataMap = GSON.fromJson(reader, type);
+                }
+            }
+        } catch (Exception e) {
+            // Handle exceptions
+        }
     }
 }

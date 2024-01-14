@@ -38,10 +38,14 @@ public class ChatGPTRequest {
         List<ChatGPTRequestMessage> messages;
         ResponseFormat response_format;
 
-        public ChatGPTRequestPayload(String model, List<ChatGPTRequestMessage> messages) {
+        public ChatGPTRequestPayload(String model, List<ChatGPTRequestMessage> messages, Boolean jsonMode) {
             this.model = model;
             this.messages = messages;
-            this.response_format = new ResponseFormat("json_object");
+            if (jsonMode) {
+                this.response_format = new ResponseFormat("json_object");
+            } else {
+                this.response_format = new ResponseFormat("text");
+            }
         }
     }
 
@@ -80,7 +84,7 @@ public class ChatGPTRequest {
         return result.replace("\"", "") ;
     }
 
-    public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory) {
+    public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 // Load and prepare the system prompt template
@@ -110,7 +114,7 @@ public class ChatGPTRequest {
                 }
 
                 // Convert JSON to String
-                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo-1106", messages);
+                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo-1106", messages, jsonMode);
                 Gson gsonInput = new Gson();
                 String jsonInputString = gsonInput.toJson(payload);
 

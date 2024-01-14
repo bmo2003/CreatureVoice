@@ -53,7 +53,9 @@ public class ModInit implements ModInitializer {
 							chatData.status == ChatDataManager.ChatStatus.END) {
 						// Only generate a new greeting if not already doing so
 						LOGGER.info("Generate greeting for: " + entity.getType().toString());
-						chatData.generateMessage(player, "system-character", "Please generate a new background character who lives near the {{player_biome}}");
+						String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
+						String userMessage = "Please generate a new background character who lives near the " + player_biome;
+						chatData.generateMessage(player, "system-character", userMessage);
 					}
 				}
 			});
@@ -118,14 +120,18 @@ public class ModInit implements ModInitializer {
 		});
 
 		ServerWorldEvents.LOAD.register((server, world) -> {
-			// Load chat data...
-			LOGGER.info("LOAD chat data from NBT: " + world.getRegistryKey().getValue());
-			serverInstance = server;
+			String world_name = world.getRegistryKey().getValue().getPath();
+			if (world_name == "overworld") {
+				serverInstance = server;
+				ChatDataManager.getServerInstance().loadChatData(server);
+			}
 		});
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
-			// Save chat data...
-			LOGGER.info("SAVE chat data to NBT: " + world.getRegistryKey().getValue());
-			serverInstance = null;
+			String world_name = world.getRegistryKey().getValue().getPath();
+			if (world_name == "overworld") {
+				ChatDataManager.getServerInstance().saveChatData(server);
+				serverInstance = null;
+			}
 		});
 
 		LOGGER.info("MobGPT Initialized!");
