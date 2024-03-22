@@ -1,9 +1,11 @@
 package com.owlmaddie;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -14,6 +16,8 @@ import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -61,6 +65,20 @@ public class ClickHandler {
             });
         });
 
+        // Client-side player login: get all chat data
+        ClientPlayNetworking.registerGlobalReceiver(ModInit.PACKET_S2C_LOGIN, (client, handler, buffer, responseSender) -> {
+            // Read the data from the server packet
+            int length = buffer.readInt();
+            String chatDataJSON = buffer.readString(length);
+
+            // Update the chat data manager on the client-side
+            Gson GSON = new Gson();
+            client.execute(() -> { // Make sure to run on the client thread
+                // Parse JSON and override client chat data
+                Type type = new TypeToken<HashMap<Integer, ChatDataManager.EntityChatData>>(){}.getType();
+                ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
+            });
+        });
     }
 
     public static void handleUseKeyClick(MinecraftClient client) {

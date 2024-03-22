@@ -3,23 +3,19 @@ package com.owlmaddie;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.Item;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Rarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 
 public class ModInit implements ModInitializer {
@@ -30,6 +26,7 @@ public class ModInit implements ModInitializer {
 	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
 	public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("mobgpt", "packet_c2s_send_chat");
 	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("mobgpt", "packet_s2c_message");
+	public static final Identifier PACKET_S2C_LOGIN = new Identifier("mobgpt", "packet_s2c_login");
 
 	@Override
 	public void onInitialize() {
@@ -117,6 +114,21 @@ public class ModInit implements ModInitializer {
 					}
 				}
 			});
+		});
+
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			ServerPlayerEntity player = handler.player;
+			LOGGER.info("Server send login message packet to player: " + player.getName().getString());
+
+			// Get chat data for logged in player (light version)
+			String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData();
+
+			// Write the light chat data
+			PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+			buffer.writeInt(chatDataJSON.length());
+			buffer.writeString(chatDataJSON);
+
+			ServerPlayNetworking.send(player, PACKET_S2C_LOGIN, buffer);
 		});
 
 		ServerWorldEvents.LOAD.register((server, world) -> {

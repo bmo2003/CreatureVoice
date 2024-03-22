@@ -47,13 +47,6 @@ public class ClientInit implements ClientModInitializer {
             // Clear or reset the ChatDataManager
             ChatDataManager.getClientInstance().clearData();
         });
-
-        // Register an event callback for when the player joins a server or world
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            // Possibly re-initialize or prepare the ChatDataManager for the new session
-            ChatDataManager.getClientInstance().clearData();
-        });
-
     }
 
     public void drawTextBubbleBackground(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {

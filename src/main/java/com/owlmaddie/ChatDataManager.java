@@ -46,7 +46,7 @@ public class ChatDataManager {
     }
 
     // HashMap to associate unique entity IDs with their chat data
-    private HashMap<Integer, EntityChatData> entityChatDataMap;
+    public HashMap<Integer, EntityChatData> entityChatDataMap;
 
     public static class ChatMessage {
         public String message;
@@ -76,6 +76,28 @@ public class ChatDataManager {
             this.characterSheet = "";
             this.status = ChatStatus.NONE;
             this.sender = ChatSender.USER;
+        }
+
+        // Light version with no 'previousMessages' attribute
+        public class EntityChatDataLight {
+            public int entityId;
+            public String currentMessage;
+            public int currentLineNumber;
+            public ChatStatus status;
+            public ChatSender sender;
+        }
+
+        // Generate light version of chat data (no previous messages)
+        public EntityChatDataLight toLightVersion() {
+            EntityChatDataLight light = new EntityChatDataLight();
+            light.entityId = this.entityId;
+            if (light.status != ChatStatus.END) {
+                light.currentMessage = this.currentMessage;
+            }
+            light.currentLineNumber = this.currentLineNumber;
+            light.status = this.status;
+            light.sender = this.sender;
+            return light;
         }
 
         public static String extractGreeting(String inputText) {
@@ -206,7 +228,7 @@ public class ChatDataManager {
         if (server_only) {
             // Generate initial quest
             // TODO: Complete the quest flow
-            generateQuest();
+            //generateQuest();
         }
     }
 
@@ -259,6 +281,21 @@ public class ChatDataManager {
     }
 
     // Save chat data to file
+    public String GetLightChatData() {
+        try {
+            // Create "light" version of entire chat data HashMap
+            HashMap<Integer, EntityChatData.EntityChatDataLight> lightVersionMap = new HashMap<>();
+            this.entityChatDataMap.forEach((id, entityChatData) -> lightVersionMap.put(id, entityChatData.toLightVersion()));
+
+            // Convert light chat data to JSON string
+            return GSON.toJson(lightVersionMap).toString();
+        } catch (Exception e) {
+            // Handle exceptions
+            return "";
+        }
+    }
+
+    // Save chat data to file
     public void saveChatData(MinecraftServer server) {
         try {
             File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
@@ -272,7 +309,6 @@ public class ChatDataManager {
     }
 
     // Load chat data from file
-    @SuppressWarnings("unchecked")
     public void loadChatData(MinecraftServer server) {
         try {
             File loadFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
