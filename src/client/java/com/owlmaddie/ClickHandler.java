@@ -20,6 +20,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -43,7 +44,7 @@ public class ClickHandler {
         // Client-side packet handler, message sync
         ClientPlayNetworking.registerGlobalReceiver(ModInit.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
-            int entityId = buffer.readInt();
+            UUID entityId = UUID.fromString(buffer.readString());
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -51,10 +52,10 @@ public class ClickHandler {
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
-                Entity entity = client.world.getEntityById(entityId);
+                Entity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                    ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entityId);
+                    ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }
@@ -75,7 +76,7 @@ public class ClickHandler {
             Gson GSON = new Gson();
             client.execute(() -> { // Make sure to run on the client thread
                 // Parse JSON and override client chat data
-                Type type = new TypeToken<HashMap<Integer, ChatDataManager.EntityChatData>>(){}.getType();
+                Type type = new TypeToken<HashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
                 ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
             });
         });
@@ -149,7 +150,7 @@ public class ClickHandler {
         // Handle the click for the closest entity after the loop
         if (closestEntity != null) {
             // Look-up conversation
-            ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntity.getId());
+            ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntity.getUuidAsString());
 
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Start conversation

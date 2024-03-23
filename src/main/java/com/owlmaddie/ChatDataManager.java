@@ -6,10 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.google.gson.Gson;
@@ -46,7 +43,7 @@ public class ChatDataManager {
     }
 
     // HashMap to associate unique entity IDs with their chat data
-    public HashMap<Integer, EntityChatData> entityChatDataMap;
+    public HashMap<String, EntityChatData> entityChatDataMap;
 
     public static class ChatMessage {
         public String message;
@@ -60,7 +57,7 @@ public class ChatDataManager {
 
     // Inner class to hold entity-specific data
     public static class EntityChatData {
-        public int entityId;
+        public String entityId;
         public String currentMessage;
         public int currentLineNumber;
         public ChatStatus status;
@@ -68,7 +65,7 @@ public class ChatDataManager {
         public String characterSheet;
         public ChatSender sender;
 
-        public EntityChatData(int entityId) {
+        public EntityChatData(String entityId) {
             this.entityId = entityId;
             this.currentMessage = "";
             this.currentLineNumber = 0;
@@ -80,7 +77,7 @@ public class ChatDataManager {
 
         // Light version with no 'previousMessages' attribute
         public class EntityChatDataLight {
-            public int entityId;
+            public String entityId;
             public String currentMessage;
             public int currentLineNumber;
             public ChatStatus status;
@@ -138,7 +135,7 @@ public class ChatDataManager {
             contextData.put("world_time", String.format("%02d:%02d", hours, minutes));
 
             // Get Entity details
-            Entity entity = player.getServerWorld().getEntityById(entityId);
+            Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
             if (entity.getCustomName() == null) {
                 contextData.put("entity_name", "Un-named");
             } else {
@@ -243,7 +240,7 @@ public class ChatDataManager {
     }
 
     // Retrieve chat data for a specific entity, or create it if it doesn't exist
-    public EntityChatData getOrCreateChatData(int entityId) {
+    public EntityChatData getOrCreateChatData(String entityId) {
         return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId));
     }
 
@@ -284,7 +281,7 @@ public class ChatDataManager {
     public String GetLightChatData() {
         try {
             // Create "light" version of entire chat data HashMap
-            HashMap<Integer, EntityChatData.EntityChatDataLight> lightVersionMap = new HashMap<>();
+            HashMap<String, EntityChatData.EntityChatDataLight> lightVersionMap = new HashMap<>();
             this.entityChatDataMap.forEach((id, entityChatData) -> lightVersionMap.put(id, entityChatData.toLightVersion()));
 
             // Convert light chat data to JSON string
@@ -314,7 +311,7 @@ public class ChatDataManager {
             File loadFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
             LOGGER.info("Load chat data from " + loadFile.getAbsolutePath());
             if (loadFile.exists()) {
-                Type type = new TypeToken<HashMap<Integer, EntityChatData>>(){}.getType();
+                Type type = new TypeToken<HashMap<String, EntityChatData>>(){}.getType();
                 try (FileReader reader = new FileReader(loadFile)) {
                     this.entityChatDataMap = GSON.fromJson(reader, type);
                 }

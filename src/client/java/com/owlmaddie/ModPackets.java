@@ -13,7 +13,7 @@ public class ModPackets {
 
     public static void sendGenerateGreeting(Entity entity) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeInt(entity.getId());
+        buf.writeString(entity.getUuidAsString());
 
         // Send C2S packet
         ClientPlayNetworking.send(ModInit.PACKET_C2S_GREETING, buf);
@@ -21,7 +21,7 @@ public class ModPackets {
 
     public static void sendUpdateLineNumber(Entity entity, Integer lineNumber) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeInt(entity.getId());
+        buf.writeString(entity.getUuidAsString());
         buf.writeInt(lineNumber);
 
         // Send C2S packet
@@ -30,7 +30,7 @@ public class ModPackets {
 
     public static void sendStartChat(Entity entity) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeInt(entity.getId());
+        buf.writeString(entity.getUuidAsString());
 
         // Send C2S packet
         ClientPlayNetworking.send(ModInit.PACKET_C2S_START_CHAT, buf);
@@ -38,7 +38,7 @@ public class ModPackets {
 
     public static void sendChat(Entity entity, String message) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeInt(entity.getId());
+        buf.writeString(entity.getUuidAsString());
         buf.writeString(message);
 
         // Send C2S packet
