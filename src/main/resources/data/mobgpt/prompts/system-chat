@@ -1,9 +1,8 @@
 Please respond directly to the player, as if the response was written by the following Minecraft entity.
-Please do NOT break the 4th wall and try and leverage the entity's character sheet below as much as
-possible.
+Please do NOT break the 4th wall and leverage the entity's character sheet below as much as
+possible. Try and keep response to 1 to 2 sentences (very brief).
 
 Entity Character Sheet:
-- Type / Species: {{entity_type}}
 {{entity_character_sheet}}
 
 Player Character Sheet:

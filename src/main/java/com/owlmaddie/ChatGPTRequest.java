@@ -37,10 +37,12 @@ public class ChatGPTRequest {
         String model;
         List<ChatGPTRequestMessage> messages;
         ResponseFormat response_format;
+        float temperature;
 
-        public ChatGPTRequestPayload(String model, List<ChatGPTRequestMessage> messages, Boolean jsonMode) {
+        public ChatGPTRequestPayload(String model, List<ChatGPTRequestMessage> messages, Boolean jsonMode, float temperature) {
             this.model = model;
             this.messages = messages;
+            this.temperature = temperature;
             if (jsonMode) {
                 this.response_format = new ResponseFormat("json_object");
             } else {
@@ -114,7 +116,7 @@ public class ChatGPTRequest {
                 }
 
                 // Convert JSON to String
-                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo-1106", messages, jsonMode);
+                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo", messages, jsonMode, 1.0f);
                 Gson gsonInput = new Gson();
                 String jsonInputString = gsonInput.toJson(payload);
 

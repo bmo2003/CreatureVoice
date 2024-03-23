@@ -137,7 +137,7 @@ public class ChatDataManager {
             // Get Entity details
             Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
             if (entity.getCustomName() == null) {
-                contextData.put("entity_name", "Un-named");
+                contextData.put("entity_name", "");
             } else {
                 contextData.put("entity_name", entity.getCustomName().toString());
             }
@@ -151,7 +151,9 @@ public class ChatDataManager {
         public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
-            this.addMessage(userMessage, ChatSender.USER);
+            if (systemPrompt == "system-chat") {
+                this.addMessage(userMessage, ChatSender.USER);
+            }
 
             // Add PLAYER context information
             Map<String, String> contextData = getPlayerContext(player);
