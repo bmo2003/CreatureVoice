@@ -97,17 +97,17 @@ public class ChatDataManager {
             return light;
         }
 
-        public static String extractGreeting(String inputText) {
-            // Regex pattern to match the "Short Greeting" line and capture the greeting text
-            Pattern pattern = Pattern.compile("- Short Greeting: \"?([^\"]+)\"?");
-            Matcher matcher = pattern.matcher(inputText);
+        public String getCharacterProp(String propertyName) {
+            // Create a case-insensitive regex pattern to match the property name and capture its value
+            Pattern pattern = Pattern.compile("-\\s*" + Pattern.quote(propertyName) + ":\\s*(.+)", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(characterSheet);
 
             if (matcher.find()) {
-                // Return the captured group (greeting text), removing any quotes
-                return matcher.group(1).replace("\"", "");
+                // Return the captured value, trimmed of any excess whitespace
+                return matcher.group(1).trim().replace("\"", "");
             }
 
-            return "Umm... hello... ugh..."; // Return a default string if no match is found
+            return "N/A";
         }
 
         // Generate context object
@@ -161,7 +161,7 @@ public class ChatDataManager {
                 if (output_message != null && systemPrompt == "system-character") {
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
-                    String shortGreeting = extractGreeting(output_message);
+                    String shortGreeting = getCharacterProp("short greeting");
                     this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT);
 
                 } else if (output_message != null && systemPrompt == "system-chat") {

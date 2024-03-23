@@ -14,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,6 +158,14 @@ public class ModInit implements ModInitializer {
 			UUID entityId = UUID.fromString(chatData.entityId);
 			Entity entity = ServerEntityFinder.getEntityByUUID(world, entityId);
 			if (entity != null) {
+				// Set custom name (if none)
+				if (entity.getCustomName() == null && chatData.status != ChatDataManager.ChatStatus.PENDING) {
+					String characterName = chatData.getCharacterProp("name");
+					LOGGER.info("Setting entity name to " + characterName + " for " + chatData.entityId);
+					entity.setCustomName(Text.literal(characterName));
+					entity.setCustomNameVisible(true);
+				}
+
 				PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 
 				// Write the entity's chat updated data
