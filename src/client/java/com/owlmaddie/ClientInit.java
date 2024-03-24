@@ -135,6 +135,44 @@ public class ClientInit implements ClientModInitializer {
         RenderSystem.disableDepthTest();
     }
 
+    private void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
+                                 VertexConsumerProvider immediate, float lineSpacing, int fullBright, float yOffset) {
+        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
+        int currentLineIndex = 0; // We'll use this to track which line we're on
+
+        for (String lineText : lines) {
+            // Only draw lines that are within the specified range
+            if (currentLineIndex >= starting_line && currentLineIndex < ending_line) {
+                fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
+                        false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+                yOffset += fontRenderer.fontHeight + lineSpacing;
+            }
+            currentLineIndex++;
+
+            if (currentLineIndex > ending_line) {
+                break;
+            }
+        }
+    }
+
+    private void drawEndOfMessageText(Matrix4f matrix, VertexConsumerProvider immediate,
+                                      int fullBright, float yOffset) {
+        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
+        String lineText = "<end of message>";
+        fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset + 10F, 0xffffff,
+                false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+    }
+
+    private void drawEntityName(Entity entity, Matrix4f matrix, VertexConsumerProvider immediate,
+                                int fullBright, float xOffset, float yOffset) {
+        if (entity.getCustomName() != null) {
+            TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
+            String lineText = entity.getCustomName().getString();
+            fontRenderer.draw(lineText, xOffset, yOffset, 0xffffff,
+                    false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+        }
+    }
+
     private void drawTextAboveEntities(WorldRenderContext context, float partialTicks) {
         Camera camera = context.camera();
         Entity cameraEntity = camera.getFocusedEntity();
@@ -230,7 +268,8 @@ public class ClientInit implements ClientModInitializer {
             float lineSpacing = 1F;
             float textHeaderHeight = 40F;
             float textFooterHeight = 5F;
-
+            int fullBright = 0xF000F0;
+            Matrix4f matrix = matrices.peek().getPositionMatrix();
 
             // Calculate size of text scaled to world
             float scaledTextHeight = linesDisplayed * (fontRenderer.fontHeight + lineSpacing);
@@ -242,6 +281,9 @@ public class ClientInit implements ClientModInitializer {
 
             // Translate above the entity
             matrices.translate(0F, -scaledTextHeight + -textHeaderHeight + -textFooterHeight, 0F);
+
+            // Draw Entity (Custom Name)
+            drawEntityName(entity, matrix, immediate, fullBright, -25F, 22F + DISPLAY_PADDING);
 
             // Check if conversation has started
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
@@ -260,30 +302,11 @@ public class ClientInit implements ClientModInitializer {
                 drawEntityIcon(matrices, entity, -59, 7, 32, 32);
 
                 // Render each line of the text
-                int fullBright = 0xF000F0;
-                Matrix4f matrix = matrices.peek().getPositionMatrix();
-                float yOffset = 40.0F + DISPLAY_PADDING;
-                int currentLineIndex = 0; // We'll use this to track which line we're on
+                drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
 
-                for (String lineText : lines) {
-                    // Only draw lines that are within the specified range
-                    if (currentLineIndex >= starting_line && currentLineIndex < ending_line) {
-                        fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
-                                false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
-                        yOffset += fontRenderer.fontHeight + lineSpacing;
-                    }
-                    currentLineIndex++;
-
-                    if (currentLineIndex > ending_line) {
-                        break;
-                    }
-                }
-
-                // Add end of message
                 if (starting_line > 0 && starting_line == ending_line) {
-                    String lineText = "<end of message>";
-                    fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset + 10F, 0xffffff,
-                            false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+                    // Add <End Of Message> text
+                    drawEndOfMessageText(matrix, immediate, fullBright, 40.0F + DISPLAY_PADDING);
                 }
             }
 
