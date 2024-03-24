@@ -14,17 +14,18 @@ build_mod:
   script:
     - ./gradlew build
     - find build/libs -type f -name '*sources*.jar' -exec rm {} \;
+    - mv build/libs/mobgpt-*.jar .
     - export FABRIC_VERSION=$(grep 'fabric_version' gradle.properties | cut -d'=' -f2)
     - export FABRIC_API_JAR="fabric-api-${FABRIC_VERSION}.jar"
     - echo Detected Fabric API version from gradle.properties $FABRIC_API_JAR
     - export DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${FABRIC_VERSION//+/%2B}/${FABRIC_API_JAR}"
     - echo Download Fabric API from $DOWNLOAD_URL
-    - wget -q -O "build/libs/${FABRIC_API_JAR}" $DOWNLOAD_URL
+    - wget -q -O "${FABRIC_API_JAR}" $DOWNLOAD_URL
 
   artifacts:
     paths:
-      - build/libs/mobgpt-*.jar
-      - build/libs/fabric-api-*.jar
+      - mobgpt-*.jar
+      - fabric-api-*.jar
   only:
     - develop
   tags:
