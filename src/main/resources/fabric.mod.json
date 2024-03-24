@@ -3,7 +3,7 @@
 	"id": "mobgpt",
 	"version": "${version}",
 	"name": "Mob GPT",
-	"description": "Elevate your Minecraft experience with Mob GPT, a cutting-edge mod that brings intelligent, dynamic conversation to Minecraft mobs! We harnesses the power of GPT (Generative Pre-trained Transformer) to make your world more interactive and communicative.",
+	"description": "Elevate your Minecraft experiences with Mob GPT, a cutting-edge mod that brings intelligent, dynamic conversation to Minecraft mobs! We harnesses the power of GPT (Generative Pre-trained Transformer) to make your world more interactive and communicative.",
 	"authors": [
 		"Jonathan Thomas <jonathan@openshot.org>",
 		"Owlmaddie <owlmaddie@gmail.com>"
