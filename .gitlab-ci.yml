@@ -13,17 +13,18 @@ build_mod:
   stage: build
   script:
     - echo "Reading Fabric version from gradle.properties..."
-    - export FABRIC_VERSION=$(grep 'fabric_version' gradle.properties | cut -d'=' -f2)
+    - FABRIC_VERSION=$(grep 'fabric_version' gradle.properties | cut -d'=' -f2)
     - echo "Fabric version: $FABRIC_VERSION"
-    - export FABRIC_API_JAR="fabric-api-${FABRIC_VERSION}.jar"
-    - export DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${FABRIC_VERSION//+/%2B}/${FABRIC_API_JAR}"
+    - echo "Constructing download URL..."
+    - DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${FABRIC_VERSION//+/%2B}/fabric-api-${FABRIC_VERSION}.jar"
     - echo "Download URL: $DOWNLOAD_URL"
-    - wget -O "${FABRIC_API_JAR}" $DOWNLOAD_URL
-    - echo "Fabric API ${FABRIC_API_JAR} downloaded."
+    - echo "Downloading Fabric API..."
+    - wget $DOWNLOAD_URL
+    - echo "Fabric API downloaded."
   artifacts:
     paths:
       - build/libs/*.jar
-      - "${FABRIC_API_JAR}"
+      - "fabric-api-${FABRIC_VERSION}.jar"
   only:
     - develop
   tags:
