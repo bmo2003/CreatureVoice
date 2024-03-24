@@ -15,12 +15,11 @@ build_mod:
     - ./gradlew build
     - find build/libs -type f -name '*sources*.jar' -exec rm {} \;
     - export FABRIC_VERSION=$(grep 'fabric_version' gradle.properties | cut -d'=' -f2)
-    - echo $FABRIC_VERSION
     - export FABRIC_API_JAR="fabric-api-${FABRIC_VERSION}.jar"
-    - echo $FABRIC_API_JAR
+    - echo Detected Fabric API version from gradle.properties:: $FABRIC_API_JAR
     - export DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${FABRIC_VERSION//+/%2B}/${FABRIC_API_JAR}"
-    - echo $DOWNLOAD_URL
-    - wget -O "${FABRIC_API_JAR}" $DOWNLOAD_URL
+    - echo Download Fabric API from $DOWNLOAD_URL
+    - wget -q -O "${FABRIC_API_JAR}" -P build/libs/ $DOWNLOAD_URL
 
   artifacts:
     paths:
