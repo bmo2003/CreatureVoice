@@ -23,8 +23,8 @@ build_mod:
 
   artifacts:
     paths:
-      - build/libs/*.jar
-      - "$FABRIC_API_JAR"
+      - build/libs/mobgpt-*.jar
+      - build/libs/fabric-api-*.jar
   only:
     - develop
   tags:
