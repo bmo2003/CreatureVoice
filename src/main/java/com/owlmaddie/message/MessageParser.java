@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.message;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;

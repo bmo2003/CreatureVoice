@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.message;
 
 /**
  * The {@code Behavior} class represents a single behavior with an optional integer argument.

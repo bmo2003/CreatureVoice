@@ -2,8 +2,13 @@ package com.owlmaddie;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.json.QuestJson;
+import com.owlmaddie.message.Behavior;
+import com.owlmaddie.message.MessageParser;
+import com.owlmaddie.message.ParsedMessage;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -200,10 +205,18 @@ public class ChatDataManager {
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
 
                     // Apply behaviors (if any)
+                    MobEntity entity = (MobEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
                     for (Behavior behavior : result.getBehaviors()) {
                         LOGGER.info("Behavior: " + behavior.getName());
                         if (behavior.getArgument() != null) {
                             LOGGER.info("Argument: " + behavior.getArgument());
+                        }
+
+                        // Apply goal to entity
+                        if (behavior.getName().equals("FOLLOW")) {
+                            EntityBehaviorManager.addFollowPlayerGoal(player, entity, 1.0);
+                        } else if (behavior.getName().equals("UNFOLLOW")) {
+                            EntityBehaviorManager.removeFollowPlayerGoal(entity);
                         }
                     }
 
