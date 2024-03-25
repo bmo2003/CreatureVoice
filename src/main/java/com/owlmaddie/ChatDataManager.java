@@ -99,7 +99,7 @@ public class ChatDataManager {
 
         public String getCharacterProp(String propertyName) {
             // Create a case-insensitive regex pattern to match the property name and capture its value
-            Pattern pattern = Pattern.compile("-\\s*" + Pattern.quote(propertyName) + ":\\s*(.+)", Pattern.CASE_INSENSITIVE);
+            Pattern pattern = Pattern.compile("-?\\s*" + Pattern.quote(propertyName) + ":\\s*(.+)", Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(characterSheet);
 
             if (matcher.find()) {
@@ -196,8 +196,19 @@ public class ChatDataManager {
                     this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT);
 
                 } else if (output_message != null && systemPrompt == "system-chat") {
+                    // Parse message for behaviors
+                    ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
+
+                    // Apply behaviors (if any)
+                    for (Behavior behavior : result.getBehaviors()) {
+                        LOGGER.info("Behavior: " + behavior.getName());
+                        if (behavior.getArgument() != null) {
+                            LOGGER.info("Argument: " + behavior.getArgument());
+                        }
+                    }
+
                     // Add ASSISTANT message
-                    this.addMessage(output_message.replace("\n", " "), ChatSender.ASSISTANT);
+                    this.addMessage(result.getCleanedMessage(), ChatSender.ASSISTANT);
                 }
             });
 
