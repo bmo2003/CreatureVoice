@@ -167,7 +167,7 @@ public class ClientInit implements ClientModInitializer {
                                 int fullBright, float xOffset, float yOffset) {
         if (entity.getCustomName() != null) {
             TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
-            String lineText = entity.getCustomName().getString();
+            String lineText = entity.getCustomName().getLiteralString();
             fontRenderer.draw(lineText, xOffset, yOffset, 0xffffff,
                     false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
         }

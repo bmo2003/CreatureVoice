@@ -1,25 +1,25 @@
 package com.owlmaddie;
 
-import com.owlmaddie.json.QuestJson;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.WorldSavePath;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.owlmaddie.json.QuestJson;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Rarity;
+import net.minecraft.util.WorldSavePath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import net.minecraft.server.MinecraftServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ChatDataManager {
     // Use a static instance to manage our data globally
@@ -115,10 +115,13 @@ public class ChatDataManager {
             // Add PLAYER context information
             Map<String, String> contextData = new HashMap<>();
             contextData.put("player_name", player.getDisplayName().getString());
-            contextData.put("player_health", String.valueOf(player.getHealth()));
+            contextData.put("player_health", player.getHealth() + "/" + player.getMaxHealth());
             contextData.put("player_hunger", String.valueOf(player.getHungerManager().getFoodLevel()));
             contextData.put("player_held_item", String.valueOf(player.getMainHandStack().getItem().toString()));
             contextData.put("player_biome", player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath());
+            contextData.put("player_is_creative", player.isCreative() ? "yes" : "no");
+            contextData.put("player_is_swimming", player.isSwimming() ? "yes" : "no");
+            contextData.put("player_is_on_ground", player.isOnGround() ? "yes" : "no");
 
             ItemStack feetArmor = player.getInventory().armor.get(0);
             ItemStack legsArmor = player.getInventory().armor.get(1);
@@ -129,19 +132,45 @@ public class ChatDataManager {
             contextData.put("player_armor_legs", legsArmor.getItem().toString());
             contextData.put("player_armor_feet", feetArmor.getItem().toString());
 
+            // Get active player effects
+            String effectsString = player.getActiveStatusEffects().entrySet().stream()
+                    .map(entry -> entry.getKey().getTranslationKey() + " x" + (entry.getValue().getAmplifier() + 1))
+                    .collect(Collectors.joining(", "));
+            contextData.put("player_active_effects", effectsString);
+
             // Get World time (as 24 hour value)
             int hours = (int) ((player.getWorld().getTimeOfDay() / 1000 + 6) % 24); // Minecraft day starts at 6 AM
             int minutes = (int) (((player.getWorld().getTimeOfDay() % 1000) / 1000.0) * 60);
             contextData.put("world_time", String.format("%02d:%02d", hours, minutes));
+            contextData.put("world_is_raining", player.getWorld().isRaining() ? "yes" : "no");
+            contextData.put("world_is_thundering", player.getWorld().isThundering() ? "yes" : "no");
+            contextData.put("world_difficulty", player.getWorld().getDifficulty().getName());
+            contextData.put("world_is_hardcore", player.getWorld().getLevelProperties().isHardcore() ? "yes" : "no");
+
+
+            // Get moon phase
+            String moonPhaseDescription = switch (player.getWorld().getMoonPhase()) {
+                case 0 -> "Full Moon";
+                case 1 -> "Waning Gibbous";
+                case 2 -> "Last Quarter";
+                case 3 -> "Waning Crescent";
+                case 4 -> "New Moon";
+                case 5 -> "Waxing Crescent";
+                case 6 -> "First Quarter";
+                case 7 -> "Waxing Gibbous";
+                default -> "Unknown";
+            };
+            contextData.put("world_moon_phase", moonPhaseDescription);
 
             // Get Entity details
-            Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+            LivingEntity entity = (LivingEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
             if (entity.getCustomName() == null) {
                 contextData.put("entity_name", "");
             } else {
-                contextData.put("entity_name", entity.getCustomName().toString());
+                contextData.put("entity_name", entity.getCustomName().getLiteralString());
             }
-            contextData.put("entity_type", entity.getType().getName().getString().toString());
+            contextData.put("entity_type", entity.getType().getName().getString());
+            contextData.put("entity_health", entity.getHealth() + "/" + entity.getMaxHealth());
             contextData.put("entity_character_sheet", characterSheet);
 
             return contextData;
