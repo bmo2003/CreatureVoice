@@ -69,6 +69,7 @@ public class ChatDataManager {
         public List<ChatMessage> previousMessages;
         public String characterSheet;
         public ChatSender sender;
+        public int friendship; // -3 to 3 (0 = neutral)
 
         public EntityChatData(String entityId) {
             this.entityId = entityId;
@@ -78,6 +79,7 @@ public class ChatDataManager {
             this.characterSheet = "";
             this.status = ChatStatus.NONE;
             this.sender = ChatSender.USER;
+            this.friendship = 0;
         }
 
         // Light version with no 'previousMessages' attribute
@@ -87,6 +89,7 @@ public class ChatDataManager {
             public int currentLineNumber;
             public ChatStatus status;
             public ChatSender sender;
+            public int friendship;
         }
 
         // Generate light version of chat data (no previous messages)
@@ -99,6 +102,7 @@ public class ChatDataManager {
             light.currentLineNumber = this.currentLineNumber;
             light.status = this.status;
             light.sender = this.sender;
+            light.friendship = this.friendship;
             return light;
         }
 
@@ -152,7 +156,6 @@ public class ChatDataManager {
             contextData.put("world_difficulty", player.getWorld().getDifficulty().getName());
             contextData.put("world_is_hardcore", player.getWorld().getLevelProperties().isHardcore() ? "yes" : "no");
 
-
             // Get moon phase
             String moonPhaseDescription = switch (player.getWorld().getMoonPhase()) {
                 case 0 -> "Full Moon";
@@ -176,6 +179,7 @@ public class ChatDataManager {
             }
             contextData.put("entity_type", entity.getType().getName().getString());
             contextData.put("entity_health", entity.getHealth() + "/" + entity.getMaxHealth());
+            contextData.put("entity_friendship", String.valueOf(friendship));
             contextData.put("entity_character_sheet", characterSheet);
 
             return contextData;
@@ -207,16 +211,16 @@ public class ChatDataManager {
                     // Apply behaviors (if any)
                     MobEntity entity = (MobEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
                     for (Behavior behavior : result.getBehaviors()) {
-                        LOGGER.info("Behavior: " + behavior.getName());
-                        if (behavior.getArgument() != null) {
-                            LOGGER.info("Argument: " + behavior.getArgument());
-                        }
+                        LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
+                                    ", Argument: " + behavior.getArgument() : ""));
 
-                        // Apply goal to entity
+                        // Apply behaviors to entity
                         if (behavior.getName().equals("FOLLOW")) {
                             EntityBehaviorManager.addFollowPlayerGoal(player, entity, 1.0);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeFollowPlayerGoal(entity);
+                        } else if (behavior.getName().equals("FRIENDSHIP")) {
+                            friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
                         }
                     }
 
