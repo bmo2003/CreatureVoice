@@ -17,10 +17,9 @@ import net.minecraft.util.WorldSavePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -353,30 +352,39 @@ public class ChatDataManager {
 
     // Save chat data to file
     public void saveChatData(MinecraftServer server) {
-        try {
-            File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
-            LOGGER.info("Save chat data to " + saveFile.getAbsolutePath());
-            try (FileWriter writer = new FileWriter(saveFile)) {
-                GSON.toJson(this.entityChatDataMap, writer);
+        File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
+        File tempFile = new File(saveFile.getAbsolutePath() + ".tmp");
+        LOGGER.info("Saving chat data to " + saveFile.getAbsolutePath());
+
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8)) {
+            GSON.toJson(this.entityChatDataMap, writer);
+            if (saveFile.exists()) {
+                saveFile.delete();
+            }
+            if (!tempFile.renameTo(saveFile)) {
+                throw new IOException("Failed to rename temporary chat data file to " + saveFile.getName());
             }
         } catch (Exception e) {
-            // Handle exceptions
+            LOGGER.error("Error saving chat data", e);
         }
     }
 
     // Load chat data from file
     public void loadChatData(MinecraftServer server) {
-        try {
-            File loadFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
-            LOGGER.info("Load chat data from " + loadFile.getAbsolutePath());
-            if (loadFile.exists()) {
+        File loadFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
+        LOGGER.info("Loading chat data from " + loadFile.getAbsolutePath());
+
+        if (loadFile.exists()) {
+            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(loadFile), StandardCharsets.UTF_8)) {
                 Type type = new TypeToken<HashMap<String, EntityChatData>>(){}.getType();
-                try (FileReader reader = new FileReader(loadFile)) {
-                    this.entityChatDataMap = GSON.fromJson(reader, type);
-                }
+                this.entityChatDataMap = GSON.fromJson(reader, type);
+            } catch (Exception e) {
+                LOGGER.error("Error loading chat data", e);
+                this.entityChatDataMap = new HashMap<>();
             }
-        } catch (Exception e) {
-            // Handle exceptions
+        } else {
+            // Init empty chat data
+            this.entityChatDataMap = new HashMap<>();
         }
     }
 }
