@@ -266,7 +266,7 @@ public class ClientInit implements ClientModInitializer {
             // Determine max line length
             float linesDisplayed = ending_line - starting_line;
             float lineSpacing = 1F;
-            float textHeaderHeight = 40F;
+            float textHeaderHeight = 30F;
             float textFooterHeight = 5F;
             int fullBright = 0xF000F0;
             Matrix4f matrix = matrices.peek().getPositionMatrix();
