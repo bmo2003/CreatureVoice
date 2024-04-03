@@ -6,6 +6,8 @@ import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -89,15 +91,11 @@ public class ChatGPTRequest {
     public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Load and prepare the system prompt template
                 String systemMessage = "";
-                if (!systemPrompt.isEmpty()) {
-                    // Load prompt from resources
+                if (systemPrompt != null && !systemPrompt.isEmpty()) {
                     systemMessage = loadPromptFromResource(ModInit.serverInstance.getResourceManager(), "prompts/" + systemPrompt);
+                    systemMessage = replacePlaceholders(systemMessage, context);
                 }
-
-                // Replace placeholders (if any)
-                systemMessage = replacePlaceholders(systemMessage, context);
 
                 URL url = new URL("https://api.openai.com/v1/chat/completions");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -105,8 +103,9 @@ public class ChatGPTRequest {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestProperty("Authorization", "Bearer REDACTED_API_KEY");
                 connection.setDoOutput(true);
+                connection.setConnectTimeout(10000); // 10 seconds connection timeout
+                connection.setReadTimeout(10000); // 10 seconds read timeout
 
-                // Build JSON payload for ChatGPT (with previous messages)
                 List<ChatGPTRequestMessage> messages = new ArrayList<>();
                 messages.add(new ChatGPTRequestMessage("system", systemMessage));
                 for (ChatDataManager.ChatMessage chatMessage : messageHistory) {
@@ -121,11 +120,24 @@ public class ChatGPTRequest {
                 String jsonInputString = gsonInput.toJson(payload);
 
                 try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = jsonInputString.getBytes("utf-8");
+                    byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
                     os.write(input, 0, input.length);
                 }
 
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+                // Check for error message in response
+                if (connection.getResponseCode() >= HttpURLConnection.HTTP_BAD_REQUEST) {
+                    try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+                        String errorLine;
+                        StringBuilder errorResponse = new StringBuilder();
+                        while ((errorLine = errorReader.readLine()) != null) {
+                            errorResponse.append(errorLine.trim());
+                        }
+                        LOGGER.error("Error response from OpenAI: " + errorResponse.toString());
+                    }
+                    return null;
+                }
+
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
                     StringBuilder response = new StringBuilder();
                     String responseLine;
                     while ((responseLine = br.readLine()) != null) {
@@ -136,12 +148,12 @@ public class ChatGPTRequest {
                     ChatGPTResponse chatGPTResponse = gsonOutput.fromJson(response.toString(), ChatGPTResponse.class);
                     if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
                         String content = chatGPTResponse.choices.get(0).message.content;
-                        LOGGER.info(content);
+                        LOGGER.info("Generated message: " + content);
                         return content;
                     }
                 }
-            } catch (Exception e) {
-                LOGGER.error("Failed to fetch greeting from ChatGPT", e);
+            } catch (IOException e) {
+                LOGGER.error("Failed to fetch message from ChatGPT", e);
             }
             return null; // If there was an error or no response, return null
         });
