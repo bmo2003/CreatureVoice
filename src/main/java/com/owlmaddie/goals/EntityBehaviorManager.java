@@ -21,16 +21,22 @@ public class EntityBehaviorManager {
     private static final Map<UUID, FollowPlayerGoal> followGoals = new HashMap<>();
 
     public static void addFollowPlayerGoal(ServerPlayerEntity player, MobEntity entity, double speed) {
+        LOGGER.info("Start of addFollowPlayerGoal function - 5");
         if (!(entity.getWorld() instanceof ServerWorld)) {
             LOGGER.debug("Attempted to add FollowPlayerGoal in a non-server world. Aborting.");
             return;
         }
 
         UUID entityId = entity.getUuid();
+        LOGGER.info("entity.getUuid(): " + entity.getUuid() + " - 6");
         if (!followGoals.containsKey(entityId)) {
+            LOGGER.info("followGoals does not contain the key yet - 7");
             FollowPlayerGoal goal = new FollowPlayerGoal(player, entity, speed);
+            LOGGER.info("Created FollowPlayerGoal instance - 8");
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-            goalSelector.add(1, goal);  // Priority 1
+            LOGGER.info("Created goalSelector instance - 9");
+            goalSelector.add(1, goal);
+            LOGGER.info("Added goal to goalSelector - 10");
             followGoals.put(entityId, goal);
             LOGGER.info("FollowPlayerGoal added for entity UUID: {} with speed: {}", entityId, speed);
         } else {
