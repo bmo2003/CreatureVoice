@@ -241,7 +241,7 @@ public class ClientInit implements ClientModInitializer {
             double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
 
             // Convert yaw to Quaternion
-            float halfYaw = (float) yaw * 0.5f;
+            float halfYaw = (float) yaw * 0.4f;
             double sinHalfYaw = MathHelper.sin(halfYaw);
             double cosHalfYaw = MathHelper.cos(halfYaw);
             Quaternionf yawRotation = new Quaternionf(0, sinHalfYaw, 0, cosHalfYaw);
@@ -266,7 +266,7 @@ public class ClientInit implements ClientModInitializer {
             // Determine max line length
             float linesDisplayed = ending_line - starting_line;
             float lineSpacing = 1F;
-            float textHeaderHeight = 30F;
+            float textHeaderHeight = 40F;
             float textFooterHeight = 5F;
             int fullBright = 0xF000F0;
             Matrix4f matrix = matrices.peek().getPositionMatrix();

@@ -37,7 +37,6 @@ public class FollowPlayerGoal extends Goal {
     @Override
     public boolean shouldContinue() {
         boolean shouldContinue = this.targetPlayer != null && this.targetPlayer.isAlive();
-        LOGGER.info("[FollowPlayerGoal] shouldContinue: " + shouldContinue);
         return shouldContinue;
     }
 
@@ -45,7 +44,6 @@ public class FollowPlayerGoal extends Goal {
     public void stop() {
         this.targetPlayer = null;
         this.navigation.stop();
-        LOGGER.info("[FollowPlayerGoal] stop goal");
     }
 
     @Override
@@ -58,7 +56,6 @@ public class FollowPlayerGoal extends Goal {
         // Check if the entity is further away than 4 blocks (16 when squared)
         if (squaredDistanceToPlayer > 16) {
             // Entity is more than 4 blocks away, start moving towards the player
-            LOGGER.info("[FollowPlayerGoal] tick - Start moving towards player. Squared distance to player: " + squaredDistanceToPlayer);
             this.navigation.startMovingTo(this.targetPlayer, this.speed);
         } else if (squaredDistanceToPlayer < 9) {
             // Entity is closer than 3 blocks, stop moving to maintain distance

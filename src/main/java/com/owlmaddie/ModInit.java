@@ -18,6 +18,7 @@ import net.minecraft.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.UUID;
 
 
@@ -52,10 +53,18 @@ public class ModInit implements ModInitializer {
 					if (chatData.status == ChatDataManager.ChatStatus.NONE ||
 							chatData.status == ChatDataManager.ChatStatus.END) {
 						// Only generate a new greeting if not already doing so
-						LOGGER.info("Generate greeting for: " + entity.getType().toString());
 						String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
-						String userMessage = "Please generate a new background character who lives near the " + player_biome;
-						chatData.generateMessage(player, "system-character", userMessage);
+
+						StringBuilder userMessageBuilder = new StringBuilder();
+						userMessageBuilder.append("Please generate a new character ");
+						if (entity.getCustomName() != null) {
+							userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
+						}
+						userMessageBuilder.append("of type '").append(entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)).append("' ");
+						userMessageBuilder.append("who lives near the ").append(player_biome).append(".");
+						LOGGER.info(userMessageBuilder.toString());
+
+						chatData.generateMessage(player, "system-character", userMessageBuilder.toString());
 					}
 				}
 			});

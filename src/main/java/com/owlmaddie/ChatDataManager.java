@@ -188,9 +188,7 @@ public class ChatDataManager {
         public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
-            if (systemPrompt == "system-chat") {
-                this.addMessage(userMessage, ChatSender.USER);
-            }
+            this.addMessage(userMessage, ChatSender.USER);
 
             // Add PLAYER context information
             Map<String, String> contextData = getPlayerContext(player);
@@ -198,6 +196,9 @@ public class ChatDataManager {
             // fetch HTTP response from ChatGPT
             ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages, false).thenAccept(output_message -> {
                 if (output_message != null && systemPrompt == "system-character") {
+                    // Remove system-character message from previous messages
+                    previousMessages.clear();
+
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
                     String shortGreeting = getCharacterProp("short greeting");
