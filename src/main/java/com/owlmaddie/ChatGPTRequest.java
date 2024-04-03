@@ -116,7 +116,7 @@ public class ChatGPTRequest {
                 }
 
                 // Convert JSON to String
-                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-4-turbo-preview", messages, jsonMode, 1.0f);
+                ChatGPTRequestPayload payload = new ChatGPTRequestPayload("gpt-3.5-turbo", messages, jsonMode, 1.0f);
                 Gson gsonInput = new Gson();
                 String jsonInputString = gsonInput.toJson(payload);
 
