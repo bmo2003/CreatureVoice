@@ -3,7 +3,8 @@
 	"package": "com.owlmaddie.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"MixinMobEntity"
 	],
 	"injectors": {
 		"defaultRequire": 1
