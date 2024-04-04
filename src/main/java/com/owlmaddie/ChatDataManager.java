@@ -215,15 +215,7 @@ public class ChatDataManager {
                                     ", Argument: " + behavior.getArgument() : ""));
 
                         // Apply behaviors to entity
-                        LOGGER.info("About to check behavior name - 1");
                         if (behavior.getName().equals("FOLLOW")) {
-                            LOGGER.info("FOLLOW behavior detected - 2");
-                            if (entity != null) {
-                                LOGGER.info("Entity is not null - 3");
-                            }
-                            if (player != null) {
-                                LOGGER.info("Player is not null - 4");
-                            }
                             EntityBehaviorManager.addFollowPlayerGoal(player, entity, 1.0);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeFollowPlayerGoal(entity);

@@ -30,7 +30,6 @@ public class FollowPlayerGoal extends Goal {
     @Override
     public boolean canStart() {
         boolean canStart = this.targetPlayer != null;
-        LOGGER.info("[FollowPlayerGoal] canStart: " + canStart);
         return canStart;
     }
 
