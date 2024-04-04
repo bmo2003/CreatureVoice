@@ -229,7 +229,7 @@ public class ClientInit implements ClientModInitializer {
             matrices.push();
 
             // Interpolate entity position (smooth motion)
-            double paddingAboveEntity = 0.5D;
+            double paddingAboveEntity = 0.4D;
             Vec3d interpolatedEntityPos = new Vec3d(
                     MathHelper.lerp(partialTicks, entity.prevX, entity.getPos().x),
                     MathHelper.lerp(partialTicks, entity.prevY, entity.getPos().y),
@@ -248,7 +248,7 @@ public class ClientInit implements ClientModInitializer {
             double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
 
             // Convert yaw to Quaternion
-            float halfYaw = (float) yaw * 0.4f;
+            float halfYaw = (float) yaw * 0.5f;
             double sinHalfYaw = MathHelper.sin(halfYaw);
             double cosHalfYaw = MathHelper.cos(halfYaw);
             Quaternionf yawRotation = new Quaternionf(0, sinHalfYaw, 0, cosHalfYaw);
