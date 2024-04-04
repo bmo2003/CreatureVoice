@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * The {@code ModInit} class initializes this mod and defines all the server message
+ * The {@code ModInit} class initializes this mod on the server and defines all the server message
  * identifiers. It also listens for messages from the client, and has code to send
  * messages to the client.
  */

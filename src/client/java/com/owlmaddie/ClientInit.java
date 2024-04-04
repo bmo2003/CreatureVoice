@@ -9,6 +9,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.font.TextRenderer.TextLayerType;
 import net.minecraft.client.render.*;
+import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -22,11 +23,14 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
-
+/**
+ * The {@code ClientInit} class initializes this mod in the client and defines all hooks into the
+ * render pipeline to draw chat bubbles, text, and entity icons.
+ */
 public class ClientInit implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     protected static TextureLoader textures = new TextureLoader();;
@@ -60,13 +64,13 @@ public class ClientInit implements ClientModInitializer {
         float z = 0.01F;
 
         // Draw UI text background
-        RenderSystem.setShaderTexture(0, textures.Get("ui", "text-top"));
+        RenderSystem.setShaderTexture(0, textures.GetUI("text-top"));
         drawTexturePart(matrices, buffer, x, y, z, width, 40);
 
-        RenderSystem.setShaderTexture(0, textures.Get("ui", "text-middle"));
+        RenderSystem.setShaderTexture(0, textures.GetUI("text-middle"));
         drawTexturePart(matrices, buffer, x, y + 40, z, width, height);
 
-        RenderSystem.setShaderTexture(0, textures.Get("ui", "text-bottom"));
+        RenderSystem.setShaderTexture(0, textures.GetUI("text-bottom"));
         drawTexturePart(matrices, buffer, x, y + 40 + height, z, width, 5);
 
         RenderSystem.disableBlend();
@@ -84,7 +88,7 @@ public class ClientInit implements ClientModInitializer {
 
     private void drawIcon(String ui_icon_name, MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Draw button icon
-        Identifier button_texture = textures.Get("ui", ui_icon_name);
+        Identifier button_texture = textures.GetUI(ui_icon_name);
         RenderSystem.setShaderTexture(0, button_texture);
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
@@ -107,9 +111,12 @@ public class ClientInit implements ClientModInitializer {
     }
 
     private void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+        // Get entity renderer
+        EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
+        String entity_icon_path = renderer.getTexture(entity).getPath();
+
         // Draw face icon
-        String entity_name = entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT);
-        Identifier entity_id = textures.Get("entity", entity_name);
+        Identifier entity_id = textures.GetEntity(entity_icon_path);
         if (entity_id == null) {
             return;
         }
