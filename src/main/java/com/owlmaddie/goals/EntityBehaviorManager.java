@@ -1,15 +1,13 @@
 package com.owlmaddie.goals;
 
+import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.GoalSelector;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * The {@code EntityBehaviorManager} class keeps track of all Mob Entities which have
@@ -18,35 +16,42 @@ import java.util.UUID;
  */
 public class EntityBehaviorManager {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-    private static final Map<UUID, FollowPlayerGoal> followGoals = new HashMap<>();
+    private static final Map<UUID, List<Goal>> entityGoals = new HashMap<>();
 
-    public static void addFollowPlayerGoal(ServerPlayerEntity player, MobEntity entity, double speed) {
+    public static void addGoal(MobEntity entity, Goal goal, GoalPriority priority) {
         if (!(entity.getWorld() instanceof ServerWorld)) {
-            LOGGER.debug("Attempted to add FollowPlayerGoal in a non-server world. Aborting.");
+            LOGGER.debug("Attempted to add a goal in a non-server world. Aborting.");
             return;
         }
 
         UUID entityId = entity.getUuid();
-        if (!followGoals.containsKey(entityId)) {
-            FollowPlayerGoal goal = new FollowPlayerGoal(player, entity, speed);
-            GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-            goalSelector.add(1, goal);
-            followGoals.put(entityId, goal);
-            LOGGER.info("FollowPlayerGoal added for entity UUID: {} with speed: {}", entityId, speed);
-        } else {
-            LOGGER.debug("FollowPlayerGoal already exists for entity UUID: {}", entityId);
-        }
+
+        // Use removeGoal to remove any existing goal of the same type
+        removeGoal(entity, goal.getClass());
+
+        // Now that any existing goal of the same type has been removed, we can add the new goal
+        List<Goal> goals = entityGoals.computeIfAbsent(entityId, k -> new ArrayList<>());
+        goals.add(goal);
+
+        GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+        goalSelector.add(priority.getPriority(), goal);
+        LOGGER.info("Goal of type {} added to entity UUID: {}", goal.getClass().getSimpleName(), entityId);
     }
 
-    public static void removeFollowPlayerGoal(MobEntity entity) {
+    public static void removeGoal(MobEntity entity, Class<? extends Goal> goalClass) {
         UUID entityId = entity.getUuid();
-        if (followGoals.containsKey(entityId)) {
-            FollowPlayerGoal goal = followGoals.remove(entityId);
+        List<Goal> goals = entityGoals.get(entityId);
+
+        if (goals != null) {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-            goalSelector.remove(goal);
-            LOGGER.info("FollowPlayerGoal removed for entity UUID: {}", entityId);
-        } else {
-            LOGGER.debug("No FollowPlayerGoal found for entity UUID: {} to remove", entityId);
+            goals.removeIf(goal -> {
+                if (goalClass.isInstance(goal)) {
+                    goalSelector.remove(goal);
+                    LOGGER.info("Goal of type {} removed for entity UUID: {}", goalClass.getSimpleName(), entityId);
+                    return true;
+                }
+                return false;
+            });
         }
     }
 }

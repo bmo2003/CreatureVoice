@@ -23,7 +23,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
+/**
+ * The {@code ClickHandler} class is used for the client to interact with the Entity chat UI. This class helps
+ * to receive messages from the server, cast rays to see what the user clicked on, and communicate these events
+ * back to the server.
+ */
 public class ClickHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     private static boolean wasClicked = false;
@@ -160,7 +164,7 @@ public class ClickHandler {
                 ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + ClientInit.DISPLAY_NUM_LINES);
             } else if (chatData.status == ChatDataManager.ChatStatus.END) {
                 // End of chat (open player chat screen)
-                ModPackets.sendStartChat(closestEntity); // Slow down entity while chat screen is open
+                ModPackets.sendStartChat(closestEntity);
                 client.setScreen(new ChatScreen(closestEntity));
             }
         }

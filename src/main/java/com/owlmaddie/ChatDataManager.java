@@ -3,6 +3,8 @@ package com.owlmaddie;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.goals.EntityBehaviorManager;
+import com.owlmaddie.goals.FollowPlayerGoal;
+import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
@@ -25,6 +27,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * The {@code ChatDataManager} class manages chat data for all entities. This class also helps
+ * generate new messages, set entity goals, and other useful chat-related functions.
+ */
 public class ChatDataManager {
     // Use a static instance to manage our data globally
     private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager(true);
@@ -216,9 +222,10 @@ public class ChatDataManager {
 
                         // Apply behaviors to entity
                         if (behavior.getName().equals("FOLLOW")) {
-                            EntityBehaviorManager.addFollowPlayerGoal(player, entity, 1.0);
+                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, 1.0);
+                            EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
-                            EntityBehaviorManager.removeFollowPlayerGoal(entity);
+                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
                         }

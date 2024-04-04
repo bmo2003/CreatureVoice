@@ -1,27 +1,32 @@
 package com.owlmaddie;
 
+import com.owlmaddie.goals.EntityBehaviorManager;
+import com.owlmaddie.goals.GoalPriority;
+import com.owlmaddie.goals.TalkPlayerGoal;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 import java.util.UUID;
 
-
+/**
+ * The {@code ModInit} class initializes this mod and defines all the server message
+ * identifiers. It also listens for messages from the client, and has code to send
+ * messages to the client.
+ */
 public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
 	public static MinecraftServer serverInstance;
@@ -46,8 +51,9 @@ public class ModInit implements ModInitializer {
 			server.execute(() -> {
 				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
-					// Slow entity
-					SlowEntity((LivingEntity) entity, 3.5F);
+					// Set talk to player goal (prevent entity from walking off)
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 3.5F);
+					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					if (chatData.status == ChatDataManager.ChatStatus.NONE ||
@@ -79,8 +85,9 @@ public class ModInit implements ModInitializer {
 			server.execute(() -> {
 				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
-					// Slow entity
-					SlowEntity((LivingEntity) entity, 3.5F);
+					// Set talk to player goal (prevent entity from walking off)
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 3.5F);
+					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
@@ -100,8 +107,9 @@ public class ModInit implements ModInitializer {
 			server.execute(() -> {
 				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
-					// Slow entity, so it does NOT walk away during player typing
-					SlowEntity((LivingEntity) entity, 7F);
+					// Set talk to player goal (prevent entity from walking off)
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 7F);
+					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
 				}
 			});
 		});
@@ -115,8 +123,9 @@ public class ModInit implements ModInitializer {
 			server.execute(() -> {
 				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
-					// Slow entity
-					SlowEntity((LivingEntity) entity, 3.5F);
+					// Set talk to player goal (prevent entity from walking off)
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 3.5F);
+					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					if (chatData.status == ChatDataManager.ChatStatus.END) {
@@ -192,16 +201,5 @@ public class ModInit implements ModInitializer {
 				break;
 			}
 		}
-	}
-
-	public void SlowEntity(LivingEntity entity, float numSeconds) {
-		// Slow the entity temporarily (so they don't run away)
-		// Apply a slowness effect with a high amplifier for a short duration
-		// (Amplifier value must be between 0 and 127)
-		LOGGER.info("Apply SLOWNESS status effect to: " + entity.getType().toString());
-		float TPS = 20F; // ticks per second
-		StatusEffectInstance slowness = new StatusEffectInstance(StatusEffects.SLOWNESS, Math.round(numSeconds * TPS),
-				127, false, false);
-		entity.addStatusEffect(slowness);
 	}
 }
