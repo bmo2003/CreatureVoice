@@ -21,8 +21,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,8 +30,7 @@ import java.util.stream.Collectors;
  * render pipeline to draw chat bubbles, text, and entity icons.
  */
 public class ClientInit implements ClientModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-    protected static TextureLoader textures = new TextureLoader();;
+    protected static TextureLoader textures = new TextureLoader();
     public static int DISPLAY_NUM_LINES = 3;
     public static int DISPLAY_PADDING = 2;
 
@@ -320,7 +317,7 @@ public class ClientInit implements ClientModInitializer {
             matrices.scale(-0.02F, -0.02F, 0.02F);
 
             // Translate above the entity
-            matrices.translate(0F, -scaledTextHeight + -textHeaderHeight + -textFooterHeight, 0F);
+            matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
 
             // Draw Entity (Custom Name)
             drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
