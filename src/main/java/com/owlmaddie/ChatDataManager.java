@@ -227,7 +227,7 @@ public class ChatDataManager {
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
-                            friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                            this.friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
                         }
                     }
 
