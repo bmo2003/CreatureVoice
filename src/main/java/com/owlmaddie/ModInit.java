@@ -192,6 +192,7 @@ public class ModInit implements ModInitializer {
 				buffer.writeInt(chatData.currentLineNumber);
 				buffer.writeString(chatData.status.toString());
 				buffer.writeString(chatData.sender.toString());
+				buffer.writeInt(chatData.friendship);
 
 				// Iterate over all players and send the packet
 				for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {

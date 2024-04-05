@@ -53,7 +53,7 @@ public class ClientInit implements ClientModInitializer {
         });
     }
 
-    public void drawTextBubbleBackground(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+    public void drawTextBubbleBackground(MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -63,9 +63,15 @@ public class ClientInit implements ClientModInitializer {
         BufferBuilder buffer = tessellator.getBuffer();
         float z = 0.01F;
 
-        // Draw UI text background
-        RenderSystem.setShaderTexture(0, textures.GetUI("text-top"));
-        drawTexturePart(matrices, buffer, x, y, z, width, 40);
+        // Draw UI text background (based on friendship)
+        if (friendship == -3) {
+            RenderSystem.setShaderTexture(0, textures.GetUI("text-top-enemy"));
+        } else if (friendship == 3) {
+            RenderSystem.setShaderTexture(0, textures.GetUI("text-top-friend"));
+        } else {
+            RenderSystem.setShaderTexture(0, textures.GetUI("text-top"));
+        }
+        drawTexturePart(matrices, buffer, x - 50, y, z, 228, 40);
 
         RenderSystem.setShaderTexture(0, textures.GetUI("text-middle"));
         drawTexturePart(matrices, buffer, x, y + 40, z, width, height);
@@ -86,7 +92,7 @@ public class ClientInit implements ClientModInitializer {
         Tessellator.getInstance().draw();
     }
 
-    private void drawIcon(String ui_icon_name, MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+    private void drawIcon(String ui_icon_name, MatrixStack matrices, float x, float y, float width, float height) {
         // Draw button icon
         Identifier button_texture = textures.GetUI(ui_icon_name);
         RenderSystem.setShaderTexture(0, button_texture);
@@ -171,11 +177,11 @@ public class ClientInit implements ClientModInitializer {
     }
 
     private void drawEntityName(Entity entity, Matrix4f matrix, VertexConsumerProvider immediate,
-                                int fullBright, float xOffset, float yOffset) {
+                                int fullBright, float yOffset) {
         if (entity.getCustomName() != null) {
             TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
             String lineText = entity.getCustomName().getLiteralString();
-            fontRenderer.draw(lineText, xOffset, yOffset, 0xffffff,
+            fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
                     false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
         }
     }
@@ -290,23 +296,30 @@ public class ClientInit implements ClientModInitializer {
             matrices.translate(0F, -scaledTextHeight + -textHeaderHeight + -textFooterHeight, 0F);
 
             // Draw Entity (Custom Name)
-            drawEntityName(entity, matrix, immediate, fullBright, -25F, 22F + DISPLAY_PADDING);
+            drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
 
             // Check if conversation has started
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Draw 'start chat' button
-                drawIcon("button-chat", matrices, entity, -16, textHeaderHeight, 32, 17);
+                // TODO: This does not yet work, since the button is only visible on first sight
+                if (chatData.friendship == -3) {
+                    drawIcon("button-chat-enemy", matrices, -16, textHeaderHeight, 32, 17);
+                } else if (chatData.friendship == 3) {
+                    drawIcon("button-chat-friend", matrices, -16, textHeaderHeight, 32, 17);
+                } else {
+                    drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+                }
 
             } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
                 // Draw 'pending' button
-                drawIcon("button-dotdot", matrices, entity, -16, textHeaderHeight, 32, 17);
+                drawIcon("button-dotdot", matrices, -16, textHeaderHeight, 32, 17);
 
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
                 // Draw text background (no smaller than 50F tall)
-                drawTextBubbleBackground(matrices, entity, -64, 0, 128, scaledTextHeight);
+                drawTextBubbleBackground(matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
 
                 // Draw face of entity
-                drawEntityIcon(matrices, entity, -59, 7, 32, 32);
+                drawEntityIcon(matrices, entity, -82, 7, 32, 32);
 
                 // Render each line of the text
                 drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
