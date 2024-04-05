@@ -83,9 +83,6 @@ public class ChatScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Render the background
-        this.renderBackground(context, mouseX, mouseY, delta);
-
         // Render the label text above the text field
         int labelWidth = textRenderer.getWidth(labelText);
         int labelX = (this.width - labelWidth) / 2; // Centered X position
