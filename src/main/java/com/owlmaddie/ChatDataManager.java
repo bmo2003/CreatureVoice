@@ -231,13 +231,21 @@ public class ChatDataManager {
                         }
                     }
 
-                    // Add ASSISTANT message
-                    this.addMessage(result.getCleanedMessage(), ChatSender.ASSISTANT);
-                }
-            });
+                    // Add ASSISTANT message to history
+                    this.addMessage(result.getOriginalMessage(), ChatSender.ASSISTANT);
 
-            // Broadcast to all players
-            ModInit.BroadcastPacketMessage(this);
+                    // Get cleaned message (i.e. no <BEHAVIOR> strings)
+                    String cleanedMessage = result.getCleanedMessage();
+                    if (cleanedMessage.isEmpty()) {
+                        cleanedMessage = result.getRandomNoResponseMessage();
+                    }
+                    // Update the current message to a 'cleaned version'
+                    this.currentMessage = cleanedMessage;
+                }
+
+                // Broadcast to all players
+                ModInit.BroadcastPacketMessage(this);
+            });
         }
 
         // Add a message to the history and update the current message

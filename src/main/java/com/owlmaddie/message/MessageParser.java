@@ -36,6 +36,6 @@ public class MessageParser {
         matcher.appendTail(cleanedMessage);
         LOGGER.info("Cleaned message: {}", cleanedMessage.toString());
 
-        return new ParsedMessage(cleanedMessage.toString().trim(), behaviors);
+        return new ParsedMessage(cleanedMessage.toString().trim(), input.trim(), behaviors);
     }
 }
