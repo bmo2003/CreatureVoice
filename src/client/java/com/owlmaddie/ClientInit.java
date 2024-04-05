@@ -116,6 +116,33 @@ public class ClientInit implements ClientModInitializer {
         RenderSystem.disableDepthTest();
     }
 
+    private void drawFriendshipStatus(MatrixStack matrices, float x, float y, float width, float height, int friendship) {
+        // dynamically calculate friendship ui image name
+        String ui_icon_name = "friendship" + friendship;
+
+        // Draw texture
+        Identifier button_texture = textures.GetUI(ui_icon_name);
+        RenderSystem.setShaderTexture(0, button_texture);
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+        float z = -0.01F;
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(0, 1).next();  // bottom left
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(1, 1).next();   // bottom right
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(1, 0).next();  // top right
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(0, 0).next(); // top left
+        tessellator.draw();
+
+        RenderSystem.disableBlend();
+        RenderSystem.disableDepthTest();
+    }
+
     private void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Get entity renderer
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
@@ -301,14 +328,7 @@ public class ClientInit implements ClientModInitializer {
             // Check if conversation has started
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Draw 'start chat' button
-                // TODO: This does not yet work, since the button is only visible on first sight
-                if (chatData.friendship == -3) {
-                    drawIcon("button-chat-enemy", matrices, -16, textHeaderHeight, 32, 17);
-                } else if (chatData.friendship == 3) {
-                    drawIcon("button-chat-friend", matrices, -16, textHeaderHeight, 32, 17);
-                } else {
-                    drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
-                }
+                drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
 
             } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
                 // Draw 'pending' button
@@ -318,8 +338,11 @@ public class ClientInit implements ClientModInitializer {
                 // Draw text background (no smaller than 50F tall)
                 drawTextBubbleBackground(matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
 
-                // Draw face of entity
+                // Draw face icon of entity
                 drawEntityIcon(matrices, entity, -82, 7, 32, 32);
+
+                // Draw Friendship status
+                drawFriendshipStatus(matrices, 56, 25, 19, 7, chatData.friendship);
 
                 // Render each line of the text
                 drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
