@@ -53,6 +53,7 @@ public class ClickHandler {
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
             String sender_name = buffer.readString(32767);
+            int friendship = buffer.readInt();
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
@@ -66,6 +67,7 @@ public class ClickHandler {
                     chatData.currentLineNumber = line;
                     chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
                     chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
+                    chatData.friendship = friendship;
                 }
             });
         });
