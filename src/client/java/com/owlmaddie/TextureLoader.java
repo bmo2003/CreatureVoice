@@ -45,7 +45,6 @@ public class TextureLoader {
             return textureId;
         } else {
             // Texture not found, log a message and return the "not_found" texture Identifier
-            LOGGER.info(texturePath + " was not found");
             Identifier notFoundTextureId = new Identifier("mobgpt", "textures/entity/not_found.png");
             MinecraftClient.getInstance().getTextureManager().bindTexture(notFoundTextureId);
             return notFoundTextureId;
