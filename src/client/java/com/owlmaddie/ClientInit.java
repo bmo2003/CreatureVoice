@@ -339,7 +339,7 @@ public class ClientInit implements ClientModInitializer {
                 drawEntityIcon(matrices, entity, -82, 7, 32, 32);
 
                 // Draw Friendship status
-                drawFriendshipStatus(matrices, 56, 25, 19, 7, chatData.friendship);
+                drawFriendshipStatus(matrices, 51, 18, 31, 21, chatData.friendship);
 
                 // Render each line of the text
                 drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
