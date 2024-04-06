@@ -49,11 +49,11 @@ public class ModInit implements ModInitializer {
 
 			// Ensure that the task is synced with the server thread
 			server.execute(() -> {
-				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
 					// Set talk to player goal (prevent entity from walking off)
-					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 3.5F);
-					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					if (chatData.status == ChatDataManager.ChatStatus.NONE ||
@@ -83,11 +83,11 @@ public class ModInit implements ModInitializer {
 
 			// Ensure that the task is synced with the server thread
 			server.execute(() -> {
-				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
 					// Set talk to player goal (prevent entity from walking off)
-					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 3.5F);
-					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
@@ -105,11 +105,11 @@ public class ModInit implements ModInitializer {
 
 			// Ensure that the task is synced with the server thread
 			server.execute(() -> {
-				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
 					// Set talk to player goal (prevent entity from walking off)
-					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 7F);
-					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 7F);
+					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 				}
 			});
 		});
@@ -121,11 +121,11 @@ public class ModInit implements ModInitializer {
 
 			// Ensure that the task is synced with the server thread
 			server.execute(() -> {
-				Entity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
 					// Set talk to player goal (prevent entity from walking off)
-					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, (MobEntity)entity, 3.5F);
-					EntityBehaviorManager.addGoal((MobEntity)entity, talkGoal, GoalPriority.TALK_PLAYER);
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					if (chatData.status == ChatDataManager.ChatStatus.END) {
@@ -174,7 +174,7 @@ public class ModInit implements ModInitializer {
 	public static void BroadcastPacketMessage(ChatDataManager.EntityChatData chatData) {
 		for (ServerWorld world : serverInstance.getWorlds()) {
 			UUID entityId = UUID.fromString(chatData.entityId);
-			Entity entity = ServerEntityFinder.getEntityByUUID(world, entityId);
+			MobEntity entity = ServerEntityFinder.getEntityByUUID(world, entityId);
 			if (entity != null) {
 				// Set custom name (if none)
 				if (entity.getCustomName() == null && chatData.status != ChatDataManager.ChatStatus.PENDING) {

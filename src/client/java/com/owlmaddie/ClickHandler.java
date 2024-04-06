@@ -9,7 +9,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -57,7 +57,7 @@ public class ClickHandler {
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
-                Entity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
+                MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                     ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
@@ -105,10 +105,10 @@ public class ClickHandler {
         // Get all entities
         List<Entity> nearbyEntities = world.getOtherEntities(null, area);
 
-        // Filter out living entities
-        List<LivingEntity> nearbyCreatures = nearbyEntities.stream()
-                .filter(entity -> entity instanceof LivingEntity)
-                .map(entity -> (LivingEntity) entity)
+        // Filter out MobEntity/Living entities
+        List<MobEntity> nearbyCreatures = nearbyEntities.stream()
+                .filter(entity -> entity instanceof MobEntity)
+                .map(entity -> (MobEntity) entity)
                 .collect(Collectors.toList());
 
         // Get the player from the client
@@ -121,11 +121,11 @@ public class ClickHandler {
         Vec3d lookVec = player.getRotationVec(1.0F);
         Vec3d endRay = startRay.add(lookVec.normalize().multiply(renderDistance));
 
-        Entity closestEntity = null;
+        MobEntity closestEntity = null;
         double closestDistance = Double.MAX_VALUE; // Start with the largest possible distance
 
         // Iterate through the entities to check for hits
-        for (Entity entity : nearbyCreatures) {
+        for (MobEntity entity : nearbyCreatures) {
             if (entity.getType() == EntityType.PLAYER) {
                 // Skip Player
                 continue;

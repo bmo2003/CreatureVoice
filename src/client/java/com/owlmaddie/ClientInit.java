@@ -13,7 +13,7 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -140,7 +140,7 @@ public class ClientInit implements ClientModInitializer {
         RenderSystem.disableDepthTest();
     }
 
-    private void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+    private void drawEntityIcon(MatrixStack matrices, MobEntity entity, float x, float y, float width, float height) {
         // Get entity renderer
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
         String entity_icon_path = renderer.getTexture(entity).getPath();
@@ -200,7 +200,7 @@ public class ClientInit implements ClientModInitializer {
                 false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
     }
 
-    private void drawEntityName(Entity entity, Matrix4f matrix, VertexConsumerProvider immediate,
+    private void drawEntityName(MobEntity entity, Matrix4f matrix, VertexConsumerProvider immediate,
                                 int fullBright, float yOffset) {
         if (entity.getCustomName() != null) {
             TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
@@ -235,13 +235,13 @@ public class ClientInit implements ClientModInitializer {
         // Get all entities
         List<Entity> nearbyEntities = world.getOtherEntities(null, area);
 
-        // Filter living entities
-        List<LivingEntity> nearbyCreatures = nearbyEntities.stream()
-                .filter(entity -> entity instanceof LivingEntity)
-                .map(entity -> (LivingEntity) entity)
+        // Filter MobEntity/Living entities
+        List<MobEntity> nearbyCreatures = nearbyEntities.stream()
+                .filter(entity -> entity instanceof MobEntity)
+                .map(entity -> (MobEntity) entity)
                 .collect(Collectors.toList());
 
-        for (Entity entity : nearbyCreatures) {
+        for (MobEntity entity : nearbyCreatures) {
             if (entity.getType() == EntityType.PLAYER) {
                 // Skip Player
                 continue;

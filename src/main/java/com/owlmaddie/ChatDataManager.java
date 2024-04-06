@@ -9,7 +9,6 @@ import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -176,7 +175,7 @@ public class ChatDataManager {
             contextData.put("world_moon_phase", moonPhaseDescription);
 
             // Get Entity details
-            LivingEntity entity = (LivingEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+            MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
             if (entity.getCustomName() == null) {
                 contextData.put("entity_name", "");
             } else {
@@ -215,7 +214,7 @@ public class ChatDataManager {
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
 
                     // Apply behaviors (if any)
-                    MobEntity entity = (MobEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+                    MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
                     for (Behavior behavior : result.getBehaviors()) {
                         LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
                                     ", Argument: " + behavior.getArgument() : ""));
