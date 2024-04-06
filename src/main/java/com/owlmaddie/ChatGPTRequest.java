@@ -6,22 +6,22 @@ import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.nio.charset.StandardCharsets;
-import java.io.IOException;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
-
+/**
+ * The {@code ChatGPTRequest} class is used to send HTTP requests to our LLM to generate
+ * messages.
+ */
 public class ChatGPTRequest {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
 
@@ -121,25 +121,35 @@ public class ChatGPTRequest {
                 connection.setConnectTimeout(10000); // 10 seconds connection timeout
                 connection.setReadTimeout(10000); // 10 seconds read timeout
 
-                // Add system message
+                // Create messages list (for chat history)
                 List<ChatGPTRequestMessage> messages = new ArrayList<>();
-                messages.add(new ChatGPTRequestMessage("system", systemMessage));
 
                 // Don't exceed a specific % of total context window (to limit message history in request)
                 int remainingContextTokens = (int) ((maxContextTokens - maxOutputTokens) * percentOfContext);
                 int usedTokens = estimateTokenSize("system: " + systemMessage);
 
-                // Loop through entity chat history (add messages to request, if we have enough context windows)
-                for (ChatDataManager.ChatMessage chatMessage : messageHistory) {
+                // Iterate backwards through the message history
+                for (int i = messageHistory.size() - 1; i >= 0; i--) {
+                    ChatDataManager.ChatMessage chatMessage = messageHistory.get(i);
                     String senderName = chatMessage.sender.toString().toLowerCase();
                     String messageText = replacePlaceholders(chatMessage.message, context);
                     int messageTokens = estimateTokenSize(senderName + ": " + messageText);
+
                     if (usedTokens + messageTokens > remainingContextTokens) {
-                        break;
+                        break;  // If adding this message would exceed the token limit, stop adding more messages
                     }
+
+                    // Add the message to the temporary list
                     messages.add(new ChatGPTRequestMessage(senderName, messageText));
                     usedTokens += messageTokens;
                 }
+
+                // Add system message
+                messages.add(new ChatGPTRequestMessage("system", systemMessage));
+
+                // Reverse the list to restore chronological order
+                // This is needed since we build the list in reverse order for token restricting above
+                Collections.reverse(messages);
 
                 // Convert JSON to String
                 ChatGPTRequestPayload payload = new ChatGPTRequestPayload(modelName, messages, jsonMode, 1.0f, maxOutputTokens);
