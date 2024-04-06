@@ -22,7 +22,7 @@ public class TalkPlayerGoal extends Goal {
         this.entity = entity;
         this.seconds = seconds;
         this.navigation = entity.getNavigation();
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
     }
 
     @Override

@@ -2,9 +2,7 @@ package com.owlmaddie;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.owlmaddie.goals.EntityBehaviorManager;
-import com.owlmaddie.goals.FollowPlayerGoal;
-import com.owlmaddie.goals.GoalPriority;
+import com.owlmaddie.goals.*;
 import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
@@ -221,12 +219,18 @@ public class ChatDataManager {
 
                         // Apply behaviors to entity
                         if (behavior.getName().equals("FOLLOW")) {
-                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, 1.0);
+                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, 1F);
+                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             this.friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                        } else if (behavior.getName().equals("FLEE")) {
+                            FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, 1.5F, 20F);
+                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                            EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                         }
                     }
 

@@ -21,7 +21,7 @@ public class FollowPlayerGoal extends Goal {
         this.entity = entity;
         this.speed = speed;
         this.navigation = entity.getNavigation();
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
     }
 
     @Override
