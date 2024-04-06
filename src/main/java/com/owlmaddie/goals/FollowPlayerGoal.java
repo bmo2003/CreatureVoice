@@ -38,7 +38,6 @@ public class FollowPlayerGoal extends Goal {
 
     @Override
     public void stop() {
-        this.targetPlayer = null;
         this.navigation.stop();
     }
 

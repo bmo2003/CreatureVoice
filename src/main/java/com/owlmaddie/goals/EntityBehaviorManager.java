@@ -4,6 +4,7 @@ import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.GoalSelector;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.entity.ai.goal.PrioritizedGoal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,9 @@ public class EntityBehaviorManager {
         // Use removeGoal to remove any existing goal of the same type
         removeGoal(entity, goal.getClass());
 
+        // Move any conflicting goals +1 in priority
+        moveConflictingGoals(entity, priority);
+
         // Now that any existing goal of the same type has been removed, we can add the new goal
         List<Goal> goals = entityGoals.computeIfAbsent(entityId, k -> new ArrayList<>());
         goals.add(goal);
@@ -52,6 +56,39 @@ public class EntityBehaviorManager {
                 }
                 return false;
             });
+        }
+    }
+
+    private static void moveConflictingGoals(MobEntity entity, GoalPriority newGoalPriority) {
+        GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+
+        // Retrieve the existing goals
+        Set<PrioritizedGoal> existingGoals = new HashSet<>(goalSelector.getGoals());
+
+        // Flag to check if there is a goal with the same priority as the new goal
+        boolean conflictExists = existingGoals.stream()
+                .anyMatch(goal -> goal.getPriority() == newGoalPriority.getPriority());
+
+        if (!conflictExists) {
+            // If there's no conflict, no need to adjust priorities
+            return;
+        }
+
+        // If there's a conflict, collect goals that need their priority incremented
+        List<PrioritizedGoal> goalsToModify = new ArrayList<>();
+        for (PrioritizedGoal prioritizedGoal : existingGoals) {
+            if (prioritizedGoal.getPriority() >= newGoalPriority.getPriority()) {
+                goalsToModify.add(prioritizedGoal);
+            }
+        }
+
+        // Increment priorities and re-add goals
+        for (PrioritizedGoal goalToModify : goalsToModify) {
+            // Remove the original goal
+            goalSelector.remove(goalToModify.getGoal());
+
+            // Increment the priority and re-add the goal
+            goalSelector.add(goalToModify.getPriority() + 1, goalToModify.getGoal());
         }
     }
 }
