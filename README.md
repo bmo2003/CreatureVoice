@@ -1,16 +1,18 @@
-# ChattyCraft: Craft conversations, connect with characters!
+# ChatQuest: Every Conversation, A New Journey!
 
-### ✨ Welcome to **ChattyCraft 🗨️**, where every entity in your Minecraft world comes to life through conversation! ✨ 
+### ✨ Welcome to **Chat Quest 🗨️**, where every creature in your Minecraft world comes to life through conversation! ✨ 
 
 ## Features:
-- **Dynamic Dialogues**: Engage with Minecraft entities like never before, each with its unique character sheet.
-- **AI-Driven Chats**: Powered by GPT, ensuring each conversation is fresh and engaging.
-- **Multi-Player Interaction**: Share the experience; conversations sync across players.
-- **Personalized Histories**: Entities remember past interactions, making each chat personal.
-- **Open AI Model Support**: Flexible backend, compatible with various GPT versions.
+- **Dynamic Dialogues**: Engage with Minecraft creatures like never before, each with its unique character sheet.
+- **AI-Driven Chats**: Powered by ChatGPT, ensuring each conversation is fresh and engaging.
+- **Custom Behaviors**: Creatures can make decisions on their own and Follow, Flee, Attack, and more!
+- **Friendship Status**: Track your relationships on a 7-point scale, from foes to friends.
+- **Multi-Player Interaction**: Share the experience; conversations sync across server & players.
+- **Personalized Memory**: Creatures remember past interactions, making each chat more personal.
+- **Open AI Model Support**: Flexible backend, compatible with various GPT model versions.
 
 Ready to transform your Minecraft world into a bustling community of chatting entities? 
-**Dive into ChattyCraft 🗨 and start the conversation today!**
+**Dive into ChatQuest 🗨 and start the conversation today!**
 
 ## Installation
 
