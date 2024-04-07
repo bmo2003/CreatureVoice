@@ -4,6 +4,7 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
+import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.RandomUtils;
 import com.owlmaddie.utils.ServerEntityFinder;
 import io.netty.buffer.Unpooled;
@@ -21,6 +22,7 @@ import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -146,23 +148,31 @@ public class ModInit implements ModInitializer {
 		// Data is sent in chunks, to prevent exceeding the 32767 limit per String.
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.player;
-			LOGGER.info("Server send login message packet to player: " + player.getName().getString());
+			LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
 
+			// Get lite JSON data & compress to byte array
 			String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData();
-			int chunkSize = 32000; // Slightly below the limit to account for any additional data
+			byte[] compressedData = Compression.compressString(chatDataJSON);
+			if (compressedData == null) {
+				LOGGER.error("Failed to compress chat data.");
+				return;
+			}
 
-			// Calculate the number of required packets to send the entire JSON string
-			int totalPackets = (int) Math.ceil(chatDataJSON.length() / (double) chunkSize);
+			final int chunkSize = 32000; // Define chunk size
+			int totalPackets = (int) Math.ceil((double) compressedData.length / chunkSize);
 
+			// Loop through each chunk of bytes, and send bytes to player
 			for (int i = 0; i < totalPackets; i++) {
 				int start = i * chunkSize;
-				int end = Math.min(start + chunkSize, chatDataJSON.length());
-				String chunk = chatDataJSON.substring(start, end);
+				int end = Math.min(compressedData.length, start + chunkSize);
 
 				PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 				buffer.writeInt(i); // Packet sequence number
 				buffer.writeInt(totalPackets); // Total number of packets
-				buffer.writeString(chunk);
+
+				// Write chunk as byte array
+				byte[] chunk = Arrays.copyOfRange(compressedData, start, end);
+				buffer.writeByteArray(chunk);
 
 				ServerPlayNetworking.send(player, PACKET_S2C_LOGIN, buffer);
 			}

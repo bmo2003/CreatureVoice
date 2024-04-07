@@ -6,6 +6,7 @@ import com.owlmaddie.ModInit;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ModPackets;
 import com.owlmaddie.utils.ClientEntityFinder;
+import com.owlmaddie.utils.Decompression;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -17,7 +18,10 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -31,8 +35,9 @@ import java.util.stream.Collectors;
  * back to the server.
  */
 public class ClickHandler {
+    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     private static boolean wasClicked = false;
-    static HashMap<Integer, String> receivedChunks = new HashMap<>();
+    static HashMap<Integer, byte[]> receivedChunks = new HashMap<>();
 
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -79,7 +84,7 @@ public class ClickHandler {
         ClientPlayNetworking.registerGlobalReceiver(ModInit.PACKET_S2C_LOGIN, (client, handler, buffer, responseSender) -> {
             int sequenceNumber = buffer.readInt(); // Sequence number of the current packet
             int totalPackets = buffer.readInt(); // Total number of packets for this data
-            String chunk = buffer.readString(); // Read the chunk from the current packet
+            byte[] chunk = buffer.readByteArray(); // Read the byte array chunk from the current packet
 
             client.execute(() -> { // Make sure to run on the client thread
                 // Store the received chunk
@@ -87,12 +92,20 @@ public class ClickHandler {
 
                 // Check if all chunks have been received
                 if (receivedChunks.size() == totalPackets) {
-                    // Reconstruct the original chatDataJSON from chunks
-                    StringBuilder chatDataJSONBuilder = new StringBuilder();
+                    LOGGER.info("Reassemble chunks on client and decompress lite JSON data string");
+
+                    // Combine all byte array chunks
+                    ByteArrayOutputStream combined = new ByteArrayOutputStream();
                     for (int i = 0; i < totalPackets; i++) {
-                        chatDataJSONBuilder.append(receivedChunks.get(i));
+                        combined.write(receivedChunks.get(i), 0, receivedChunks.get(i).length);
                     }
-                    String chatDataJSON = chatDataJSONBuilder.toString();
+
+                    // Decompress the combined byte array to get the original JSON string
+                    String chatDataJSON = Decompression.decompressString(combined.toByteArray());
+                    if (chatDataJSON == null) {
+                        LOGGER.info("Error decompressing lite JSON string from bytes");
+                        return;
+                    }
 
                     // Parse JSON and update client chat data
                     Gson GSON = new Gson();
