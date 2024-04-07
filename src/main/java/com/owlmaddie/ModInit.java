@@ -142,19 +142,30 @@ public class ModInit implements ModInitializer {
 			});
 		});
 
+		// Send lite chat data JSON to new player (to populate client data)
+		// Data is sent in chunks, to prevent exceeding the 32767 limit per String.
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.player;
 			LOGGER.info("Server send login message packet to player: " + player.getName().getString());
 
-			// Get chat data for logged in player (light version)
 			String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData();
+			int chunkSize = 32000; // Slightly below the limit to account for any additional data
 
-			// Write the light chat data
-			PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
-			buffer.writeInt(chatDataJSON.length());
-			buffer.writeString(chatDataJSON);
+			// Calculate the number of required packets to send the entire JSON string
+			int totalPackets = (int) Math.ceil(chatDataJSON.length() / (double) chunkSize);
 
-			ServerPlayNetworking.send(player, PACKET_S2C_LOGIN, buffer);
+			for (int i = 0; i < totalPackets; i++) {
+				int start = i * chunkSize;
+				int end = Math.min(start + chunkSize, chatDataJSON.length());
+				String chunk = chatDataJSON.substring(start, end);
+
+				PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+				buffer.writeInt(i); // Packet sequence number
+				buffer.writeInt(totalPackets); // Total number of packets
+				buffer.writeString(chunk);
+
+				ServerPlayNetworking.send(player, PACKET_S2C_LOGIN, buffer);
+			}
 		});
 
 		ServerWorldEvents.LOAD.register((server, world) -> {

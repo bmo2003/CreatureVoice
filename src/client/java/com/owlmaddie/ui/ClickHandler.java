@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  */
 public class ClickHandler {
     private static boolean wasClicked = false;
+    static HashMap<Integer, String> receivedChunks = new HashMap<>();
 
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -76,16 +77,31 @@ public class ClickHandler {
 
         // Client-side player login: get all chat data
         ClientPlayNetworking.registerGlobalReceiver(ModInit.PACKET_S2C_LOGIN, (client, handler, buffer, responseSender) -> {
-            // Read the data from the server packet
-            int length = buffer.readInt();
-            String chatDataJSON = buffer.readString(length);
+            int sequenceNumber = buffer.readInt(); // Sequence number of the current packet
+            int totalPackets = buffer.readInt(); // Total number of packets for this data
+            String chunk = buffer.readString(); // Read the chunk from the current packet
 
-            // Update the chat data manager on the client-side
-            Gson GSON = new Gson();
             client.execute(() -> { // Make sure to run on the client thread
-                // Parse JSON and override client chat data
-                Type type = new TypeToken<HashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
-                ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
+                // Store the received chunk
+                receivedChunks.put(sequenceNumber, chunk);
+
+                // Check if all chunks have been received
+                if (receivedChunks.size() == totalPackets) {
+                    // Reconstruct the original chatDataJSON from chunks
+                    StringBuilder chatDataJSONBuilder = new StringBuilder();
+                    for (int i = 0; i < totalPackets; i++) {
+                        chatDataJSONBuilder.append(receivedChunks.get(i));
+                    }
+                    String chatDataJSON = chatDataJSONBuilder.toString();
+
+                    // Parse JSON and update client chat data
+                    Gson GSON = new Gson();
+                    Type type = new TypeToken<HashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
+                    ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
+
+                    // Clear receivedChunks for future use
+                    receivedChunks.clear();
+                }
             });
         });
     }
