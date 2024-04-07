@@ -15,6 +15,7 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -188,6 +189,9 @@ public class ClickHandler {
         if (closestEntity != null) {
             // Look-up conversation
             ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntity.getUuidAsString());
+
+            // Play click sound
+            client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2F, 0.8F);
 
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Start conversation
