@@ -239,7 +239,8 @@ public class ChatDataManager {
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
                             if (new_friendship > this.friendship) {
-                                // Stop any attack if friendship improves
+                                // Stop any attack/flee if friendship improves
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             }
                             this.friendship = new_friendship;
