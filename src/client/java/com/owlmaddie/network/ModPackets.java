@@ -1,15 +1,16 @@
-package com.owlmaddie;
+package com.owlmaddie.network;
 
+import com.owlmaddie.ModInit;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
+/**
+ * The {@code ModPackets} class provides methods to send packets to the server for generating greetings,
+ * updating message details, and sending user messages.
+ */
 public class ModPackets {
-    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
 
     public static void sendGenerateGreeting(Entity entity) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());

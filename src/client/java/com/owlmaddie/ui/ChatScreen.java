@@ -1,5 +1,6 @@
-package com.owlmaddie;
+package com.owlmaddie.ui;
 
+import com.owlmaddie.network.ModPackets;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -8,7 +9,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-
+/**
+ * The {@code ChatScreen} class is used to display a chat dialog UI for the player and handle keyboard
+ * entry events.
+ */
 public class ChatScreen extends Screen {
     private TextFieldWidget textField;
     private ButtonWidget sendButton;

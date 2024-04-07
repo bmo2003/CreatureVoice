@@ -1,10 +1,10 @@
-package com.owlmaddie;
+package com.owlmaddie.chat;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/*
-Wrap lines of text on a space character
+/**
+ * The {@code LineWrapper} class is used to wrap lines of text on the nearest space character
  */
 public class LineWrapper {
 

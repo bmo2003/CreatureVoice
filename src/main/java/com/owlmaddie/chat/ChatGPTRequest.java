@@ -1,6 +1,7 @@
-package com.owlmaddie;
+package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
+import com.owlmaddie.ModInit;
 import com.owlmaddie.json.ChatGPTResponse;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;

@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.utils;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;

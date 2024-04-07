@@ -1,12 +1,15 @@
-package com.owlmaddie;
+package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.owlmaddie.ModInit;
 import com.owlmaddie.goals.*;
+import com.owlmaddie.items.RarityItemCollector;
 import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
+import com.owlmaddie.utils.ServerEntityFinder;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;

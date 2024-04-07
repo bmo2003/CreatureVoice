@@ -1,7 +1,11 @@
-package com.owlmaddie;
+package com.owlmaddie.ui;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.owlmaddie.ModInit;
+import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.network.ModPackets;
+import com.owlmaddie.utils.ClientEntityFinder;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -13,8 +17,6 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -29,8 +31,8 @@ import java.util.stream.Collectors;
  * back to the server.
  */
 public class ClickHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     private static boolean wasClicked = false;
+
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.options.useKey.isPressed()) {
@@ -163,7 +165,7 @@ public class ClickHandler {
                 ModPackets.sendGenerateGreeting(closestEntity);
             } else if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
                 // Update lines read
-                ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + ClientInit.DISPLAY_NUM_LINES);
+                ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + BubbleRenderer.DISPLAY_NUM_LINES);
             } else if (chatData.status == ChatDataManager.ChatStatus.END) {
                 // End of chat (open player chat screen)
                 ModPackets.sendStartChat(closestEntity);

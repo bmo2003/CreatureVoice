@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.items;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
@@ -8,7 +8,9 @@ import net.minecraft.util.Rarity;
 
 import java.util.*;
 
-
+/**
+ * The {@code RarityItemCollector} class is used to find items & entities by rarity
+ */
 public class RarityItemCollector {
 
     public static List<String> getItemsByRarity(Rarity rarity, int quantity) {
