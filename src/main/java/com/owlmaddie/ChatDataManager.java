@@ -224,13 +224,25 @@ public class ChatDataManager {
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
-                        } else if (behavior.getName().equals("FRIENDSHIP")) {
-                            this.friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
                         } else if (behavior.getName().equals("FLEE")) {
                             FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, 1.5F, 20F);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
+                        } else if (behavior.getName().equals("ATTACK")) {
+                            AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, 1.5F);
+                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                            EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
+                        } else if (behavior.getName().equals("FRIENDSHIP")) {
+                            int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                            if (new_friendship > this.friendship) {
+                                // Stop any attack if friendship improves
+                                EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                            }
+                            this.friendship = new_friendship;
                         }
                     }
 
