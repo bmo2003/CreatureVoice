@@ -8,7 +8,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
@@ -20,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -65,6 +65,9 @@ public class ModInit implements ModInitializer {
 						userMessageBuilder.append("Please generate a new character ");
 						if (entity.getCustomName() != null) {
 							userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
+						} else {
+							userMessageBuilder.append("whose name starts with the letter '").append(this.RandomLetter()).append("' ");
+							userMessageBuilder.append("and which uses ").append(this.RandomNumber(4) + 1).append(" syllables ");
 						}
 						userMessageBuilder.append("of type '").append(entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)).append("' ");
 						userMessageBuilder.append("who lives near the ").append(player_biome).append(".");
@@ -168,6 +171,18 @@ public class ModInit implements ModInitializer {
 		});
 
 		LOGGER.info("MobGPT Initialized!");
+	}
+
+	public static String RandomLetter() {
+		// Return random letter between 'A' and 'Z'
+		int randomNumber = RandomNumber(26);
+		return String.valueOf((char) ('A' + randomNumber));
+	}
+
+	public static int RandomNumber(int max) {
+		// Generate a random integer between 0 and max (inclusive)
+		Random random = new Random();
+		return random.nextInt(max);
 	}
 
 	// Send new message to all connected players
