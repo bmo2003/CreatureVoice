@@ -1,18 +1,18 @@
-# ChatQuest: Every Conversation, A New Journey!
+# CreatureChat
 
-### ✨ Welcome to **Chat Quest 🗨️**, where every creature in your Minecraft world comes to life through conversation! ✨ 
+### Chat, befriend, and interact with a rich world of creatures like never before! All creatures can talk and respond naturally using AI. 
 
 ## Features:
 - **Dynamic Dialogues**: Engage with Minecraft creatures like never before, each with its unique character sheet.
 - **AI-Driven Chats**: Powered by ChatGPT, ensuring each conversation is fresh and engaging.
-- **Custom Behaviors**: Creatures can make decisions on their own and Follow, Flee, Attack, and more!
+- **Custom Behaviors**: Creatures can make decisions on their own and **Follow, Flee, Attack**, and more!
 - **Friendship Status**: Track your relationships on a 7-point scale, from foes to friends.
 - **Multi-Player Interaction**: Share the experience; conversations sync across server & players.
 - **Personalized Memory**: Creatures remember past interactions, making each chat more personal.
-- **Open AI Model Support**: Flexible backend, compatible with various GPT model versions.
+- **Model Support**: Flexible backend, compatible with various GPT and open-sources LLM models.
 
-Ready to transform your Minecraft world into a bustling community of chatting entities? 
-**Dive into ChatQuest 🗨 and start the conversation today!**
+Looking to enrich your Minecraft journey with deep conversations and lasting alliances?
+**Step into the world of CreatureChat 🗨 and spark your first conversation today!**
 
 ## Installation
 
@@ -52,7 +52,7 @@ be updated. Below are the general steps for this upgrade process.
 ## License
 
     ChattCraft is a Minecraft mod which allows chat conversations with entities.
-    Copyright (C) 2024 OpenShot Studios, LLC
+    Copyright (C) 2024 Owlmaddie LLC
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
