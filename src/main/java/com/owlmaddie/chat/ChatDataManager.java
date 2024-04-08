@@ -235,7 +235,7 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                         } else if (behavior.getName().equals("ATTACK")) {
-                            AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, 1.5F);
+                            AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, 1.1F);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
