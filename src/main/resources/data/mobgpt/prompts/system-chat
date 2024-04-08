@@ -29,7 +29,7 @@ Behaviors:
 
 IMPORTANT: Output one or more of these behaviors at the end of the message to instruct
 the entity how to interact with the player and world, so it's important to include them if they are needed.
-Include as many behaviors as needed at the end of the message.
+Include as many behaviors as needed at the end of the message. These are the ONLY valid behaviors.
 
 <FRIENDSHIP 0>  Friendship starts as neutral (0 value). The range of friendship values is -3 to 3. If the player gains (or loses) your trust & friendship, output a new friendship value with this behavior.
 <FOLLOW>  Follow the player location. If the player asks you to follow or come with them, please output this behavior.
@@ -40,7 +40,7 @@ Include as many behaviors as needed at the end of the message.
 Output Syntax:
 
 User: <message>
-ASSISTANT: <response> <BEHAVIOR1> <BEHAVIOR2>
+ASSISTANT: <response> <BEHAVIOR> <BEHAVIOR>
 
 Output Examples:
 The following examples include small samples of conversation text. These are only EXAMPLES to
