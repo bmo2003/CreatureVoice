@@ -224,6 +224,7 @@ public class ChatDataManager {
                         if (behavior.getName().equals("FOLLOW")) {
                             FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, 1F);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
