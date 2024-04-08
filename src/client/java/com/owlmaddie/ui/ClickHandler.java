@@ -7,6 +7,7 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ModPackets;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
+import com.owlmaddie.utils.EntityHeights;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -163,9 +164,16 @@ public class ClickHandler {
                 continue;
             }
 
+            // Get entity height (adjust for specific classes)
+            float entityHeight = EntityHeights.getAdjustedEntityHeight(entity);
+
+            // Move hit box near front of entity
+            float entityYawRadians = (float) Math.toRadians(entity.getYaw());
+            Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians)).multiply(entity.getWidth() / 2.0 * 0.8);
+
+            double paddingAboveEntity = 0.4D;
             Vec3d entityPos = entity.getPos();
-            double extraHeight = 0.5D; // Calculate how much higher the text bubble is above the entity
-            Vec3d iconCenter = entityPos.add(0, entity.getHeight() + extraHeight, 0);
+            Vec3d iconCenter = entityPos.add(forwardOffset).add(0, entityHeight + paddingAboveEntity, 0);
 
             // Define a bounding box that accurately represents the text bubble
             double bubbleRadius = 1D; // Determine the radius or size of the text bubble

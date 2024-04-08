@@ -2,6 +2,7 @@ package com.owlmaddie.ui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.utils.EntityHeights;
 import com.owlmaddie.utils.EntityRendererAccessor;
 import com.owlmaddie.utils.TextureLoader;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
@@ -213,7 +214,6 @@ public class BubbleRenderer {
         VertexConsumerProvider immediate = context.consumers();
 
         // Get camera position
-        double cameraHeight = cameraEntity.getHeight();
         Vec3d interpolatedCameraPos = new Vec3d(camera.getPos().x, camera.getPos().y, camera.getPos().z);
 
         // Get all entities
@@ -242,6 +242,9 @@ public class BubbleRenderer {
             // Push a new matrix onto the stack.
             matrices.push();
 
+            // Get entity height (adjust for specific classes)
+            float entityHeight = EntityHeights.getAdjustedEntityHeight(entity);
+
             // Interpolate entity position (smooth motion)
             double paddingAboveEntity = 0.4D;
             Vec3d interpolatedEntityPos = new Vec3d(
@@ -250,13 +253,24 @@ public class BubbleRenderer {
                     MathHelper.lerp(partialTicks, entity.prevZ, entity.getPos().z)
             );
 
-            // Translate to the entity's position
-            matrices.translate(interpolatedEntityPos.x - interpolatedCameraPos.x,
-                    (interpolatedEntityPos.y + entity.getHeight()) - interpolatedCameraPos.y + paddingAboveEntity,
-                    interpolatedEntityPos.z - interpolatedCameraPos.z);
+            // Calculate the forward offset based on the entity's yaw
+            float entityYawRadians = (float) Math.toRadians(entity.getYaw(partialTicks));
+            Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians));
 
-            // Calculate the difference vector (from entity to camera)
-            Vec3d difference = interpolatedCameraPos.subtract(interpolatedEntityPos).subtract(0, cameraHeight, 0);
+            // Calculate the forward offset based on the entity's yaw, scaled to 80% towards the front edge
+            Vec3d scaledForwardOffset = forwardOffset.multiply(entity.getWidth() / 2.0 * 0.8);
+
+            // Calculate the position of the chat bubble: above the head and 80% towards the front
+            Vec3d bubblePosition = interpolatedEntityPos.add(scaledForwardOffset)
+                    .add(0, entityHeight + paddingAboveEntity, 0);
+
+            // Translate to the chat bubble's position
+            matrices.translate(bubblePosition.x - interpolatedCameraPos.x,
+                    bubblePosition.y - interpolatedCameraPos.y,
+                    bubblePosition.z - interpolatedCameraPos.z);
+
+            // Calculate the difference vector (from entity + padding above to camera)
+            Vec3d difference = interpolatedCameraPos.subtract(new Vec3d(interpolatedEntityPos.x, interpolatedEntityPos.y + entityHeight + paddingAboveEntity, interpolatedEntityPos.z));
 
             // Calculate the yaw angle
             double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
