@@ -21,6 +21,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.owlmaddie.chat.ChatDataSaverScheduler;
+import java.util.concurrent.TimeUnit;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -34,6 +36,7 @@ import java.util.UUID;
 public class ModInit implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
 	public static MinecraftServer serverInstance;
+	private static ChatDataSaverScheduler scheduler = null;
 	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
 	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
 	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
@@ -180,9 +183,13 @@ public class ModInit implements ModInitializer {
 
 		ServerWorldEvents.LOAD.register((server, world) -> {
 			String world_name = world.getRegistryKey().getValue().getPath();
-			if (world_name == "overworld") {
+			if (world_name.equals("overworld")) {
 				serverInstance = server;
 				ChatDataManager.getServerInstance().loadChatData(server);
+
+				// Start the auto-save task to save every X minutes
+				scheduler = new ChatDataSaverScheduler();
+				scheduler.startAutoSaveTask(server, 15, TimeUnit.MINUTES);
 			}
 		});
 		ServerWorldEvents.UNLOAD.register((server, world) -> {
@@ -190,6 +197,9 @@ public class ModInit implements ModInitializer {
 			if (world_name == "overworld") {
 				ChatDataManager.getServerInstance().saveChatData(server);
 				serverInstance = null;
+
+				// Shutdown auto scheduler
+				scheduler.stopAutoSaveTask();
 			}
 		});
 
