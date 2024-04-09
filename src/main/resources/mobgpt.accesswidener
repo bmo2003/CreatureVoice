@@ -1,0 +1,5 @@
+accessWidener	v1	named
+
+# Access slime movement
+accessible    class    net/minecraft/entity/mob/SlimeEntity$SlimeMoveControl
+accessible    method    net/minecraft/entity/mob/SlimeEntity$SlimeMoveControl    look   (FZ)V
