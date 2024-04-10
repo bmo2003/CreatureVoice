@@ -257,7 +257,7 @@ public class ChatDataManager {
                             if (new_friendship > 0) {
                                 // positive friendship (apply friend goal)
                                 ((LivingEntityInterface)entity).setCanTargetPlayers(false);
-                            } else if (new_friendship < 0) {
+                            } else if (new_friendship <= 0) {
                                 // negative friendship (remove friend goal)
                                 ((LivingEntityInterface)entity).setCanTargetPlayers(true);
                             }
