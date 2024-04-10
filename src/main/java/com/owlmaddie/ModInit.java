@@ -1,17 +1,21 @@
 package com.owlmaddie;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.ChatDataSaverScheduler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
 import com.owlmaddie.utils.Compression;
+import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.RandomUtils;
 import com.owlmaddie.utils.ServerEntityFinder;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
@@ -21,12 +25,11 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.owlmaddie.chat.ChatDataSaverScheduler;
-import java.util.concurrent.TimeUnit;
 
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The {@code ModInit} class initializes this mod on the server and defines all the server message
@@ -200,6 +203,24 @@ public class ModInit implements ModInitializer {
 
 				// Shutdown auto scheduler
 				scheduler.stopAutoSaveTask();
+			}
+		});
+
+		ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {
+			String entityUUID = entity.getUuidAsString();
+			if (ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
+				int friendship = ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).friendship;
+				if (friendship > 0) {
+					LOGGER.info("Entity loaded (" + entityUUID + "), setting friendship to " + friendship);
+					((LivingEntityInterface)entity).setCanTargetPlayers(false);
+				}
+			}
+		});
+		ServerEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
+			String entityUUID = entity.getUuidAsString();
+			if (entity.getRemovalReason() == Entity.RemovalReason.KILLED && ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
+				LOGGER.info("Entity killed (" + entityUUID + "), removing chat data.");
+ 				ChatDataManager.getServerInstance().entityChatDataMap.remove(entityUUID);
 			}
 		});
 
