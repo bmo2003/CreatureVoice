@@ -9,6 +9,7 @@ import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
+import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.ServerEntityFinder;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
@@ -232,8 +233,10 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
+
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+
                         } else if (behavior.getName().equals("FLEE")) {
                             float fleeDistance = 400F; // 20 blocks squared
                             FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, entitySpeedFast, fleeDistance);
@@ -241,14 +244,24 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
+
                         } else if (behavior.getName().equals("ATTACK")) {
                             AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
+
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                            if (new_friendship > 0) {
+                                // positive friendship (apply friend goal)
+                                ((LivingEntityInterface)entity).setCanTargetPlayers(false);
+                            } else if (new_friendship < 0) {
+                                // negative friendship (remove friend goal)
+                                ((LivingEntityInterface)entity).setCanTargetPlayers(true);
+                            }
+                            // Does friendship improve?
                             if (new_friendship > this.friendship) {
                                 // Stop any attack/flee if friendship improves
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);

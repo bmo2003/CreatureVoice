@@ -26,34 +26,26 @@ public class FollowPlayerGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        boolean canStart = this.targetPlayer != null;
-        return canStart;
+        // Start only if the target player is more than 8 blocks away
+        return this.targetPlayer != null && this.entity.squaredDistanceTo(this.targetPlayer) > 64;
     }
 
     @Override
     public boolean shouldContinue() {
-        boolean shouldContinue = this.targetPlayer != null && this.targetPlayer.isAlive();
-        return shouldContinue;
+        // Continue unless the entity gets within 3.x blocks of the player
+        return this.targetPlayer != null && this.targetPlayer.isAlive() && this.entity.squaredDistanceTo(this.targetPlayer) > 12;
     }
 
     @Override
     public void stop() {
+        // Stop the entity temporarily
         this.navigation.stop();
     }
 
     @Override
     public void tick() {
-        // Calculate the squared distance between the entity and the player
-        double squaredDistanceToPlayer = this.entity.squaredDistanceTo(this.targetPlayer);
-
-        // Check if the entity is further away than 4 blocks (16 when squared)
-        if (squaredDistanceToPlayer > 16) {
-            // Entity is more than 4 blocks away, look at the player and start moving towards them
-            LookControls.LookAtEntity(this.targetPlayer, this.entity);
-            this.navigation.startMovingTo(this.targetPlayer, this.speed);
-        } else if (squaredDistanceToPlayer < 9) {
-            // Entity is closer than 3 blocks, stop moving to maintain distance
-            this.navigation.stop();
-        }
+        // Look at the player and start moving towards them
+        LookControls.LookAtEntity(this.targetPlayer, this.entity);
+        this.navigation.startMovingTo(this.targetPlayer, this.speed);
     }
 }
