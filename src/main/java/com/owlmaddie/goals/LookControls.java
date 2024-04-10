@@ -6,10 +6,10 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.MathHelper;
 
 /**
- * The {@code EntityLook} class allows an entity to look at the player, with some custom fixes
+ * The {@code LookControls} class allows an entity to look at the player, with some custom fixes
  * for certain mobs that refuse to use the normal LookControls (i.e. Slime).
  */
-public class EntityLook {
+public class LookControls {
     public static void LookAtEntity(ServerPlayerEntity player, MobEntity entity) {
 
         // Make the entity look at the player without moving towards them

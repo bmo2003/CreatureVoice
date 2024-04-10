@@ -49,7 +49,7 @@ public class FollowPlayerGoal extends Goal {
         // Check if the entity is further away than 4 blocks (16 when squared)
         if (squaredDistanceToPlayer > 16) {
             // Entity is more than 4 blocks away, look at the player and start moving towards them
-            EntityLook.LookAtEntity(this.targetPlayer, this.entity);
+            LookControls.LookAtEntity(this.targetPlayer, this.entity);
             this.navigation.startMovingTo(this.targetPlayer, this.speed);
         } else if (squaredDistanceToPlayer < 9) {
             // Entity is closer than 3 blocks, stop moving to maintain distance
