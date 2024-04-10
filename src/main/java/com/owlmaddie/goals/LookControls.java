@@ -12,9 +12,6 @@ import net.minecraft.util.math.MathHelper;
 public class LookControls {
     public static void LookAtEntity(ServerPlayerEntity player, MobEntity entity) {
 
-        // Make the entity look at the player without moving towards them
-        entity.getLookControl().lookAt(player, 10.0F, (float)entity.getMaxLookPitchChange());
-
         // Fix Slimes (who handle looking differently)
         if (entity instanceof SlimeEntity) {
             // Calculate direction which entity needs to face
@@ -27,6 +24,10 @@ public class LookControls {
             float yawChange = MathHelper.clamp(yawDifference, -10.0F, 10.0F); // Limits the change to 10 degrees
 
             ((SlimeEntity.SlimeMoveControl) entity.getMoveControl()).look(currentYaw + yawChange, false);
+
+        } else {
+            // Make the entity look at the player
+            entity.getLookControl().lookAt(player, 10.0F, (float)entity.getMaxLookPitchChange());
         }
 
     }

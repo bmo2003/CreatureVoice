@@ -106,7 +106,7 @@ public class AttackPlayerGoal extends Goal {
                 break;
 
             case CHARGING:
-                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed / 2D);
+                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed / 2.5D);
                 if (cooldownTimer <= 0) {
                     currentState = EntityState.LEAPING;
                 }
@@ -123,7 +123,7 @@ public class AttackPlayerGoal extends Goal {
 
             case ATTACKING:
                 // Attack player
-                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed / 2D);
+                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed / 2.5D);
                 if (squaredDistanceToPlayer < ATTACK_DISTANCE && cooldownTimer <= 0) {
                     this.performAttack();
                     currentState = EntityState.IDLE;

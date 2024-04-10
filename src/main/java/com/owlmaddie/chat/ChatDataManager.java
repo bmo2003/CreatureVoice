@@ -16,6 +16,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Rarity;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.util.math.MathHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,22 +221,28 @@ public class ChatDataManager {
                         LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
                                     ", Argument: " + behavior.getArgument() : ""));
 
+                        // Determine entity's default speed
+                        // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class
+                        float entitySpeed = SpeedControls.getMaxSpeed(entity);
+                        float entitySpeedFast = MathHelper.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
+
                         // Apply behaviors to entity
                         if (behavior.getName().equals("FOLLOW")) {
-                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, 1F);
+                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeed);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                         } else if (behavior.getName().equals("UNFOLLOW")) {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                         } else if (behavior.getName().equals("FLEE")) {
-                            FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, 1.5F, 20F);
+                            float fleeDistance = 400F; // 20 blocks squared
+                            FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, entitySpeedFast, fleeDistance);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                         } else if (behavior.getName().equals("ATTACK")) {
-                            AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, 1.1F);
+                            AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
