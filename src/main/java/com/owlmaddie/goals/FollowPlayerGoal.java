@@ -1,5 +1,6 @@
 package com.owlmaddie.goals;
 
+import com.owlmaddie.controls.LookControls;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.mob.MobEntity;

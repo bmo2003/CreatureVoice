@@ -1,4 +1,4 @@
-package com.owlmaddie.goals;
+package com.owlmaddie.controls;
 
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.SlimeEntity;

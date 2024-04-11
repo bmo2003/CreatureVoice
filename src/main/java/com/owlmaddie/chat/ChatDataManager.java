@@ -3,6 +3,7 @@ package com.owlmaddie.chat;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.ModInit;
+import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
 import com.owlmaddie.items.RarityItemCollector;
 import com.owlmaddie.json.QuestJson;

@@ -1,8 +1,6 @@
-package com.owlmaddie.goals;
+package com.owlmaddie.controls;
 
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.VindicatorEntity;
-import net.minecraft.entity.mob.WitchEntity;
+import net.minecraft.entity.mob.*;
 import net.minecraft.entity.passive.*;
 
 /**
@@ -18,6 +16,12 @@ public class SpeedControls {
             speed = 0.5F;
         } else if (entity instanceof VillagerEntity) {
             speed = 0.5F;
+        } else if (entity instanceof IllagerEntity) {
+            speed = 0.75F;
+        } else if (entity instanceof WitchEntity) {
+            speed = 0.75F;
+        } else if (entity instanceof WanderingTraderEntity) {
+            speed = 0.75F;
         } else if (entity instanceof AllayEntity) {
             speed = 1.5F;
         } else if (entity instanceof CamelEntity) {
@@ -28,10 +32,6 @@ public class SpeedControls {
             speed = 2F;
         } else if (entity instanceof PandaEntity) {
             speed = 2F;
-        } else if (entity instanceof VindicatorEntity) {
-            speed = 0.75F;
-        } else if (entity instanceof WitchEntity) {
-            speed = 0.75F;
         } else if (entity instanceof RabbitEntity) {
             speed = 1.5F;
         }
