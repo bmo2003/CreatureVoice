@@ -190,6 +190,12 @@ public class BubbleRenderer {
         if (entity.getCustomName() != null) {
             TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
             String lineText = entity.getCustomName().getLiteralString();
+
+            // Ensure the string is no longer than X characters
+            if (lineText.length() > 14) {
+                lineText = lineText.substring(0, 14) + "...";
+            }
+
             fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
                     false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
         }
