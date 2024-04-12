@@ -51,7 +51,7 @@ public class TalkPlayerGoal extends Goal {
     @Override
     public void tick() {
         // Make the entity look at the player without moving towards them
-        LookControls.LookAtEntity(this.targetPlayer, this.entity);
+        LookControls.lookAtPlayer(this.targetPlayer, this.entity);
         // Continuously stop the entity's navigation to ensure it remains stationary
         this.navigation.stop();
     }

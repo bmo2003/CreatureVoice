@@ -46,7 +46,7 @@ public class FollowPlayerGoal extends Goal {
     @Override
     public void tick() {
         // Look at the player and start moving towards them
-        LookControls.LookAtEntity(this.targetPlayer, this.entity);
+        LookControls.lookAtPlayer(this.targetPlayer, this.entity);
         this.navigation.startMovingTo(this.targetPlayer, this.speed);
     }
 }
