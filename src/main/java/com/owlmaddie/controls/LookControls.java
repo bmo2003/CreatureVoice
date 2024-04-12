@@ -1,8 +1,7 @@
 package com.owlmaddie.controls;
 
-import net.minecraft.entity.mob.FlyingEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.SlimeEntity;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
+import net.minecraft.entity.mob.*;
 import net.minecraft.entity.passive.SquidEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.MathHelper;
@@ -18,8 +17,10 @@ public class LookControls {
             handleSlimeLook((SlimeEntity) entity, player);
         } else if (entity instanceof SquidEntity) {
             handleSquidLook((SquidEntity) entity, player);
-        } else if (entity instanceof FlyingEntity) {
-            handleFlyingEntity((FlyingEntity) entity, player);
+        } else if (entity instanceof GhastEntity) {
+            handleFlyingEntity(entity, player, 10F);
+        } else if (entity instanceof FlyingEntity || entity instanceof VexEntity) {
+            handleFlyingEntity(entity, player, 4F);
         } else {
             // Make the entity look at the player
             entity.getLookControl().lookAt(player, 10.0F, (float)entity.getMaxLookPitchChange());
@@ -48,7 +49,7 @@ public class LookControls {
     }
 
     // Ghast, Phantom, etc...
-    private static void handleFlyingEntity(FlyingEntity flyingEntity, ServerPlayerEntity player) {
+    private static void handleFlyingEntity(MobEntity flyingEntity, ServerPlayerEntity player, float stopDistance) {
         Vec3d playerPosition = player.getPos();
         Vec3d flyingPosition = flyingEntity.getPos();
         Vec3d toPlayer = playerPosition.subtract(flyingPosition).normalize();
@@ -68,7 +69,7 @@ public class LookControls {
         );
 
         double distanceToPlayer = flyingEntity.getPos().distanceTo(player.getPos());
-        if (distanceToPlayer < 9F) {
+        if (distanceToPlayer < stopDistance) {
             // Stop motion when close
             flyingEntity.setVelocity(0, 0, 0);
         }
