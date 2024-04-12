@@ -39,6 +39,8 @@ public class BubbleRenderer {
     protected static TextureLoader textures = new TextureLoader();
     public static int DISPLAY_NUM_LINES = 3;
     public static int DISPLAY_PADDING = 2;
+    public static int animationFrame = 0;
+    public static long lastTick = 0;
 
     public static void drawTextBubbleBackground(MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         RenderSystem.enableDepthTest();
@@ -206,7 +208,7 @@ public class BubbleRenderer {
         }
     }
 
-    public static void drawTextAboveEntities(WorldRenderContext context, float partialTicks) {
+    public static void drawTextAboveEntities(WorldRenderContext context, long tick, float partialTicks) {
         Camera camera = context.camera();
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
@@ -356,7 +358,16 @@ public class BubbleRenderer {
 
             } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
                 // Draw 'pending' button
-                drawIcon("button-dot-0", matrices, -16, textHeaderHeight, 32, 17);
+                drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
+
+                // Calculate animation frames (0-8) every X ticks
+                if (lastTick != tick && tick % 5 == 0) {
+                    lastTick = tick;
+                    animationFrame++;
+                }
+                if (animationFrame > 8) {
+                    animationFrame = 0;
+                }
 
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
                 // Draw text background (no smaller than 50F tall)
