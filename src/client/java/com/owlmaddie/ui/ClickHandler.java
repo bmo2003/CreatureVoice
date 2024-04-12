@@ -15,6 +15,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Box;
@@ -172,8 +173,21 @@ public class ClickHandler {
             Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians)).multiply(entity.getWidth() / 2.0 * 0.8);
 
             double paddingAboveEntity = 0.4D;
-            Vec3d entityPos = entity.getPos();
-            Vec3d iconCenter = entityPos.add(forwardOffset).add(0, entityHeight + paddingAboveEntity, 0);
+            Vec3d iconCenter;
+
+            // Determine the chat bubble position
+            if (entity instanceof EnderDragonEntity) {
+                // Ender dragons a unique, and we must use the Head for position
+                EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                Vec3d headPos = dragon.head.getPos();
+
+                // Just use the head's interpolated position directly
+                iconCenter = headPos.add(0, entityHeight + paddingAboveEntity, 0);
+            } else {
+                // Calculate the position of the chat bubble: above the head and 80% towards the front
+                Vec3d entityPos = entity.getPos();
+                iconCenter = entityPos.add(forwardOffset).add(0, entityHeight + paddingAboveEntity, 0);
+            }
 
             // Define a bounding box that accurately represents the text bubble
             double bubbleRadius = 1D; // Determine the radius or size of the text bubble

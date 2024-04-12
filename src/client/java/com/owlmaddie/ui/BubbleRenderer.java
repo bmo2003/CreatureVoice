@@ -14,6 +14,8 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
+import net.minecraft.entity.boss.dragon.EnderDragonPart;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
@@ -22,6 +24,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +35,7 @@ import java.util.stream.Collectors;
  * text, friendship status, and other UI-related rendering code.
  */
 public class BubbleRenderer {
+    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     protected static TextureLoader textures = new TextureLoader();
     public static int DISPLAY_NUM_LINES = 3;
     public static int DISPLAY_PADDING = 2;
@@ -259,16 +264,34 @@ public class BubbleRenderer {
                     MathHelper.lerp(partialTicks, entity.prevZ, entity.getPos().z)
             );
 
-            // Calculate the forward offset based on the entity's yaw
-            float entityYawRadians = (float) Math.toRadians(entity.getYaw(partialTicks));
-            Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians));
+            // Determine the chat bubble position
+            Vec3d bubblePosition;
+            if (entity instanceof EnderDragonEntity) {
+                // Ender dragons a unique, and we must use the Head for position
+                EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                EnderDragonPart head = dragon.head;
 
-            // Calculate the forward offset based on the entity's yaw, scaled to 80% towards the front edge
-            Vec3d scaledForwardOffset = forwardOffset.multiply(entity.getWidth() / 2.0 * 0.8);
+                // Interpolate the head position
+                Vec3d headPos = new Vec3d(
+                        MathHelper.lerp(partialTicks, head.prevX, head.getX()),
+                        MathHelper.lerp(partialTicks, head.prevY, head.getY()),
+                        MathHelper.lerp(partialTicks, head.prevZ, head.getZ())
+                );
 
-            // Calculate the position of the chat bubble: above the head and 80% towards the front
-            Vec3d bubblePosition = interpolatedEntityPos.add(scaledForwardOffset)
-                    .add(0, entityHeight + paddingAboveEntity, 0);
+                // Just use the head's interpolated position directly
+                bubblePosition = headPos.add(0, entityHeight + paddingAboveEntity, 0);
+            } else {
+                // Calculate the forward offset based on the entity's yaw
+                float entityYawRadians = (float) Math.toRadians(entity.getYaw(partialTicks));
+                Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians));
+
+                // Calculate the forward offset based on the entity's yaw, scaled to 80% towards the front edge
+                Vec3d scaledForwardOffset = forwardOffset.multiply(entity.getWidth() / 2.0 * 0.8);
+
+                // Calculate the position of the chat bubble: above the head and 80% towards the front
+                bubblePosition = interpolatedEntityPos.add(scaledForwardOffset)
+                        .add(0, entityHeight + paddingAboveEntity, 0);
+            }
 
             // Translate to the chat bubble's position
             matrices.translate(bubblePosition.x - interpolatedCameraPos.x,
