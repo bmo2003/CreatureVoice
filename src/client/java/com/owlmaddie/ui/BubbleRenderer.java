@@ -239,8 +239,8 @@ public class BubbleRenderer {
                 .collect(Collectors.toList());
 
         for (MobEntity entity : nearbyCreatures) {
-            if (entity.getType() == EntityType.PLAYER) {
-                // Skip Player
+            if (entity.getType() == EntityType.PLAYER || entity.hasPassengers()) {
+                // Skip
                 continue;
             }
 
