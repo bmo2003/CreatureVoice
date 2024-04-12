@@ -160,7 +160,7 @@ public class ClickHandler {
 
         // Iterate through the entities to check for hits
         for (MobEntity entity : nearbyCreatures) {
-            if (entity.getType() == EntityType.PLAYER) {
+            if (entity.getType() == EntityType.PLAYER || entity.hasPassengers()) {
                 // Skip Player
                 continue;
             }
