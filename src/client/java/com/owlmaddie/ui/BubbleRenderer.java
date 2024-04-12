@@ -356,7 +356,7 @@ public class BubbleRenderer {
 
             } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
                 // Draw 'pending' button
-                drawIcon("button-dotdot", matrices, -16, textHeaderHeight, 32, 17);
+                drawIcon("button-dot-0", matrices, -16, textHeaderHeight, 32, 17);
 
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
                 // Draw text background (no smaller than 50F tall)
