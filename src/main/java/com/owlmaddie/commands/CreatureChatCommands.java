@@ -17,53 +17,62 @@ public class CreatureChatCommands {
     public static void register() {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
-            registerBaseCommand(dispatcher);
+            registerCommands(dispatcher);
         });
     }
 
-    private static void registerBaseCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
+    public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("creaturechat")
-                .then(registerSetKeyCommand())
-                .then(registerSetUrlCommand())
-                .then(registerSetModelCommand())
+                .then(registerSetCommand("key", "API key"))
+                .then(registerSetCommand("url", "URL"))
+                .then(registerSetCommand("model", "model"))
                 .then(registerHelpCommand()));
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> registerSetKeyCommand() {
-        return CommandManager.literal("key").then(CommandManager.literal("set").then(CommandManager.argument("key", StringArgumentType.word())
-                .requires(source -> source.hasPermissionLevel(4))
-                .executes(context -> {
-                    String key = StringArgumentType.getString(context, "key");
-                    context.getSource().sendFeedback(() -> Text.literal("API key set to: " + key), false);
-                    return 1;
-                })));
+    private static LiteralArgumentBuilder<ServerCommandSource> registerSetCommand(String settingName, String settingDescription) {
+        return CommandManager.literal(settingName)
+                .then(CommandManager.literal("set")
+                        .then(CommandManager.argument("value", StringArgumentType.string())
+                                .then(CommandManager.literal("--config")
+                                        .then(CommandManager.literal("default")
+                                                .executes(context -> setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), false, settingDescription)))
+                                        .then(CommandManager.literal("server")
+                                                .executes(context -> setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), true, settingDescription)))
+                                )
+                                .executes(context -> setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), false, settingDescription)) // Default to server if not specified
+                        ));
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> registerSetUrlCommand() {
-        return CommandManager.literal("url").then(CommandManager.literal("set").then(CommandManager.argument("url", StringArgumentType.string())
-                .requires(source -> source.hasPermissionLevel(4))
-                .executes(context -> {
-                    String url = StringArgumentType.getString(context, "url");
-                    context.getSource().sendFeedback(() -> Text.literal("URL set to: " + url), false);
-                    return 1;
-                })));
-    }
-
-    private static LiteralArgumentBuilder<ServerCommandSource> registerSetModelCommand() {
-        return CommandManager.literal("model").then(CommandManager.literal("set").then(CommandManager.argument("model", StringArgumentType.word())
-                .requires(source -> source.hasPermissionLevel(4))
-                .executes(context -> {
-                    String model = StringArgumentType.getString(context, "model");
-                    context.getSource().sendFeedback(() -> Text.literal("Model set to: " + model), false);
-                    return 1;
-                })));
+    private static int setConfig(ServerCommandSource source, String settingName, String value, boolean useServerConfig, String settingDescription) {
+        ConfigurationHandler configHandler = new ConfigurationHandler(source.getServer());
+        ConfigurationHandler.Config config = configHandler.loadConfig();
+        switch (settingName) {
+            case "key":
+                config.setApiKey(value);
+                break;
+            case "url":
+                config.setUrl(value);
+                break;
+            case "model":
+                config.setModel(value);
+                break;
+        }
+        configHandler.saveConfig(config, useServerConfig);
+        source.sendFeedback(() -> Text.literal(settingDescription + " set to: " + value + " in " + (useServerConfig ? "server" : "default") + " configuration."), false);
+        return 1;
     }
 
     private static LiteralArgumentBuilder<ServerCommandSource> registerHelpCommand() {
         return CommandManager.literal("help")
-                .requires(source -> source.hasPermissionLevel(4))
+                .requires(source -> source.hasPermissionLevel(4))  // Restricts this command to high-level permissions
                 .executes(context -> {
-                    context.getSource().sendFeedback(() -> Text.literal("Usage:\n/creaturechat key set <key>\n/creaturechat url set <url>\n/creaturechat model set <model>"), false);
+                    String helpMessage = "Usage of CreatureChat Commands:\n"
+                            + "/creaturechat key set <key> - Sets the API key.\n"
+                            + "/creaturechat url set <url> - Sets the URL.\n"
+                            + "/creaturechat model set <model> - Sets the model.\n"
+                            + "\n"
+                            + "Optional: Append [--config default | server] to any command to specify configuration scope. If --config is not specified, 'default' is assumed'.";
+                    context.getSource().sendFeedback(() -> Text.literal(helpMessage), false);
                     return 1;
                 });
     }
