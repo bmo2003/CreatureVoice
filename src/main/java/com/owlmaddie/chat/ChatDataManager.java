@@ -205,7 +205,7 @@ public class ChatDataManager {
             // fetch HTTP response from ChatGPT
             ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages, false).thenAccept(output_message -> {
                 if (output_message != null && systemPrompt == "system-character") {
-                    // Remove system-character message from previous messages
+                    // Character Sheet: Remove system-character message from previous messages
                     previousMessages.clear();
 
                     // Add NEW CHARACTER sheet & greeting
@@ -214,7 +214,7 @@ public class ChatDataManager {
                     this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT);
 
                 } else if (output_message != null && systemPrompt == "system-chat") {
-                    // Parse message for behaviors
+                    // Chat Message: Parse message for behaviors
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
 
                     // Apply behaviors (if any)
@@ -278,10 +278,15 @@ public class ChatDataManager {
                     // Get cleaned message (i.e. no <BEHAVIOR> strings)
                     String cleanedMessage = result.getCleanedMessage();
                     if (cleanedMessage.isEmpty()) {
-                        cleanedMessage = result.getRandomNoResponseMessage();
+                        cleanedMessage = ParsedMessage.getRandomNoResponseMessage();
                     }
                     // Update the current message to a 'cleaned version'
                     this.currentMessage = cleanedMessage;
+
+                } else {
+                    // Error / No Chat Message (Failure)
+                    String randomErrorMessage = ParsedMessage.getRandomErrorMessage();
+                    this.addMessage(randomErrorMessage, ChatSender.ASSISTANT);
                 }
 
                 // Broadcast to all players

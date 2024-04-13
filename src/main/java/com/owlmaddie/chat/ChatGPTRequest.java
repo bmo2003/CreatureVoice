@@ -2,6 +2,7 @@ package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
 import com.owlmaddie.ModInit;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.json.ChatGPTResponse;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
@@ -25,14 +26,6 @@ import java.util.regex.Pattern;
  */
 public class ChatGPTRequest {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-
-    // Init API & LLM details
-    private static final String apiUrl = "https://api.openai.com/v1/chat/completions";
-    private static final String apiKey = "REDACTED_API_KEY";
-    private static final String modelName = "gpt-3.5-turbo";
-    private static final int maxContextTokens = 16385;
-    private static final int maxOutputTokens = 200;
-    private static final double percentOfContext = 0.75;
 
     static class ChatGPTRequestMessage {
         String role;
@@ -105,6 +98,17 @@ public class ChatGPTRequest {
     }
 
     public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
+        // Get config (api key, url, settings)
+        ConfigurationHandler.Config config = new ConfigurationHandler(ModInit.serverInstance).loadConfig();
+
+        // Init API & LLM details
+        String apiUrl = config.getUrl();
+        String apiKey = config.getApiKey();
+        String modelName = config.getModel();
+        int maxContextTokens = config.getMaxContextTokens();
+        int maxOutputTokens = config.getMaxOutputTokens();
+        double percentOfContext = config.getPercentOfContext();
+
         return CompletableFuture.supplyAsync(() -> {
             try {
                 String systemMessage = "";

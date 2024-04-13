@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 /**
  * The {@code ConfigurationHandler} class loads and saves configuration settings for this mod. It first
  * checks for a config file in the world save folder, and if not found, falls back to the root folder.
- * This allows for global/default settings, or server-specific settings.
+ * This allows for global/default settings, or optional server-specific settings.
  */
 
 public class ConfigurationHandler {
@@ -54,16 +54,32 @@ public class ConfigurationHandler {
     }
 
     public static class Config {
-        private String apiKey;
-        private String url;
-        private String model;
+        private String apiKey = "";
+        private String url = "https://api.openai.com/v1/chat/completions";
+        private String model = "gpt-3.5-turbo";
+        private int maxContextTokens = 16385;
+        private int maxOutputTokens = 200;
+        private double percentOfContext = 0.75;
 
-        // getters and setters
+        // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+
         public String getUrl() { return url; }
         public void setUrl(String url) { this.url = url; }
+
         public String getModel() { return model; }
         public void setModel(String model) { this.model = model; }
+
+        // Getters and setters for new fields
+        public int getMaxContextTokens() { return maxContextTokens; }
+        public void setMaxContextTokens(int maxContextTokens) { this.maxContextTokens = maxContextTokens; }
+
+        public int getMaxOutputTokens() { return maxOutputTokens; }
+        public void setMaxOutputTokens(int maxOutputTokens) { this.maxOutputTokens = maxOutputTokens; }
+
+        public double getPercentOfContext() { return percentOfContext; }
+        public void setPercentOfContext(double percentOfContext) { this.percentOfContext = percentOfContext; }
+
     }
 }
