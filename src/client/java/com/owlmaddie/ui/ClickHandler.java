@@ -17,6 +17,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The {@code ClickHandler} class is used for the client to interact with the Entity chat UI. This class helps
@@ -123,7 +125,6 @@ public class ClickHandler {
     }
 
     public static void handleUseKeyClick(MinecraftClient client) {
-        // Get Nearby Entities
         Camera camera = client.gameRenderer.getCamera();
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
@@ -132,9 +133,9 @@ public class ClickHandler {
         double renderDistance = 9.0;
 
         // Calculate radius of entities
-        Vec3d pos = cameraEntity.getPos();
-        Box area = new Box(pos.x - renderDistance, pos.y - renderDistance, pos.z - renderDistance,
-                pos.x + renderDistance, pos.y + renderDistance, pos.z + renderDistance);
+        Vec3d cameraPos = cameraEntity.getPos();
+        Box area = new Box(cameraPos.x - renderDistance, cameraPos.y - renderDistance, cameraPos.z - renderDistance,
+                cameraPos.x + renderDistance, cameraPos.y + renderDistance, cameraPos.z + renderDistance);
 
         // Get all entities
         List<Entity> nearbyEntities = world.getOtherEntities(null, area);
@@ -153,10 +154,15 @@ public class ClickHandler {
 
         // Use the player's looking direction to define the ray's direction
         Vec3d lookVec = player.getRotationVec(1.0F);
-        Vec3d endRay = startRay.add(lookVec.normalize().multiply(renderDistance));
+
+        // Chat bubble size
+        double bubbleHeight = 1.3D;
+        double bubbleWidth = 2.6D;
 
         MobEntity closestEntity = null;
         double closestDistance = Double.MAX_VALUE; // Start with the largest possible distance
+        Optional<Vec3d> closestHitResult = null;
+        Vec3d closestCenter = null;
 
         // Iterate through the entities to check for hits
         for (MobEntity entity : nearbyCreatures) {
@@ -190,19 +196,21 @@ public class ClickHandler {
             }
 
             // Define a bounding box that accurately represents the text bubble
-            double bubbleRadius = 1D; // Determine the radius or size of the text bubble
-            Box iconBox = new Box(
-                    iconCenter.add(-bubbleRadius, -bubbleRadius, -bubbleRadius),
-                    iconCenter.add(bubbleRadius, bubbleRadius, bubbleRadius)
-            );
+            Vec3d[] corners = getBillboardCorners(iconCenter, cameraPos, bubbleHeight, bubbleWidth);
 
-            // Perform the raycast
-            Optional<Vec3d> hitResult = iconBox.raycast(startRay, endRay);
+            // DEBUG CODE
+            //drawCorners(entity.getWorld(), corners);
+            //drawRay(startRay, lookVec, entity.getWorld());
+
+            // Cast ray and determine intersection with chat bubble
+            Optional<Vec3d> hitResult = rayIntersectsPolygon(startRay, lookVec, corners);
             if (hitResult.isPresent()) {
                 double distance = startRay.squaredDistanceTo(hitResult.get());
                 if (distance < closestDistance) {
                     closestDistance = distance;
                     closestEntity = entity;
+                    closestHitResult = hitResult;
+                    closestCenter = iconCenter;
                 }
             }
         }
@@ -214,6 +222,10 @@ public class ClickHandler {
 
             // Play click sound
             client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2F, 0.8F);
+
+            // Determine area clicked inside chat bubble (top, left, right)
+            String hitRegion = determineHitRegion(closestHitResult.get(), closestCenter, camera, bubbleHeight);
+            LOGGER.info(hitRegion);
 
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Start conversation
@@ -227,6 +239,116 @@ public class ClickHandler {
                 client.setScreen(new ChatScreen(closestEntity));
             }
         }
+    }
 
+    public static Vec3d[] getBillboardCorners(Vec3d center, Vec3d cameraPos, double height, double width) {
+        // Calculate the vector pointing from the center to the camera
+        Vec3d toCamera = cameraPos.subtract(center).normalize();
+
+        // Right vector is perpendicular on the 'toCamera' vector, assuming 'up' is the global Y-axis (0, 1, 0)
+        Vec3d right = toCamera.crossProduct(new Vec3d(0, 1, 0)).normalize();
+
+        // The actual up vector for the billboard can be recalculated to ensure orthogonality
+        Vec3d up = right.crossProduct(toCamera).normalize();
+
+        // Adjust the center point to move it to the bottom center of the rectangle
+        Vec3d adjustedCenter = center.add(up.multiply(height / 2));  // Move the center upwards by half the height
+
+        // Calculate the corners using the adjusted center, right, and up vectors
+        Vec3d topLeft = adjustedCenter.subtract(right.multiply(width / 2)).add(up.multiply(height / 2));
+        Vec3d topRight = adjustedCenter.add(right.multiply(width / 2)).add(up.multiply(height / 2));
+        Vec3d bottomRight = adjustedCenter.add(right.multiply(width / 2)).subtract(up.multiply(height / 2));
+        Vec3d bottomLeft = adjustedCenter.subtract(right.multiply(width / 2)).subtract(up.multiply(height / 2));
+
+        // Return an array of Vec3d representing each corner of the billboard
+        return new Vec3d[] {topLeft, topRight, bottomRight, bottomLeft};
+    }
+
+    public static void drawCorners(World world, Vec3d[] corners) {
+        // Iterate over the corners to place glow particles
+        for (Vec3d corner : corners) {
+            world.addParticle(
+                    ParticleTypes.GLOW,  // Using glow particles
+                    corner.x, corner.y, corner.z,  // Coordinates of the particle
+                    0.0, 0.0, 0.0  // No motion
+            );
+        }
+    }
+
+    public static void drawRay(Vec3d origin, Vec3d direction, World world) {
+        Vec3d point = origin;
+        double step = 0.5;
+        int count = 100;  // Draw the ray for 100 steps
+        for (int i = 0; i < count; i++) {
+            point = point.add(direction.multiply(step));
+            world.addParticle(ParticleTypes.END_ROD, point.x, point.y, point.z, 0, 0, 0);
+        }
+    }
+
+    public static Optional<Vec3d> rayIntersectsPolygon(Vec3d rayOrigin, Vec3d rayDirection, Vec3d[] vertices) {
+        rayDirection = rayDirection.normalize();  // Ensure direction is normalized
+        // Check two triangles formed by the quad
+        return Stream.of(
+                        rayIntersectsTriangle(rayOrigin, rayDirection, vertices[0], vertices[1], vertices[2]),
+                        rayIntersectsTriangle(rayOrigin, rayDirection, vertices[0], vertices[2], vertices[3])
+                ).filter(Optional::isPresent)
+                .findFirst()
+                .orElse(Optional.empty());
+    }
+
+    public static Optional<Vec3d> rayIntersectsTriangle(Vec3d rayOrigin, Vec3d rayDirection, Vec3d v0, Vec3d v1, Vec3d v2) {
+        Vec3d edge1 = v1.subtract(v0);
+        Vec3d edge2 = v2.subtract(v0);
+        Vec3d h = rayDirection.crossProduct(edge2);
+        double a = edge1.dotProduct(h);
+
+        if (Math.abs(a) < 1e-6) return Optional.empty();  // Ray is parallel to the triangle
+
+        double f = 1.0 / a;
+        Vec3d s = rayOrigin.subtract(v0);
+        double u = f * s.dotProduct(h);
+        if (u < 0.0 || u > 1.0) return Optional.empty();
+
+        Vec3d q = s.crossProduct(edge1);
+        double v = f * rayDirection.dotProduct(q);
+        if (v < 0.0 || u + v > 1.0) return Optional.empty();
+
+        double t = f * edge2.dotProduct(q);
+        if (t > 1e-6) {
+            return Optional.of(rayOrigin.add(rayDirection.multiply(t)));
+        }
+        return Optional.empty();
+    }
+
+    public static String determineHitRegion(Vec3d hitPoint, Vec3d center, Camera camera, double height) {
+        Vec3d cameraPos = camera.getPos();
+        Vec3d toCamera = cameraPos.subtract(center).normalize();
+
+        // Assuming a standard global up vector (aligned with the y-axis)
+        Vec3d globalUp = new Vec3d(0, 1, 0);
+
+        // Calculate the "RIGHT" vector as perpendicular to the 'toCamera' vector and the global up vector
+        Vec3d right = globalUp.crossProduct(toCamera).normalize();
+
+        // Handle the case where the camera is looking straight down or up, making the cross product degenerate
+        if (right.lengthSquared() == 0) {
+            // If directly above or below, define an arbitrary right vector (assuming world x-axis)
+            right = new Vec3d(1, 0, 0);
+        }
+
+        // Recalculate "UP" vector to ensure it's orthogonal to both "RIGHT" and "toCamera"
+        Vec3d up = toCamera.crossProduct(right).normalize();
+
+        // Calculate the relative position of the hit point to the center of the billboard
+        Vec3d relPosition = hitPoint.subtract(center);
+        double relX = relPosition.dotProduct(right);  // Project onto "RIGHT"
+        double relY = relPosition.dotProduct(up);     // Project onto "UP"
+
+        // Determine hit region based on relative coordinates
+        if (relY > 0.65 * height) {
+            return "TOP";
+        } else {
+            return relX < 0 ? "LEFT" : "RIGHT"; // Determine if on the left or right half
+        }
     }
 }
