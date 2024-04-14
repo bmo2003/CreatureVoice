@@ -7,19 +7,15 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ModPackets;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
-import com.owlmaddie.utils.EntityHeights;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
@@ -28,10 +24,9 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -129,78 +124,32 @@ public class ClickHandler {
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
 
-        World world = cameraEntity.getEntityWorld();
-        double renderDistance = 9.0;
-
-        // Calculate radius of entities
-        Vec3d cameraPos = cameraEntity.getPos();
-        Box area = new Box(cameraPos.x - renderDistance, cameraPos.y - renderDistance, cameraPos.z - renderDistance,
-                cameraPos.x + renderDistance, cameraPos.y + renderDistance, cameraPos.z + renderDistance);
-
-        // Get all entities
-        List<Entity> nearbyEntities = world.getOtherEntities(null, area);
-
-        // Filter out MobEntity/Living entities
-        List<MobEntity> nearbyCreatures = nearbyEntities.stream()
-                .filter(entity -> entity instanceof MobEntity)
-                .map(entity -> (MobEntity) entity)
-                .collect(Collectors.toList());
-
         // Get the player from the client
         ClientPlayerEntity player = client.player;
 
         // Get the camera position for ray start to support both first-person and third-person views
-        Vec3d startRay = client.gameRenderer.getCamera().getPos();
+        Vec3d startRay = camera.getPos();
 
         // Use the player's looking direction to define the ray's direction
         Vec3d lookVec = player.getRotationVec(1.0F);
 
-        // Chat bubble size
-        double bubbleHeight = 1.3D;
-        double bubbleWidth = 2.6D;
-
-        MobEntity closestEntity = null;
-        double closestDistance = Double.MAX_VALUE; // Start with the largest possible distance
+        // Track the closest object details
+        double closestDistance = Double.MAX_VALUE;
         Optional<Vec3d> closestHitResult = null;
-        Vec3d closestCenter = null;
+        UUID closestEntityUUID = null;
+        BubbleLocationManager.BubbleData closestBubbleData = null;
 
-        // Iterate through the entities to check for hits
-        for (MobEntity entity : nearbyCreatures) {
-            if (entity.getType() == EntityType.PLAYER || entity.hasPassengers()) {
-                // Skip Player
-                continue;
-            }
-
-            // Get entity height (adjust for specific classes)
-            float entityHeight = EntityHeights.getAdjustedEntityHeight(entity);
-
-            // Move hit box near front of entity
-            float entityYawRadians = (float) Math.toRadians(entity.getYaw());
-            Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians)).multiply(entity.getWidth() / 2.0 * 0.8);
-
-            double paddingAboveEntity = 0.4D;
-            Vec3d iconCenter;
-
-            // Determine the chat bubble position
-            if (entity instanceof EnderDragonEntity) {
-                // Ender dragons a unique, and we must use the Head for position
-                EnderDragonEntity dragon = (EnderDragonEntity) entity;
-                Vec3d headPos = dragon.head.getPos();
-
-                // Just use the head's interpolated position directly
-                iconCenter = headPos.add(0, entityHeight + paddingAboveEntity, 0);
-            } else {
-                // Calculate the position of the chat bubble: above the head and 80% towards the front
-                Vec3d entityPos = entity.getPos();
-                iconCenter = entityPos.add(forwardOffset).add(0, entityHeight + paddingAboveEntity, 0);
-            }
+        // Iterate over cached rendered chat bubble data in BubbleLocationManager
+        for (Map.Entry<UUID, BubbleLocationManager.BubbleData> entry : BubbleLocationManager.getAllBubbleData().entrySet()) {
+            UUID entityUUID = entry.getKey();
+            BubbleLocationManager.BubbleData bubbleData = entry.getValue();
 
             // Define a bounding box that accurately represents the text bubble
-            Vec3d[] corners = getBillboardCorners(iconCenter, cameraPos, bubbleHeight, bubbleWidth);
+            Vec3d[] corners = getBillboardCorners(bubbleData.position, camera.getPos(), bubbleData.height, bubbleData.width, bubbleData.yaw, bubbleData.pitch);
 
             // DEBUG CODE
-            //drawCorners(entity.getWorld(), corners);
-            //drawRay(startRay, lookVec, entity.getWorld());
+            drawCorners(player.getWorld(), corners);
+            drawRay(startRay, lookVec, player.getWorld());
 
             // Cast ray and determine intersection with chat bubble
             Optional<Vec3d> hitResult = rayIntersectsPolygon(startRay, lookVec, corners);
@@ -208,48 +157,58 @@ public class ClickHandler {
                 double distance = startRay.squaredDistanceTo(hitResult.get());
                 if (distance < closestDistance) {
                     closestDistance = distance;
-                    closestEntity = entity;
+                    closestEntityUUID = entityUUID;
                     closestHitResult = hitResult;
-                    closestCenter = iconCenter;
+                    closestBubbleData = bubbleData;
                 }
             }
         }
 
         // Handle the click for the closest entity after the loop
-        if (closestEntity != null) {
-            // Look-up conversation
-            ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntity.getUuidAsString());
+        if (closestEntityUUID != null) {
+            MobEntity closestEntity = ClientEntityFinder.getEntityByUUID(client.world, closestEntityUUID);
+            if (closestEntity != null) {
+                // Look-up conversation
+                ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntityUUID.toString());
 
-            // Play click sound
-            client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2F, 0.8F);
+                // Play click sound
+                client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2F, 0.8F);
 
-            // Determine area clicked inside chat bubble (top, left, right)
-            String hitRegion = determineHitRegion(closestHitResult.get(), closestCenter, camera, bubbleHeight);
-            LOGGER.info(hitRegion);
+                // Determine area clicked inside chat bubble (top, left, right)
+                String hitRegion = determineHitRegion(closestHitResult.get(), closestBubbleData.position, camera, closestBubbleData.height);
+                LOGGER.info("Clicked region: " + hitRegion);
 
-            if (chatData.status == ChatDataManager.ChatStatus.NONE) {
-                // Start conversation
-                ModPackets.sendGenerateGreeting(closestEntity);
-            } else if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                // Update lines read
-                ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + BubbleRenderer.DISPLAY_NUM_LINES);
-            } else if (chatData.status == ChatDataManager.ChatStatus.END) {
-                // End of chat (open player chat screen)
-                ModPackets.sendStartChat(closestEntity);
-                client.setScreen(new ChatScreen(closestEntity));
+                if (chatData.status == ChatDataManager.ChatStatus.NONE) {
+                    // Start conversation
+                    ModPackets.sendGenerateGreeting(closestEntity);
+                } else if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
+                    // Update lines read
+                    ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + BubbleRenderer.DISPLAY_NUM_LINES);
+                } else if (chatData.status == ChatDataManager.ChatStatus.END) {
+                    // End of chat (open player chat screen)
+                    ModPackets.sendStartChat(closestEntity);
+                    client.setScreen(new ChatScreen(closestEntity));
+                }
             }
         }
     }
 
-    public static Vec3d[] getBillboardCorners(Vec3d center, Vec3d cameraPos, double height, double width) {
+    public static Vec3d[] getBillboardCorners(Vec3d center, Vec3d cameraPos, double height, double width, double yaw, double pitch) {
+        // Convert yaw and pitch to radians for rotation calculations
+        double radYaw = Math.toRadians(yaw);
+        double radPitch = Math.toRadians(pitch);
+
         // Calculate the vector pointing from the center to the camera
         Vec3d toCamera = cameraPos.subtract(center).normalize();
 
-        // Right vector is perpendicular on the 'toCamera' vector, assuming 'up' is the global Y-axis (0, 1, 0)
-        Vec3d right = toCamera.crossProduct(new Vec3d(0, 1, 0)).normalize();
+        // Calculate initial 'right' and 'up' vectors assuming 'up' is the global Y-axis (0, 1, 0)
+        Vec3d globalUp = new Vec3d(0, 1, 0);
+        Vec3d right = globalUp.crossProduct(toCamera).normalize();
+        Vec3d up = toCamera.crossProduct(right).normalize();
 
-        // The actual up vector for the billboard can be recalculated to ensure orthogonality
-        Vec3d up = right.crossProduct(toCamera).normalize();
+        // Rotate 'right' and 'up' vectors based on yaw and pitch
+        right = rotateVector(right, radYaw, radPitch);
+        up = rotateVector(up, radYaw, radPitch);
 
         // Adjust the center point to move it to the bottom center of the rectangle
         Vec3d adjustedCenter = center.add(up.multiply(height / 2));  // Move the center upwards by half the height
@@ -262,6 +221,26 @@ public class ClickHandler {
 
         // Return an array of Vec3d representing each corner of the billboard
         return new Vec3d[] {topLeft, topRight, bottomRight, bottomLeft};
+    }
+
+    private static Vec3d rotateVector(Vec3d vector, double yaw, double pitch) {
+        // Rotation around Y-axis (yaw)
+        double cosYaw = Math.cos(yaw);
+        double sinYaw = Math.sin(yaw);
+        Vec3d yawRotated = new Vec3d(
+                vector.x * cosYaw + vector.z * sinYaw,
+                vector.y,
+                -vector.x * sinYaw + vector.z * cosYaw
+        );
+
+        // Rotation around X-axis (pitch)
+        double cosPitch = Math.cos(pitch);
+        double sinPitch = Math.sin(pitch);
+        return new Vec3d(
+                yawRotated.x,
+                yawRotated.y * cosPitch - yawRotated.z * sinPitch,
+                yawRotated.y * sinPitch + yawRotated.z * cosPitch
+        );
     }
 
     public static void drawCorners(World world, Vec3d[] corners) {
@@ -345,7 +324,7 @@ public class ClickHandler {
         double relY = relPosition.dotProduct(up);     // Project onto "UP"
 
         // Determine hit region based on relative coordinates
-        if (relY > 0.65 * height) {
+        if (relY > 0.70 * height) {
             return "TOP";
         } else {
             return relX < 0 ? "LEFT" : "RIGHT"; // Determine if on the left or right half

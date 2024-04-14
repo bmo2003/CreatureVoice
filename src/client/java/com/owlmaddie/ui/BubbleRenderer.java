@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -342,6 +343,10 @@ public class BubbleRenderer {
             float minTextHeight = (DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
             scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
 
+            // Update Bubble Data for Click Handling using UUID (account for scaling)
+            BubbleLocationManager.updateBubbleData(entity.getUuid(), bubblePosition,
+                    128F / (1 / 0.02F), (scaledTextHeight + 25F) / (1 / 0.02F), yaw, pitch);
+
             // Scale down before rendering textures (otherwise font is huge)
             matrices.scale(-0.02F, -0.02F, 0.02F);
 
@@ -391,5 +396,13 @@ public class BubbleRenderer {
             // Pop the matrix to return to the original state.
             matrices.pop();
         }
+
+        // Get list of Entity UUIDs with chat bubbles rendered
+        List<UUID> activeEntityUUIDs = nearbyCreatures.stream()
+                .map(Entity::getUuid)
+                .collect(Collectors.toList());
+
+        // Purge entities that were not rendered
+        BubbleLocationManager.performCleanup(activeEntityUUIDs);
     }
 }
