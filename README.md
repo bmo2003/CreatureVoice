@@ -15,13 +15,32 @@ Looking to enrich your Minecraft journey with deep conversations and lasting all
 **Step into the world of CreatureChat 🗨 and spark your first conversation today!**
 
 ## Installation
-
 1. **Install Fabric Loader**: Follow the instructions [here](https://fabricmc.net/use/).
 2. **Download Fabric API**: Get the version which we support (refer to `gradle.properties` for supported Minecraft and Fabric versions)
    from [Modrinth](https://modrinth.com/mod/fabric-api)
    or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api).
 3. **Install Mob GPT Mod**: Place `mobgpt-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
    folder.
+
+## Commands
+The CreatureChat mod allows users to configure settings via in-game commands. Here's how to use them:
+
+### Command Usage
+- `/creaturechat key set <key>`
+  Sets the **OpenAI API key**. This is required for making requests to the LLM.
+- `/creaturechat url set <url>`
+  **Optional:** Sets the URL of the API used to make LLM requests.
+- `/creaturechat model set <model>`
+  **Optional:** Sets the model used for generating responses in chats.
+
+### Configuration Scope:
+  You can specify the **optional** configuration scope at the end of each command to determine where settings should be applied:
+
+- **Default** Configuration (`--config default`):
+  Applies the configuration universally, unless overridden by a server-specific configuration.
+- **Server**-Specific Configuration (`--config server`):
+  Applies the configuration only to the server where the command is executed.
+- If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ## Screenshots
 ![Pig Teaching Player](src/main/resources/assets/mobgpt/screenshots/pig-teaching.png "Pig Teaching Player")
