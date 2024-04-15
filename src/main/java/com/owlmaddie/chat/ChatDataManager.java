@@ -39,7 +39,8 @@ public class ChatDataManager {
     private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager(true);
     private static final ChatDataManager CLIENT_INSTANCE = new ChatDataManager(false);
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
-    public static int MAX_CHAR_PER_LINE = 22;
+    public static int MAX_CHAR_PER_LINE = 20;
+    public static int DISPLAY_NUM_LINES = 3;
     public QuestJson quest = null;
     private static final Gson GSON = new Gson();
 
@@ -47,7 +48,7 @@ public class ChatDataManager {
         NONE,       // No chat status yet
         PENDING,    // Chat is pending (e.g., awaiting response or processing)
         DISPLAY,    // Chat is currently being displayed
-        END         // Chat has ended or been dismissed
+        HIDDEN,     // Chat is currently hidden
     }
 
     public enum ChatSender {
@@ -104,9 +105,7 @@ public class ChatDataManager {
         public EntityChatDataLight toLightVersion() {
             EntityChatDataLight light = new EntityChatDataLight();
             light.entityId = this.entityId;
-            if (light.status != ChatStatus.END) {
-                light.currentMessage = this.currentMessage;
-            }
+            light.currentMessage = this.currentMessage;
             light.currentLineNumber = this.currentLineNumber;
             light.status = this.status;
             light.sender = this.sender;
@@ -320,13 +319,16 @@ public class ChatDataManager {
             return LineWrapper.wrapLines(this.currentMessage, MAX_CHAR_PER_LINE);
         }
 
-        // Update starting line number of displayed text
+        public boolean isEndOfMessage() {
+            int totalLines = this.getWrappedLines().size();
+            // Check if the current line number plus DISPLAY_NUM_LINES covers or exceeds the total number of lines
+            return currentLineNumber + DISPLAY_NUM_LINES >= totalLines;
+        }
+
         public void setLineNumber(Integer lineNumber) {
-            // Update displayed starting line # (between 0 and # of lines)
-            currentLineNumber = Math.min(Math.max(lineNumber, 0), this.getWrappedLines().size());
-            if (currentLineNumber >= this.getWrappedLines().size()) {
-                status = ChatStatus.END;
-            }
+            int totalLines = this.getWrappedLines().size();
+            // Ensure the lineNumber is within the valid range
+            currentLineNumber = Math.min(Math.max(lineNumber, 0), totalLines);
 
             // Broadcast to all players
             ModInit.BroadcastPacketMessage(this);

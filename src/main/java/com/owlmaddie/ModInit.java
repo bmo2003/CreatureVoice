@@ -43,6 +43,7 @@ public class ModInit implements ModInitializer {
 	private static ChatDataSaverScheduler scheduler = null;
 	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
 	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
+	public static final Identifier PACKET_C2S_READ_PREV = new Identifier("mobgpt", "packet_c2s_read_prev");
 	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
 	public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("mobgpt", "packet_c2s_send_chat");
 	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("mobgpt", "packet_s2c_message");
@@ -70,8 +71,7 @@ public class ModInit implements ModInitializer {
 					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-					if (chatData.status == ChatDataManager.ChatStatus.NONE ||
-							chatData.status == ChatDataManager.ChatStatus.END) {
+					if (chatData.status == ChatDataManager.ChatStatus.NONE) {
 						// Only generate a new greeting if not already doing so
 						String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
 
@@ -107,11 +107,8 @@ public class ModInit implements ModInitializer {
 					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-					if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-						// Only set line number if status allows
-						LOGGER.info("Increment read lines to " + lineNumber + " for: " + entity.getType().toString());
-						chatData.setLineNumber(lineNumber);
-					}
+					LOGGER.info("Update read lines to " + lineNumber + " for: " + entity.getType().toString());
+					chatData.setLineNumber(lineNumber);
 				}
 			});
 		});
@@ -145,11 +142,9 @@ public class ModInit implements ModInitializer {
 					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-					if (chatData.status == ChatDataManager.ChatStatus.END) {
-						// Add new message
-						LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
-						chatData.generateMessage(player, "system-chat", message);
-					}
+					// Add new message
+					LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
+					chatData.generateMessage(player, "system-chat", message);
 				}
 			});
 		});

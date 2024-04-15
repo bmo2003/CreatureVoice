@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 public class BubbleRenderer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     protected static TextureLoader textures = new TextureLoader();
-    public static int DISPLAY_NUM_LINES = 3;
     public static int DISPLAY_PADDING = 2;
     public static int animationFrame = 0;
     public static long lastTick = 0;
@@ -185,14 +184,6 @@ public class BubbleRenderer {
         }
     }
 
-    private static void drawEndOfMessageText(Matrix4f matrix, VertexConsumerProvider immediate,
-                                      int fullBright, float yOffset) {
-        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
-        String lineText = "<end of message>";
-        fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset + 10F, 0xffffff,
-                false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
-    }
-
     private static void drawEntityName(MobEntity entity, Matrix4f matrix, VertexConsumerProvider immediate,
                                 int fullBright, float yOffset) {
         if (entity.getCustomName() != null) {
@@ -251,7 +242,7 @@ public class BubbleRenderer {
 
             // Set the range of lines to display
             int starting_line = chatData.currentLineNumber;
-            int ending_line = Math.min(chatData.currentLineNumber + DISPLAY_NUM_LINES, lines.size());
+            int ending_line = Math.min(chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES, lines.size());
 
             // Push a new matrix onto the stack.
             matrices.push();
@@ -340,7 +331,7 @@ public class BubbleRenderer {
 
             // Calculate size of text scaled to world
             float scaledTextHeight = linesDisplayed * (fontRenderer.fontHeight + lineSpacing);
-            float minTextHeight = (DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
+            float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
             scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
 
             // Update Bubble Data for Click Handling using UUID (account for scaling)
@@ -384,13 +375,18 @@ public class BubbleRenderer {
                 // Draw Friendship status
                 drawFriendshipStatus(matrices, 51, 18, 31, 21, chatData.friendship);
 
+                // Draw 'arrows' & 'keyboard' buttons
+                if (chatData.currentLineNumber > 0) {
+                    drawIcon("arrow-left", matrices, -63, scaledTextHeight + 29, 16, 16);
+                }
+                if (!chatData.isEndOfMessage()) {
+                    drawIcon("arrow-right", matrices, 47, scaledTextHeight + 29, 16, 16);
+                } else {
+                    drawIcon("keyboard", matrices, 47, scaledTextHeight + 28, 16, 16);
+                }
+
                 // Render each line of the text
                 drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
-
-                if (starting_line > 0 && starting_line == ending_line) {
-                    // Add <End Of Message> text
-                    drawEndOfMessageText(matrix, immediate, fullBright, 40.0F + DISPLAY_PADDING);
-                }
             }
 
             // Pop the matrix to return to the original state.

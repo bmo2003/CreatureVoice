@@ -148,8 +148,8 @@ public class ClickHandler {
             Vec3d[] corners = getBillboardCorners(bubbleData.position, camera.getPos(), bubbleData.height, bubbleData.width, bubbleData.yaw, bubbleData.pitch);
 
             // DEBUG CODE
-            drawCorners(player.getWorld(), corners);
-            drawRay(startRay, lookVec, player.getWorld());
+            //drawCorners(player.getWorld(), corners);
+            //drawRay(startRay, lookVec, player.getWorld());
 
             // Cast ray and determine intersection with chat bubble
             Optional<Vec3d> hitResult = rayIntersectsPolygon(startRay, lookVec, corners);
@@ -181,14 +181,21 @@ public class ClickHandler {
                 if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                     // Start conversation
                     ModPackets.sendGenerateGreeting(closestEntity);
+
                 } else if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                    // Update lines read
-                    ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + BubbleRenderer.DISPLAY_NUM_LINES);
-                } else if (chatData.status == ChatDataManager.ChatStatus.END) {
-                    // End of chat (open player chat screen)
-                    ModPackets.sendStartChat(closestEntity);
-                    client.setScreen(new ChatScreen(closestEntity));
+                    if (hitRegion.equals("RIGHT") && !chatData.isEndOfMessage()) {
+                        // Update lines read > next lines
+                        ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES);
+                    } else if (hitRegion.equals("LEFT") && chatData.currentLineNumber > 0) {
+                        // Update lines read < previous lines
+                        ModPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber - ChatDataManager.DISPLAY_NUM_LINES);
+                    } else if (hitRegion.equals("RIGHT") && chatData.isEndOfMessage()) {
+                        // End of chat (open player chat screen)
+                        ModPackets.sendStartChat(closestEntity);
+                        client.setScreen(new ChatScreen(closestEntity));
+                    }
                 }
+
             }
         }
     }
