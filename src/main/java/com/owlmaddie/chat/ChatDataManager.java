@@ -286,6 +286,11 @@ public class ChatDataManager {
                     // Error / No Chat Message (Failure)
                     String randomErrorMessage = ParsedMessage.getRandomErrorMessage();
                     this.addMessage(randomErrorMessage, ChatSender.ASSISTANT);
+
+                    // Clear history (if no character sheet was generated)
+                    if (characterSheet.isEmpty()) {
+                        previousMessages.clear();
+                    }
                 }
 
                 // Broadcast to all players

@@ -66,28 +66,9 @@ public class ModInit implements ModInitializer {
 			server.execute(() -> {
 				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
-					// Set talk to player goal (prevent entity from walking off)
-					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
-					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
-
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-					if (chatData.status == ChatDataManager.ChatStatus.NONE) {
-						// Only generate a new greeting if not already doing so
-						String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
-
-						StringBuilder userMessageBuilder = new StringBuilder();
-						userMessageBuilder.append("Please generate a new character ");
-						if (entity.getCustomName() != null) {
-							userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
-						} else {
-							userMessageBuilder.append("whose name starts with the letter '").append(RandomUtils.RandomLetter()).append("' ");
-							userMessageBuilder.append("and which uses ").append(RandomUtils.RandomNumber(4) + 1).append(" syllables ");
-						}
-						userMessageBuilder.append("of type '").append(entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)).append("' ");
-						userMessageBuilder.append("who lives near the ").append(player_biome).append(".");
-						LOGGER.info(userMessageBuilder.toString());
-
-						chatData.generateMessage(player, "system-character", userMessageBuilder.toString());
+					if (chatData.characterSheet.isEmpty()) {
+						generate_character(chatData, player, entity);
 					}
 				}
 			});
@@ -157,14 +138,12 @@ public class ModInit implements ModInitializer {
 			server.execute(() -> {
 				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
 				if (entity != null) {
-					// Set talk to player goal (prevent entity from walking off)
-					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
-					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
-
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-					// Add new message
-					LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
-					chatData.generateMessage(player, "system-chat", message);
+					if (chatData.characterSheet.isEmpty()) {
+						generate_character(chatData, player, entity);
+					} else {
+						generate_chat(chatData, player, entity, message);
+					}
 				}
 			});
 		});
@@ -246,15 +225,48 @@ public class ModInit implements ModInitializer {
 		LOGGER.info("MobGPT Initialized!");
 	}
 
+	public static void generate_character(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity) {
+		// Set talk to player goal (prevent entity from walking off)
+		TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+		EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+
+		// Only generate a new greeting if not already doing so
+		String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
+
+		StringBuilder userMessageBuilder = new StringBuilder();
+		userMessageBuilder.append("Please generate a new character ");
+		if (entity.getCustomName() != null && !entity.getCustomName().getLiteralString().equals("N/A")) {
+			userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
+		} else {
+			userMessageBuilder.append("whose name starts with the letter '").append(RandomUtils.RandomLetter()).append("' ");
+			userMessageBuilder.append("and which uses ").append(RandomUtils.RandomNumber(4) + 1).append(" syllables ");
+		}
+		userMessageBuilder.append("of type '").append(entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)).append("' ");
+		userMessageBuilder.append("who lives near the ").append(player_biome).append(".");
+		LOGGER.info(userMessageBuilder.toString());
+
+		chatData.generateMessage(player, "system-character", userMessageBuilder.toString());
+	}
+
+	public static void generate_chat(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message) {
+		// Set talk to player goal (prevent entity from walking off)
+		TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+		EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+
+		// Add new message
+		LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
+		chatData.generateMessage(player, "system-chat", message);
+	}
+
 	// Send new message to all connected players
 	public static void BroadcastPacketMessage(ChatDataManager.EntityChatData chatData) {
 		for (ServerWorld world : serverInstance.getWorlds()) {
 			UUID entityId = UUID.fromString(chatData.entityId);
 			MobEntity entity = ServerEntityFinder.getEntityByUUID(world, entityId);
 			if (entity != null) {
-				// Set custom name (if none)
-				if (entity.getCustomName() == null && chatData.status != ChatDataManager.ChatStatus.PENDING) {
-					String characterName = chatData.getCharacterProp("name");
+				// Set custom name (if null)
+				String characterName = chatData.getCharacterProp("name");
+				if (!characterName.isEmpty() && !characterName.equals("N/A") && entity.getCustomName() == null) {
 					LOGGER.info("Setting entity name to " + characterName + " for " + chatData.entityId);
 					entity.setCustomName(Text.literal(characterName));
 					entity.setCustomNameVisible(true);
