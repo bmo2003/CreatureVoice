@@ -333,6 +333,13 @@ public class ChatDataManager {
             // Broadcast to all players
             ModInit.BroadcastPacketMessage(this);
         }
+
+        public void setStatus(ChatStatus new_status) {
+            status = new_status;
+
+            // Broadcast to all players
+            ModInit.BroadcastPacketMessage(this);
+        }
     }
 
     public void clearData() {

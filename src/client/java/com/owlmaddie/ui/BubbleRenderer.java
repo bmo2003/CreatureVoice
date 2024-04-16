@@ -365,7 +365,7 @@ public class BubbleRenderer {
                     animationFrame = 0;
                 }
 
-            } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
+            } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
                 // Draw text background (no smaller than 50F tall)
                 drawTextBubbleBackground(matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
 
@@ -387,6 +387,10 @@ public class BubbleRenderer {
 
                 // Render each line of the text
                 drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
+
+            } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
+                // Draw 'resume chat' button
+                drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
             }
 
             // Pop the matrix to return to the original state.

@@ -43,7 +43,7 @@ public class ModInit implements ModInitializer {
 	private static ChatDataSaverScheduler scheduler = null;
 	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
 	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
-	public static final Identifier PACKET_C2S_READ_PREV = new Identifier("mobgpt", "packet_c2s_read_prev");
+	public static final Identifier PACKET_C2S_SET_STATUS = new Identifier("mobgpt", "packet_c2s_set_status");
 	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
 	public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("mobgpt", "packet_c2s_send_chat");
 	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("mobgpt", "packet_s2c_message");
@@ -109,6 +109,26 @@ public class ModInit implements ModInitializer {
 					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
 					LOGGER.info("Update read lines to " + lineNumber + " for: " + entity.getType().toString());
 					chatData.setLineNumber(lineNumber);
+				}
+			});
+		});
+
+		// Handle packet for setting status of chat bubbles
+		ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_SET_STATUS, (server, player, handler, buf, responseSender) -> {
+			UUID entityId = UUID.fromString(buf.readString());
+			String status_name = buf.readString(32767);
+
+			// Ensure that the task is synced with the server thread
+			server.execute(() -> {
+				MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+				if (entity != null) {
+					// Set talk to player goal (prevent entity from walking off)
+					TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+					EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+
+					ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
+					LOGGER.info("Hiding chat bubble for: " + entity.getType().toString());
+					chatData.setStatus(ChatDataManager.ChatStatus.valueOf(status_name));
 				}
 			});
 		});

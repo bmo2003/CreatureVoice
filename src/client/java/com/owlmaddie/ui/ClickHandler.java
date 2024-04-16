@@ -193,7 +193,13 @@ public class ClickHandler {
                         // End of chat (open player chat screen)
                         ModPackets.sendStartChat(closestEntity);
                         client.setScreen(new ChatScreen(closestEntity));
+                    } else if (hitRegion.equals("TOP")) {
+                        // Hide chat
+                        ModPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.HIDDEN);
                     }
+                } else if (chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
+                    // Show chat
+                    ModPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.DISPLAY);
                 }
 
             }
