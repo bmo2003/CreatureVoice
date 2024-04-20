@@ -57,6 +57,7 @@ public class ClickHandler {
         ClientPlayNetworking.registerGlobalReceiver(ModInit.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
+            UUID playerId = UUID.fromString(buffer.readString());
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -69,6 +70,7 @@ public class ClickHandler {
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                     ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
+                    chatData.playerId = playerId.toString();
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }

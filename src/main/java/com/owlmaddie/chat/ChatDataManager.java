@@ -72,6 +72,7 @@ public class ChatDataManager {
     // Inner class to hold entity-specific data
     public static class EntityChatData {
         public String entityId;
+        public String playerId;
         public String currentMessage;
         public int currentLineNumber;
         public ChatStatus status;
@@ -82,6 +83,7 @@ public class ChatDataManager {
 
         public EntityChatData(String entityId) {
             this.entityId = entityId;
+            this.playerId = null;
             this.currentMessage = "";
             this.currentLineNumber = 0;
             this.previousMessages = new ArrayList<>();
@@ -196,7 +198,7 @@ public class ChatDataManager {
         public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
-            this.addMessage(userMessage, ChatSender.USER);
+            this.addMessage(userMessage, ChatSender.USER, player.getUuidAsString());
 
             // Add PLAYER context information
             Map<String, String> contextData = getPlayerContext(player);
@@ -210,7 +212,7 @@ public class ChatDataManager {
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
                     String shortGreeting = getCharacterProp("short greeting");
-                    this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT);
+                    this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT, player.getUuidAsString());
 
                 } else if (output_message != null && systemPrompt == "system-chat") {
                     // Chat Message: Parse message for behaviors
@@ -272,7 +274,7 @@ public class ChatDataManager {
                     }
 
                     // Add ASSISTANT message to history
-                    this.addMessage(result.getOriginalMessage(), ChatSender.ASSISTANT);
+                    this.addMessage(result.getOriginalMessage(), ChatSender.ASSISTANT, player.getUuidAsString());
 
                     // Get cleaned message (i.e. no <BEHAVIOR> strings)
                     String cleanedMessage = result.getCleanedMessage();
@@ -285,7 +287,7 @@ public class ChatDataManager {
                 } else {
                     // Error / No Chat Message (Failure)
                     String randomErrorMessage = ParsedMessage.getRandomErrorMessage();
-                    this.addMessage(randomErrorMessage, ChatSender.ASSISTANT);
+                    this.addMessage(randomErrorMessage, ChatSender.ASSISTANT, player.getUuidAsString());
 
                     // Clear history (if no character sheet was generated)
                     if (characterSheet.isEmpty()) {
@@ -299,7 +301,7 @@ public class ChatDataManager {
         }
 
         // Add a message to the history and update the current message
-        public void addMessage(String message, ChatSender messageSender) {
+        public void addMessage(String message, ChatSender messageSender, String playerId) {
             // Add message to history
             previousMessages.add(new ChatMessage(message, messageSender));
 
@@ -314,6 +316,7 @@ public class ChatDataManager {
                 status = ChatStatus.PENDING;
             }
             sender = messageSender;
+            this.playerId = playerId;
 
             // Broadcast to all players
             ModInit.BroadcastPacketMessage(this);

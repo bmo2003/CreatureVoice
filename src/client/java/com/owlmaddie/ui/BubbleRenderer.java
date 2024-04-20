@@ -13,10 +13,10 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonPart;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -132,7 +132,7 @@ public class BubbleRenderer {
         RenderSystem.disableDepthTest();
     }
 
-    private static void drawEntityIcon(MatrixStack matrices, MobEntity entity, float x, float y, float width, float height) {
+    private static void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Get entity renderer
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
         String entity_icon_path = renderer.getTexture(entity).getPath();
@@ -184,7 +184,7 @@ public class BubbleRenderer {
         }
     }
 
-    private static void drawEntityName(MobEntity entity, Matrix4f matrix, VertexConsumerProvider immediate,
+    private static void drawEntityName(Entity entity, Matrix4f matrix, VertexConsumerProvider immediate,
                                 int fullBright, float yOffset) {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
@@ -204,6 +204,10 @@ public class BubbleRenderer {
     }
 
     public static void drawTextAboveEntities(WorldRenderContext context, long tick, float partialTicks) {
+        // Access the Minecraft client instance
+        MinecraftClient client = MinecraftClient.getInstance();
+        PlayerEntity player = client.player;
+
         Camera camera = context.camera();
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
@@ -227,14 +231,15 @@ public class BubbleRenderer {
         // Get all entities
         List<Entity> nearbyEntities = world.getOtherEntities(null, area);
 
-        // Filter MobEntity/Living entities
-        List<MobEntity> nearbyCreatures = nearbyEntities.stream()
-                .filter(entity -> entity instanceof MobEntity)
-                .map(entity -> (MobEntity) entity)
+        // Filter to include only MobEntity & PlayerEntity but exclude the current player and any entities with passengers
+        List<Entity> relevantEntities = nearbyEntities.stream()
+                .filter(entity ->  (entity instanceof MobEntity || entity instanceof PlayerEntity))
+                .filter(entity -> !entity.getUuid().equals(player.getUuid())) // Exclude current player by UUID
+                .filter(entity -> !entity.hasPassengers()) // Exclude entities with passengers
                 .collect(Collectors.toList());
 
-        for (MobEntity entity : nearbyCreatures) {
-            if (entity.getType() == EntityType.PLAYER || entity.hasPassengers()) {
+        for (Entity entity : relevantEntities) {
+            if (entity.hasPassengers()) {
                 // Skip
                 continue;
             }
@@ -401,7 +406,7 @@ public class BubbleRenderer {
         }
 
         // Get list of Entity UUIDs with chat bubbles rendered
-        List<UUID> activeEntityUUIDs = nearbyCreatures.stream()
+        List<UUID> activeEntityUUIDs = relevantEntities.stream()
                 .map(Entity::getUuid)
                 .collect(Collectors.toList());
 

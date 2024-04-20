@@ -275,7 +275,8 @@ public class ModInit implements ModInitializer {
 				PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 
 				// Write the entity's chat updated data
-				buffer.writeString(entity.getUuidAsString());
+				buffer.writeString(chatData.entityId);
+				buffer.writeString(chatData.playerId);
 				buffer.writeString(chatData.currentMessage);
 				buffer.writeInt(chatData.currentLineNumber);
 				buffer.writeString(chatData.status.toString());
