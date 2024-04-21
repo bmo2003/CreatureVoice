@@ -42,7 +42,7 @@ public class ChatDataManager {
     public static int MAX_CHAR_PER_LINE = 20;
     public static int DISPLAY_NUM_LINES = 3;
     public static int MAX_CHAR_IN_USER_MESSAGE = 512;
-    public static int TICKS_TO_DISPLAY_USER_MESSAGE = 90;
+    public static int TICKS_TO_DISPLAY_USER_MESSAGE = 60;
     public QuestJson quest = null;
     private static final Gson GSON = new Gson();
 
@@ -83,9 +83,9 @@ public class ChatDataManager {
         public ChatSender sender;
         public int friendship; // -3 to 3 (0 = neutral)
 
-        public EntityChatData(String entityId) {
+        public EntityChatData(String entityId, String playerId) {
             this.entityId = entityId;
-            this.playerId = null;
+            this.playerId = playerId;
             this.currentMessage = "";
             this.currentLineNumber = 0;
             this.previousMessages = new ArrayList<>();
@@ -200,7 +200,12 @@ public class ChatDataManager {
         public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage) {
             this.status = ChatStatus.PENDING;
             // Add USER Message
-            this.addMessage(userMessage, ChatSender.USER, player.getUuidAsString());
+            if (systemPrompt == "system-character") {
+                // Add message without playerId (so it does not display)
+                this.addMessage(userMessage, ChatSender.USER, "");
+            } else if (systemPrompt == "system-chat") {
+                this.addMessage(userMessage, ChatSender.USER, player.getUuidAsString());
+            }
 
             // Add PLAYER context information
             Map<String, String> contextData = getPlayerContext(player);
@@ -383,7 +388,7 @@ public class ChatDataManager {
 
     // Retrieve chat data for a specific entity, or create it if it doesn't exist
     public EntityChatData getOrCreateChatData(String entityId) {
-        return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId));
+        return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId, ""));
     }
 
     // Generate quest data for this server session

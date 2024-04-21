@@ -42,7 +42,7 @@ public class BubbleRenderer {
     public static int animationFrame = 0;
     public static long lastTick = 0;
 
-    public static void drawTextBubbleBackground(MatrixStack matrices, float x, float y, float width, float height, int friendship) {
+    public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -54,11 +54,11 @@ public class BubbleRenderer {
 
         // Draw UI text background (based on friendship)
         if (friendship == -3) {
-            RenderSystem.setShaderTexture(0, textures.GetUI("text-top-enemy"));
+            RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-enemy"));
         } else if (friendship == 3) {
-            RenderSystem.setShaderTexture(0, textures.GetUI("text-top-friend"));
+            RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-friend"));
         } else {
-            RenderSystem.setShaderTexture(0, textures.GetUI("text-top"));
+            RenderSystem.setShaderTexture(0, textures.GetUI(base_name));
         }
         drawTexturePart(matrices, buffer, x - 50, y, z, 228, 40);
 
@@ -164,6 +164,40 @@ public class BubbleRenderer {
         RenderSystem.disableDepthTest();
     }
 
+    private static void drawPlayerIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+        // Get player skin texture
+        EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
+        Identifier playerTexture = renderer.getTexture(entity);
+
+        RenderSystem.setShaderTexture(0, playerTexture);
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+        // Texture coordinates for the face region (8, 8) to (16, 16) in a 64x64 texture
+        float textureWidth = 64.0F;
+        float textureHeight = 64.0F;
+        float u1 = 8.0F / textureWidth;
+        float v1 = 8.0F / textureHeight;
+        float u2 = 16.0F / textureWidth;
+        float v2 = 16.0F / textureHeight;
+
+        float z = -0.01F;
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(u1, v2).next();  // bottom left
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(u2, v2).next();   // bottom right
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(u2, v1).next();  // top right
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(u1, v1).next(); // top left
+        tessellator.draw();
+
+        RenderSystem.disableBlend();
+        RenderSystem.disableDepthTest();
+    }
+
     private static void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
                                  VertexConsumerProvider immediate, float lineSpacing, int fullBright, float yOffset) {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
@@ -239,13 +273,21 @@ public class BubbleRenderer {
                 .collect(Collectors.toList());
 
         for (Entity entity : relevantEntities) {
-            if (entity.hasPassengers()) {
+
+            // Look-up greeting (if any)
+            ChatDataManager.EntityChatData chatData = null;
+            if (entity instanceof MobEntity) {
+                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
+            } else if (entity instanceof PlayerEntity) {
+                chatData = PlayerMessageManager.getMessage(entity.getUuid());
+            }
+
+            // Bail if no chatData found, or if they have passengers
+            if (chatData == null || entity.hasPassengers()) {
                 // Skip
                 continue;
             }
 
-            // Look-up greeting (if any)
-            ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
             List<String> lines = chatData.getWrappedLines();
 
             // Set the range of lines to display
@@ -375,7 +417,7 @@ public class BubbleRenderer {
 
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
                 // Draw text background (no smaller than 50F tall)
-                drawTextBubbleBackground(matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+                drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
 
                 // Draw face icon of entity
                 drawEntityIcon(matrices, entity, -82, 7, 32, 32);
@@ -399,6 +441,16 @@ public class BubbleRenderer {
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
                 // Draw 'resume chat' button
                 drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+
+            } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
+                // Draw text background
+                drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+
+                // Draw face icon of player
+                drawPlayerIcon(matrices, entity, -75, 14, 18, 18);
+
+                // Render each line of the player's text
+                drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
             }
 
             // Pop the matrix to return to the original state.

@@ -12,7 +12,11 @@ public class PlayerMessageManager {
     private static final ConcurrentHashMap<UUID, PlayerMessage> messages = new ConcurrentHashMap<>();
 
     public static void addMessage(UUID playerUUID, String messageText, int ticks) {
-        messages.put(playerUUID, new PlayerMessage(messageText, ticks));
+        messages.put(playerUUID, new PlayerMessage(playerUUID.toString(), messageText, ticks));
+    }
+
+    public static PlayerMessage getMessage(UUID playerId) {
+        return messages.get(playerId);
     }
 
     public static void tickUpdate() {
