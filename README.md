@@ -1,6 +1,8 @@
+![CreatureChat Logo](src/main/resources/assets/creaturechat/icon.png "CreatureChat Logo")
+
 # CreatureChat
 
-### Chat, befriend, and interact with a rich world of creatures like never before! All creatures can talk and respond naturally using AI. 
+### Chat, befriend, and interact with a rich world of creatures like never before! All creatures can talk and respond naturally using AI.
 
 ## Features:
 - **Dynamic Dialogues**: Engage with Minecraft creatures like never before, each with a unique character sheet.
