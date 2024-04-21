@@ -19,11 +19,11 @@ repositories {
 }
 
 loom {
-	accessWidenerPath = file("src/main/resources/mobgpt.accesswidener")
+	accessWidenerPath = file("src/main/resources/creaturechat.accesswidener")
     splitEnvironmentSourceSets()
 
 	mods {
-		"mobgpt" {
+		"creaturechat" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

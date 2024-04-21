@@ -14,7 +14,7 @@ build_mod:
   script:
     - ./gradlew build
     - find build/libs -type f -name '*sources*.jar' -exec rm {} \;
-    - mv build/libs/mobgpt-*.jar .
+    - mv build/libs/creaturechat-*.jar .
     - export FABRIC_VERSION=$(grep 'fabric_version' gradle.properties | cut -d'=' -f2)
     - export FABRIC_API_JAR="fabric-api-${FABRIC_VERSION}.jar"
     - echo Detected Fabric API version from gradle.properties $FABRIC_API_JAR
@@ -24,7 +24,7 @@ build_mod:
 
   artifacts:
     paths:
-      - mobgpt-*.jar
+      - creaturechat-*.jar
       - fabric-api-*.jar
   only:
     - develop

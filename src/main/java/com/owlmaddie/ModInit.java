@@ -38,16 +38,16 @@ import java.util.concurrent.TimeUnit;
  * messages to the client.
  */
 public class ModInit implements ModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
 	public static MinecraftServer serverInstance;
 	private static ChatDataSaverScheduler scheduler = null;
-	public static final Identifier PACKET_C2S_GREETING = new Identifier("mobgpt", "packet_c2s_greeting");
-	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("mobgpt", "packet_c2s_read_next");
-	public static final Identifier PACKET_C2S_SET_STATUS = new Identifier("mobgpt", "packet_c2s_set_status");
-	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("mobgpt", "packet_c2s_start_chat");
-	public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("mobgpt", "packet_c2s_send_chat");
-	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("mobgpt", "packet_s2c_message");
-	public static final Identifier PACKET_S2C_LOGIN = new Identifier("mobgpt", "packet_s2c_login");
+	public static final Identifier PACKET_C2S_GREETING = new Identifier("creaturechat", "packet_c2s_greeting");
+	public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("creaturechat", "packet_c2s_read_next");
+	public static final Identifier PACKET_C2S_SET_STATUS = new Identifier("creaturechat", "packet_c2s_set_status");
+	public static final Identifier PACKET_C2S_START_CHAT = new Identifier("creaturechat", "packet_c2s_start_chat");
+	public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("creaturechat", "packet_c2s_send_chat");
+	public static final Identifier PACKET_S2C_MESSAGE = new Identifier("creaturechat", "packet_s2c_message");
+	public static final Identifier PACKET_S2C_LOGIN = new Identifier("creaturechat", "packet_s2c_login");
 
 	@Override
 	public void onInitialize() {
@@ -222,7 +222,7 @@ public class ModInit implements ModInitializer {
 			}
 		});
 
-		LOGGER.info("MobGPT Initialized!");
+		LOGGER.info("CreatureChat MOD Initialized!");
 	}
 
 	public static void generate_character(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity) {

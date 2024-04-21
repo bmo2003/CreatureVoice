@@ -16,7 +16,7 @@ import java.util.*;
  * entity more than once.
  */
 public class EntityBehaviorManager {
-    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final Map<UUID, List<Goal>> entityGoals = new HashMap<>();
 
     public static void addGoal(MobEntity entity, Goal goal, GoalPriority priority) {

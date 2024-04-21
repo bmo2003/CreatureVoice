@@ -1,19 +1,19 @@
 {
 	"schemaVersion": 1,
-	"id": "mobgpt",
+	"id": "creaturechat",
 	"version": "${version}",
-	"name": "Mob GPT",
-	"description": "Elevate your Minecraft experiences with Mob GPT, a cutting-edge mod that brings intelligent, dynamic conversation to Minecraft mobs! We harnesses the power of GPT (Generative Pre-trained Transformer) to make your world more interactive and communicative.",
+	"name": "Creature Chat",
+	"description": "Elevate your Minecraft experiences with Creature Chat, a cutting-edge mod that brings intelligent, dynamic conversation to Minecraft creatures! We harnesses the power of GPT (Generative Pre-trained Transformer) to make your world more interactive and communicative.",
 	"authors": [
 		"Jonathan Thomas <jonathan@openshot.org>",
 		"Owlmaddie <owlmaddie@gmail.com>"
 	],
 	"contact": {
 		"homepage": "http://owlmaddie.com",
-		"sources": "http://gitlab.openshot.org/minecraft/mobgpt"
+		"sources": "http://gitlab.openshot.org/minecraft/creature-chat"
 	},
 	"license": "GPLv3",
-	"icon": "assets/mobgpt/icon.png",
+	"icon": "assets/creaturechat/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
@@ -24,13 +24,13 @@
 		]
 	},
 	"mixins": [
-		"mobgpt.mixins.json",
+		"creaturechat.mixins.json",
 		{
-			"config": "mobgpt.client.mixins.json",
+			"config": "creaturechat.client.mixins.json",
 			"environment": "client"
 		}
 	],
-	"accessWidener": "mobgpt.accesswidener",
+	"accessWidener": "creaturechat.accesswidener",
 	"depends": {
 		"fabricloader": ">=0.14.22",
 		"minecraft": "~1.20.2",

@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * back to the server.
  */
 public class ClickHandler {
-    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static boolean wasClicked = false;
     static HashMap<Integer, byte[]> receivedChunks = new HashMap<>();
 

@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * messages.
  */
 public class ChatGPTRequest {
-    public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
 
     static class ChatGPTRequestMessage {
         String role;
@@ -67,7 +67,7 @@ public class ChatGPTRequest {
 
     // This method should be called in an appropriate context where ResourceManager is available
     public static String loadPromptFromResource(ResourceManager resourceManager, String filePath) {
-        Identifier fileIdentifier = new Identifier("mobgpt", filePath);
+        Identifier fileIdentifier = new Identifier("creaturechat", filePath);
         try (InputStream inputStream = resourceManager.getResource(fileIdentifier).get().getInputStream();
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 

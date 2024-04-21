@@ -43,9 +43,9 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ## Screenshots
-![Pig Teaching Player](src/main/resources/assets/mobgpt/screenshots/pig-teaching.png "Pig Teaching Player")
-![Villager Greeting Player](src/main/resources/assets/mobgpt/screenshots/villager_greeting.png "Villager Greeting Player")
-![Chat User-Interface](src/main/resources/assets/mobgpt/screenshots/chat-ui.png "Chat User-Interface")
+![Pig Teaching Player](src/main/resources/assets/creaturechat/screenshots/pig-teaching.png "Pig Teaching Player")
+![Villager Greeting Player](src/main/resources/assets/creaturechat/screenshots/villager_greeting.png "Villager Greeting Player")
+![Chat User-Interface](src/main/resources/assets/creaturechat/screenshots/chat-ui.png "Chat User-Interface")
 
 ## Upgrade Dependencies
 
