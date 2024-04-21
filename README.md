@@ -3,7 +3,7 @@
 ### Chat, befriend, and interact with a rich world of creatures like never before! All creatures can talk and respond naturally using AI. 
 
 ## Features:
-- **Dynamic Dialogues**: Engage with Minecraft creatures like never before, each with its unique character sheet.
+- **Dynamic Dialogues**: Engage with Minecraft creatures like never before, each with a unique character sheet.
 - **AI-Driven Chats**: Powered by ChatGPT, ensuring each conversation is fresh and engaging.
 - **Custom Behaviors**: Creatures can make decisions on their own and **Follow, Flee, Attack**, and more!
 - **Friendship Status**: Track your relationships on a 7-point scale, from foes to friends.
@@ -19,7 +19,7 @@ Looking to enrich your Minecraft journey with deep conversations and lasting all
 2. **Download Fabric API**: Get the version which we support (refer to `gradle.properties` for supported Minecraft and Fabric versions)
    from [Modrinth](https://modrinth.com/mod/fabric-api)
    or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api).
-3. **Install Mob GPT Mod**: Place `mobgpt-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
+3. **Install CreatureChat Mod**: Place `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
    folder.
 
 ## Commands
@@ -66,11 +66,11 @@ be updated. Below are the general steps for this upgrade process.
 
 ## Contact & Resources
 
-- [Source Code](http://gitlab.openshot.org/minecraft/mobgpt)
+- [Source Code](http://gitlab.openshot.org/minecraft/creature-chat)
 
 ## License
 
-    ChattCraft is a Minecraft mod which allows chat conversations with entities.
+    CreatureChat is a Minecraft mod which allows chat conversations with entities.
     Copyright (C) 2024 Owlmaddie LLC
 
     This program is free software: you can redistribute it and/or modify
