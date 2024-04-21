@@ -1,5 +1,6 @@
 package com.owlmaddie.ui;
 
+import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ModPackets;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -38,7 +39,7 @@ public class ChatScreen extends Screen {
 
         // Initialize the text field
         textField = new TextFieldWidget(textRenderer, textFieldX, textFieldY, textFieldWidth, textFieldHeight, Text.literal("Chat Input"));
-        textField.setMaxLength(512);
+        textField.setMaxLength(ChatDataManager.MAX_CHAR_IN_USER_MESSAGE);
         textField.setDrawsBackground(true);
         textField.setText("");
         this.addDrawableChild(textField);

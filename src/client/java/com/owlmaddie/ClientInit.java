@@ -3,10 +3,11 @@ package com.owlmaddie;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.ClickHandler;
+import com.owlmaddie.ui.PlayerMessageManager;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 /**
  * The {@code ClientInit} class initializes this mod in the client and defines all hooks into the
@@ -19,6 +20,7 @@ public class ClientInit implements ClientModInitializer {
     public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             tickCounter++;
+            PlayerMessageManager.tickUpdate();
         });
 
         ClickHandler.register();

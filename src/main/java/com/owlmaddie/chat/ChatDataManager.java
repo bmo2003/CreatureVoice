@@ -41,6 +41,8 @@ public class ChatDataManager {
     public static final Logger LOGGER = LoggerFactory.getLogger("mobgpt");
     public static int MAX_CHAR_PER_LINE = 20;
     public static int DISPLAY_NUM_LINES = 3;
+    public static int MAX_CHAR_IN_USER_MESSAGE = 512;
+    public static int TICKS_TO_DISPLAY_USER_MESSAGE = 90;
     public QuestJson quest = null;
     private static final Gson GSON = new Gson();
 
@@ -302,11 +304,14 @@ public class ChatDataManager {
 
         // Add a message to the history and update the current message
         public void addMessage(String message, ChatSender messageSender, String playerId) {
+            // Truncate message (prevent crazy long messages... just in case)
+            String truncatedMessage = message.substring(0, Math.min(message.length(), MAX_CHAR_IN_USER_MESSAGE));
+
             // Add message to history
-            previousMessages.add(new ChatMessage(message, messageSender));
+            previousMessages.add(new ChatMessage(truncatedMessage, messageSender));
 
             // Set new message and reset line number of displayed text
-            currentMessage = message;
+            currentMessage = truncatedMessage;
             currentLineNumber = 0;
             if (messageSender == ChatSender.ASSISTANT) {
                 // Show new generated message

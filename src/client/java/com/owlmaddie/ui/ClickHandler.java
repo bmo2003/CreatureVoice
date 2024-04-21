@@ -78,6 +78,11 @@ public class ClickHandler {
                     chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
                     chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
                     chatData.friendship = friendship;
+
+                    if (chatData.sender == ChatDataManager.ChatSender.USER) {
+                        // Add player message to queue for rendering
+                        PlayerMessageManager.addMessage(UUID.fromString(chatData.playerId), chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                    }
                 }
             });
         });
