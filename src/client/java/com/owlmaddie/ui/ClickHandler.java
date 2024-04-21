@@ -347,7 +347,9 @@ public class ClickHandler {
         if (relY > 0.70 * height) {
             return "TOP";
         } else {
-            return relX < 0 ? "LEFT" : "RIGHT"; // Determine if on the left or right half
+            // Determine left or right (0 is center)
+            // Offset this to give the left a smaller target (going backwards is less common)
+            return relX < -0.5 ? "LEFT" : "RIGHT";
         }
     }
 }
