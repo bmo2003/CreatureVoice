@@ -394,9 +394,6 @@ public class BubbleRenderer {
             // Translate above the entity
             matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
 
-            // Draw Entity (Custom Name)
-            drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
-
             // Check if conversation has started
             if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                 // Draw 'start chat' button
@@ -416,6 +413,9 @@ public class BubbleRenderer {
                 }
 
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
+                // Draw Entity (Custom Name)
+                drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+
                 // Draw text background (no smaller than 50F tall)
                 drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
 
@@ -439,10 +439,16 @@ public class BubbleRenderer {
                 drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
 
             } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
+                // Draw Entity (Custom Name)
+                drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+
                 // Draw 'resume chat' button
                 drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
 
             } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
+                // Draw Entity (Custom Name)
+                drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+
                 // Draw text background
                 drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
 
