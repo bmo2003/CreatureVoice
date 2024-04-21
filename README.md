@@ -43,9 +43,10 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ## Screenshots
-![Pig Teaching Player](src/main/resources/assets/creaturechat/screenshots/pig-teaching.png "Pig Teaching Player")
-![Villager Greeting Player](src/main/resources/assets/creaturechat/screenshots/villager_greeting.png "Villager Greeting Player")
-![Chat User-Interface](src/main/resources/assets/creaturechat/screenshots/chat-ui.png "Chat User-Interface")
+![Sheep Greeting a Player](src/main/resources/assets/creaturechat/screenshots/sheep-greeting.png "Sheep Greeting a Player")
+![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png "Chat User-Interface")
+![Sheep Following a Player](src/main/resources/assets/creaturechat/screenshots/sheep-following.png "Sheep Following a Player")
+![Skeleton with Chat Bubble](src/main/resources/assets/creaturechat/screenshots/skeleton-chat.png "Skeleton with Chat Bubble")
 
 ## Upgrade Dependencies
 
@@ -67,6 +68,7 @@ be updated. Below are the general steps for this upgrade process.
 ## Contact & Resources
 
 - [Source Code](http://gitlab.openshot.org/minecraft/creature-chat)
+- [Join us on Discord](https://discord.gg/m9dvPFmN3e)
 
 ## License
 

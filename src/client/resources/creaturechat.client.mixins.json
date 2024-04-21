@@ -3,7 +3,6 @@
 	"package": "com.owlmaddie.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"ExampleClientMixin",
 		"EntityRendererMixin"
 	],
 	"injectors": {
