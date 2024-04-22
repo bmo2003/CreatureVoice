@@ -222,10 +222,16 @@ public class BubbleRenderer {
                                 int fullBright, float yOffset) {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
-        // Get custom name (if any)
+        // Get Name of entity
         String nameText = "N/A";
-        if (entity.getCustomName() != null) {
-            nameText = entity.getCustomName().getLiteralString();
+        if (entity instanceof MobEntity) {
+            // Custom Name Tag (MobEntity)
+            if (entity.getCustomName() != null) {
+                nameText = entity.getCustomName().getLiteralString();
+            }
+        } else if (entity instanceof PlayerEntity) {
+            // Player Name
+            nameText = entity.getName().getLiteralString();
         }
 
         // Truncate long names
@@ -238,16 +244,18 @@ public class BubbleRenderer {
     }
 
     public static void drawTextAboveEntities(WorldRenderContext context, long tick, float partialTicks) {
-        // Access the Minecraft client instance
-        MinecraftClient client = MinecraftClient.getInstance();
-        PlayerEntity player = client.player;
+        // Set some rendering constants
+        float lineSpacing = 1F;
+        float textHeaderHeight = 40F;
+        float textFooterHeight = 5F;
+        int fullBright = 0xF000F0;
+        double renderDistance = 9.0;
 
+        // Get camera
         Camera camera = context.camera();
         Entity cameraEntity = camera.getFocusedEntity();
         if (cameraEntity == null) return;
-
         World world = cameraEntity.getEntityWorld();
-        double renderDistance = 9.0;
 
         // Calculate radius of entities
         Vec3d pos = cameraEntity.getPos();
@@ -265,34 +273,14 @@ public class BubbleRenderer {
         // Get all entities
         List<Entity> nearbyEntities = world.getOtherEntities(null, area);
 
-        // Filter to include only MobEntity & PlayerEntity but exclude the current player and any entities with passengers
+        // Filter to include only MobEntity & PlayerEntity but exclude any camera 1st person entity and any entities with passengers
         List<Entity> relevantEntities = nearbyEntities.stream()
-                .filter(entity ->  (entity instanceof MobEntity || entity instanceof PlayerEntity))
-                .filter(entity -> !entity.getUuid().equals(player.getUuid())) // Exclude current player by UUID
-                .filter(entity -> !entity.hasPassengers()) // Exclude entities with passengers
+                .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
+                .filter(entity -> !entity.hasPassengers())
+                .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
                 .collect(Collectors.toList());
 
         for (Entity entity : relevantEntities) {
-
-            // Look-up greeting (if any)
-            ChatDataManager.EntityChatData chatData = null;
-            if (entity instanceof MobEntity) {
-                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
-            } else if (entity instanceof PlayerEntity) {
-                chatData = PlayerMessageManager.getMessage(entity.getUuid());
-            }
-
-            // Bail if no chatData found, or if they have passengers
-            if (chatData == null || entity.hasPassengers()) {
-                // Skip
-                continue;
-            }
-
-            List<String> lines = chatData.getWrappedLines();
-
-            // Set the range of lines to display
-            int starting_line = chatData.currentLineNumber;
-            int ending_line = Math.min(chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES, lines.size());
 
             // Push a new matrix onto the stack.
             matrices.push();
@@ -371,92 +359,118 @@ public class BubbleRenderer {
             // Apply the pitch rotation to the matrix stack
             matrices.multiply(pitchRotation);
 
-            // Determine max line length
-            float linesDisplayed = ending_line - starting_line;
-            float lineSpacing = 1F;
-            float textHeaderHeight = 40F;
-            float textFooterHeight = 5F;
-            int fullBright = 0xF000F0;
+            // Get position matrix
             Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-            // Calculate size of text scaled to world
-            float scaledTextHeight = linesDisplayed * (fontRenderer.fontHeight + lineSpacing);
+            // Look-up greeting (if any)
+            ChatDataManager.EntityChatData chatData = null;
+            if (entity instanceof MobEntity) {
+                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
+            } else if (entity instanceof PlayerEntity) {
+                chatData = PlayerMessageManager.getMessage(entity.getUuid());
+            }
+
+            float linesDisplayed = 0;
             float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
-            scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
+            float scaledTextHeight = minTextHeight;
 
-            // Update Bubble Data for Click Handling using UUID (account for scaling)
-            BubbleLocationManager.updateBubbleData(entity.getUuid(), bubblePosition,
-                    128F / (1 / 0.02F), (scaledTextHeight + 25F) / (1 / 0.02F), yaw, pitch);
+            if (chatData != null) {
+                // Set the range of lines to display
+                List<String> lines = chatData.getWrappedLines();
+                int starting_line = chatData.currentLineNumber;
+                int ending_line = Math.min(chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES, lines.size());
 
-            // Scale down before rendering textures (otherwise font is huge)
-            matrices.scale(-0.02F, -0.02F, 0.02F);
+                // Determine max line length
+                linesDisplayed = ending_line - starting_line;
 
-            // Translate above the entity
-            matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
+                // Calculate size of text scaled to world
+                scaledTextHeight = linesDisplayed * (fontRenderer.fontHeight + lineSpacing);
+                scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
 
-            // Check if conversation has started
-            if (chatData.status == ChatDataManager.ChatStatus.NONE) {
-                // Draw 'start chat' button
-                drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+                // Update Bubble Data for Click Handling using UUID (account for scaling)
+                BubbleLocationManager.updateBubbleData(entity.getUuid(), bubblePosition,
+                        128F / (1 / 0.02F), (scaledTextHeight + 25F) / (1 / 0.02F), yaw, pitch);
 
-            } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
-                // Draw 'pending' button
-                drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
+                // Scale down before rendering textures (otherwise font is huge)
+                matrices.scale(-0.02F, -0.02F, 0.02F);
 
-                // Calculate animation frames (0-8) every X ticks
-                if (lastTick != tick && tick % 5 == 0) {
-                    lastTick = tick;
-                    animationFrame++;
+                // Translate above the entity
+                matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
+
+                // Check if conversation has started
+                if (chatData.status == ChatDataManager.ChatStatus.NONE) {
+                    // Draw 'start chat' button
+                    drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+
+                } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
+                    // Draw 'pending' button
+                    drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
+
+                    // Calculate animation frames (0-8) every X ticks
+                    if (lastTick != tick && tick % 5 == 0) {
+                        lastTick = tick;
+                        animationFrame++;
+                    }
+                    if (animationFrame > 8) {
+                        animationFrame = 0;
+                    }
+
+                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
+                    // Draw Entity (Custom Name)
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+
+                    // Draw text background (no smaller than 50F tall)
+                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+
+                    // Draw face icon of entity
+                    drawEntityIcon(matrices, entity, -82, 7, 32, 32);
+
+                    // Draw Friendship status
+                    drawFriendshipStatus(matrices, 51, 18, 31, 21, chatData.friendship);
+
+                    // Draw 'arrows' & 'keyboard' buttons
+                    if (chatData.currentLineNumber > 0) {
+                        drawIcon("arrow-left", matrices, -63, scaledTextHeight + 29, 16, 16);
+                    }
+                    if (!chatData.isEndOfMessage()) {
+                        drawIcon("arrow-right", matrices, 47, scaledTextHeight + 29, 16, 16);
+                    } else {
+                        drawIcon("keyboard", matrices, 47, scaledTextHeight + 28, 16, 16);
+                    }
+
+                    // Render each line of the text
+                    drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
+
+                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
+                    // Draw Entity (Custom Name)
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+
+                    // Draw 'resume chat' button
+                    drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+
+                } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
+                    // Draw Player Name
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+
+                    // Draw text background
+                    drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+
+                    // Draw face icon of player
+                    drawPlayerIcon(matrices, entity, -75, 14, 18, 18);
+
+                    // Render each line of the player's text
+                    drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
                 }
-                if (animationFrame > 8) {
-                    animationFrame = 0;
-                }
 
-            } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
-                // Draw Entity (Custom Name)
-                drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+            } else if (entity instanceof PlayerEntity) {
+                // Scale down before rendering textures (otherwise font is huge)
+                matrices.scale(-0.02F, -0.02F, 0.02F);
 
-                // Draw text background (no smaller than 50F tall)
-                drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+                // Translate above the player
+                matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
 
-                // Draw face icon of entity
-                drawEntityIcon(matrices, entity, -82, 7, 32, 32);
-
-                // Draw Friendship status
-                drawFriendshipStatus(matrices, 51, 18, 31, 21, chatData.friendship);
-
-                // Draw 'arrows' & 'keyboard' buttons
-                if (chatData.currentLineNumber > 0) {
-                    drawIcon("arrow-left", matrices, -63, scaledTextHeight + 29, 16, 16);
-                }
-                if (!chatData.isEndOfMessage()) {
-                    drawIcon("arrow-right", matrices, 47, scaledTextHeight + 29, 16, 16);
-                } else {
-                    drawIcon("keyboard", matrices, 47, scaledTextHeight + 28, 16, 16);
-                }
-
-                // Render each line of the text
-                drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
-
-            } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
-                // Draw Entity (Custom Name)
-                drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
-
-                // Draw 'resume chat' button
-                drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
-
-            } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                // Draw Entity (Custom Name)
-                drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
-
-                // Draw text background
-                drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
-
-                // Draw face icon of player
-                drawPlayerIcon(matrices, entity, -75, 14, 18, 18);
-
-                // Render each line of the player's text
-                drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
+                // Draw Player Name
+                drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING);
             }
 
             // Pop the matrix to return to the original state.
