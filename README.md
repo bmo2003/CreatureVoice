@@ -23,6 +23,10 @@ Looking to enrich your Minecraft journey with deep conversations and lasting all
    or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api).
 3. **Install CreatureChat Mod**: Place `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
    folder.
+4. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the `+ Create new secret key` button.
+   Copy/Paste your key into the `/creaturechat key set <your-secret-key-here>` command. 
+   By default, we use the `gpt-3.5-turbo`, although we support most models. Review pricing at 
+   https://openai.com/pricing#language-models.
 
 ## Commands
 The CreatureChat mod allows users to configure settings via in-game commands. Here's how to use them:
@@ -71,6 +75,23 @@ be updated. Below are the general steps for this upgrade process.
 
 - [Source Code](http://gitlab.openshot.org/minecraft/creature-chat)
 - [Join us on Discord](https://discord.gg/m9dvPFmN3e)
+
+## Costs Associated with Third-Party LLM APIs
+Using third-party Large Language Model (LLM) APIs, such as OpenAI, will incur usage-based fees. 
+These fees are typically based on the amount of data processed or the number of requests made 
+to the service. Before integrating or using these APIs, please review the pricing details 
+provided by the API provider. Be aware of the potential costs and plan your usage accordingly 
+to avoid unexpected charges.
+
+By using this software and integrating third-party APIs, you acknowledge and agree to take 
+full responsibility for securing your API keys and managing API usage within the terms and 
+cost structures outlined by the providers.
+
+## API Key Confidentiality
+Always keep your API keys confidential to prevent unauthorized access and potential misuse.
+Exposing your API key publicly can lead to security risks, unauthorized usage, and potential
+service abuse. Treat your API keys as sensitive information and only share them with trusted
+parties within secure environments.
 
 ## License
 
