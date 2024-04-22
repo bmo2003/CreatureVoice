@@ -42,7 +42,7 @@ public class ChatDataManager {
     public static int MAX_CHAR_PER_LINE = 20;
     public static int DISPLAY_NUM_LINES = 3;
     public static int MAX_CHAR_IN_USER_MESSAGE = 512;
-    public static int TICKS_TO_DISPLAY_USER_MESSAGE = 60;
+    public static int TICKS_TO_DISPLAY_USER_MESSAGE = 70;
     public QuestJson quest = null;
     private static final Gson GSON = new Gson();
 
