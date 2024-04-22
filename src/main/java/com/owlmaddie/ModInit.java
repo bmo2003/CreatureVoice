@@ -254,7 +254,7 @@ public class ModInit implements ModInitializer {
 		EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
 		// Add new message
-		LOGGER.info("Add new message (" + message + ") to Entity: " + entity.getType().toString());
+		LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());
 		chatData.generateMessage(player, "system-chat", message);
 	}
 
@@ -285,7 +285,7 @@ public class ModInit implements ModInitializer {
 
 				// Iterate over all players and send the packet
 				for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-					LOGGER.info("Server send message packet to player: " + player.getName().getString());
+					LOGGER.info("Server broadcast message to client: " + player.getName().getString() + " | Message: " + chatData.currentMessage);
 					ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
 				}
 				break;
