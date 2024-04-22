@@ -65,7 +65,7 @@ be updated. Below are the general steps for this upgrade process.
 ## Authors
 
 - Jonathan Thomas <jonathan@openshot.org>
-- Owlmaddie <owlmaddie@gmail.com>
+- owlmaddie <owlmaddie@gmail.com>
 
 ## Contact & Resources
 
