@@ -117,8 +117,7 @@ public class ClickHandler {
                         ClientPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber - ChatDataManager.DISPLAY_NUM_LINES);
                     } else if (hitRegion.equals("RIGHT") && chatData.isEndOfMessage()) {
                         // End of chat (open player chat screen)
-                        ClientPackets.sendStartChat(closestEntity);
-                        client.setScreen(new ChatScreen(closestEntity));
+                        client.setScreen(new ChatScreen(closestEntity, client.player));
                     } else if (hitRegion.equals("TOP")) {
                         // Hide chat
                         ClientPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.HIDDEN);

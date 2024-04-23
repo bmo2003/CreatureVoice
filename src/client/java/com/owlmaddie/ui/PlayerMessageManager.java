@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PlayerMessageManager {
     private static final ConcurrentHashMap<UUID, PlayerMessage> messages = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, Boolean> openChatUIs = new ConcurrentHashMap<>();
 
     public static void addMessage(UUID playerUUID, String messageText, int ticks) {
         messages.put(playerUUID, new PlayerMessage(playerUUID.toString(), messageText, ticks));
@@ -37,6 +38,19 @@ public class PlayerMessageManager {
         } else {
             messages.remove(uuid);
         }
+    }
+
+    // Methods for managing open chat UIs
+    public static void openChatUI(UUID playerId) {
+        openChatUIs.put(playerId, Boolean.TRUE);
+    }
+
+    public static boolean isChatUIOpen(UUID playerId) {
+        return openChatUIs.getOrDefault(playerId, Boolean.FALSE);
+    }
+
+    public static void closeChatUI(UUID playerId) {
+        openChatUIs.remove(playerId);
     }
 }
 

@@ -16,6 +16,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -41,10 +42,12 @@ public class ServerPackets {
     public static final Identifier PACKET_C2S_GREETING = new Identifier("creaturechat", "packet_c2s_greeting");
     public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("creaturechat", "packet_c2s_read_next");
     public static final Identifier PACKET_C2S_SET_STATUS = new Identifier("creaturechat", "packet_c2s_set_status");
-    public static final Identifier PACKET_C2S_START_CHAT = new Identifier("creaturechat", "packet_c2s_start_chat");
+    public static final Identifier PACKET_C2S_OPEN_CHAT = new Identifier("creaturechat", "packet_c2s_open_chat");
+    public static final Identifier PACKET_C2S_CLOSE_CHAT = new Identifier("creaturechat", "packet_c2s_close_chat");
     public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("creaturechat", "packet_c2s_send_chat");
     public static final Identifier PACKET_S2C_MESSAGE = new Identifier("creaturechat", "packet_s2c_message");
     public static final Identifier PACKET_S2C_LOGIN = new Identifier("creaturechat", "packet_s2c_login");
+    public static final Identifier PACKET_S2C_PLAYER_STATUS = new Identifier("creaturechat", "packet_s2c_player_status");
 
     public static void register() {
         // Handle packet for Greeting
@@ -103,8 +106,8 @@ public class ServerPackets {
             });
         });
 
-        // Handle packet for Start Chat
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_START_CHAT, (server, player, handler, buf, responseSender) -> {
+        // Handle packet for Open Chat
+        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_OPEN_CHAT, (server, player, handler, buf, responseSender) -> {
             UUID entityId = UUID.fromString(buf.readString());
 
             // Ensure that the task is synced with the server thread
@@ -115,6 +118,18 @@ public class ServerPackets {
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 7F);
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
                 }
+
+                // Sync player UI status to all clients
+                BroadcastPlayerStatus(player, true);
+            });
+        });
+
+        // Handle packet for Close Chat
+        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_CLOSE_CHAT, (server, player, handler, buf, responseSender) -> {
+
+            server.execute(() -> {
+                // Sync player UI status to all clients
+                BroadcastPlayerStatus(player, false);
             });
         });
 
@@ -255,7 +270,7 @@ public class ServerPackets {
                 // Set custom name (if null)
                 String characterName = chatData.getCharacterProp("name");
                 if (!characterName.isEmpty() && !characterName.equals("N/A") && entity.getCustomName() == null) {
-                    LOGGER.info("Setting entity name to " + characterName + " for " + chatData.entityId);
+                    LOGGER.debug("Setting entity name to " + characterName + " for " + chatData.entityId);
                     entity.setCustomName(Text.literal(characterName));
                     entity.setCustomNameVisible(true);
                 }
@@ -273,11 +288,26 @@ public class ServerPackets {
 
                 // Iterate over all players and send the packet
                 for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-                    LOGGER.info("Server broadcast message to client: " + player.getName().getString() + " | Message: " + chatData.currentMessage);
+                    LOGGER.debug("Server broadcast message to client: " + player.getName().getString() + " | Message: " + chatData.currentMessage);
                     ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
                 }
                 break;
             }
+        }
+    }
+
+    // Send new message to all connected players
+    public static void BroadcastPlayerStatus(PlayerEntity player, boolean isChatOpen) {
+        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+
+        // Write the entity's chat updated data
+        buffer.writeString(player.getUuidAsString());
+        buffer.writeBoolean(isChatOpen);
+
+        // Iterate over all players and send the packet
+        for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
+            LOGGER.debug("Server broadcast " + player.getName().getString() + " player status to client: " + serverPlayer.getName().getString() + " | isChatOpen: " + isChatOpen);
+            ServerPlayNetworking.send(serverPlayer, PACKET_S2C_PLAYER_STATUS, buffer);
         }
     }
 }

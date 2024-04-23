@@ -44,12 +44,19 @@ public class ClientPackets {
         ClientPlayNetworking.send(ServerPackets.PACKET_C2S_READ_NEXT, buf);
     }
 
-    public static void sendStartChat(Entity entity) {
+    public static void sendOpenChat(Entity entity) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeString(entity.getUuidAsString());
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_START_CHAT, buf);
+        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_OPEN_CHAT, buf);
+    }
+
+    public static void sendCloseChat() {
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+
+        // Send C2S packet
+        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_CLOSE_CHAT, buf);
     }
 
     public static void setChatStatus(Entity entity, ChatDataManager.ChatStatus new_status) {
@@ -142,6 +149,23 @@ public class ClientPackets {
                 }
             });
         });
+
+        // Client-side packet handler, player status sync
+        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_PLAYER_STATUS, (client, handler, buffer, responseSender) -> {
+            // Read the data from the server packet
+            UUID playerId = UUID.fromString(buffer.readString());
+            boolean isChatOpen = buffer.readBoolean();
+
+            // Update the player status data manager on the client-side
+            client.execute(() -> { // Make sure to run on the client thread
+                if (isChatOpen) {
+                    PlayerMessageManager.openChatUI(playerId);
+                } else {
+                    PlayerMessageManager.closeChatUI(playerId);
+                }
+            });
+        });
+
     }
 }
 

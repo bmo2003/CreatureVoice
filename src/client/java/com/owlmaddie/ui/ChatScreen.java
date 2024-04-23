@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
@@ -23,9 +24,12 @@ public class ChatScreen extends Screen {
     private Entity screenEntity;
     private final Text labelText = Text.literal("Enter your message:");
 
-    public ChatScreen(Entity entity) {
+    public ChatScreen(Entity entity, PlayerEntity player) {
         super(Text.literal("Simple Chat"));
         screenEntity = entity;
+
+        // Notify server that chat screen
+        ClientPackets.sendOpenChat(entity);
     }
 
     @Override
@@ -120,5 +124,13 @@ public class ChatScreen extends Screen {
     public boolean shouldPause() {
         // Return false to prevent the game from pausing when the screen is open
         return false;
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+
+        // Notify server that chat screen
+        ClientPackets.sendCloseChat();
     }
 }

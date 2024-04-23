@@ -406,15 +406,6 @@ public class BubbleRenderer {
                     // Draw 'pending' button
                     drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
 
-                    // Calculate animation frames (0-8) every X ticks
-                    if (lastTick != tick && tick % 5 == 0) {
-                        lastTick = tick;
-                        animationFrame++;
-                    }
-                    if (animationFrame > 8) {
-                        animationFrame = 0;
-                    }
-
                 } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
                     // Draw Entity (Custom Name)
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
@@ -471,6 +462,20 @@ public class BubbleRenderer {
 
                 // Draw Player Name
                 drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING);
+
+                if (PlayerMessageManager.isChatUIOpen(entity.getUuid())) {
+                    // Draw 'pending' button (when Chat UI is open)
+                    drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
+                }
+            }
+
+            // Calculate animation frames (0-8) every X ticks
+            if (lastTick != tick && tick % 5 == 0) {
+                lastTick = tick;
+                animationFrame++;
+            }
+            if (animationFrame > 8) {
+                animationFrame = 0;
             }
 
             // Pop the matrix to return to the original state.
