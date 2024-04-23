@@ -2,14 +2,12 @@ package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ClientPackets;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -46,6 +44,7 @@ public class ChatScreen extends Screen {
         textField.setMaxLength(ChatDataManager.MAX_CHAR_IN_USER_MESSAGE);
         textField.setDrawsBackground(true);
         textField.setText("");
+        textField.setChangedListener(this::onTextChanged);
         this.addDrawableChild(textField);
 
         // Set focus to the text field
@@ -70,6 +69,7 @@ public class ChatScreen extends Screen {
                 .size(buttonWidth, buttonHeight)
                 .position(textFieldX + buttonWidth + buttonSpacing, buttonsY)
                 .build();
+        sendButton.active = false;
         this.addDrawableChild(sendButton);
     }
 
@@ -83,16 +83,18 @@ public class ChatScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            if (textField.isFocused()) {
-                // Play click sound
-                MinecraftClient.getInstance().player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2F, 0.8F);
-
+            if (textField.isFocused() && !textField.getText().isEmpty()) {
                 // Close window on ENTER key press
                 sendChatMessage();
                 return true;
             }
         }
         return super.keyPressed(keyCode, scanCode, modifiers); // Handle other key presses
+    }
+
+    private void onTextChanged(String text) {
+        // Enable the button only if the text field is not empty
+        sendButton.active = !text.isEmpty();
     }
 
     @Override

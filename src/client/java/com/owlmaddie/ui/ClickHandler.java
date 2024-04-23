@@ -10,7 +10,6 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
@@ -96,9 +95,6 @@ public class ClickHandler {
             if (closestEntity != null) {
                 // Look-up conversation
                 ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntityUUID.toString());
-
-                // Play click sound
-                client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2F, 0.8F);
 
                 // Determine area clicked inside chat bubble (top, left, right)
                 String hitRegion = determineHitRegion(closestHitResult.get(), closestBubbleData.position, camera, closestBubbleData.height);

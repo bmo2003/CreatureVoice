@@ -8,9 +8,12 @@ import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.sound.SoundEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +85,7 @@ public class ClientPackets {
         ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
-            String playerId = buffer.readString();
+            String playerIdStr = buffer.readString();
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -95,7 +98,7 @@ public class ClientPackets {
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                     ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
-                    chatData.playerId = playerId;
+                    chatData.playerId = playerIdStr;
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }
@@ -104,10 +107,13 @@ public class ClientPackets {
                     chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
                     chatData.friendship = friendship;
 
-                    if (chatData.sender == ChatDataManager.ChatSender.USER && !playerId.isEmpty()) {
+                    if (chatData.sender == ChatDataManager.ChatSender.USER && !playerIdStr.isEmpty()) {
                         // Add player message to queue for rendering
                         PlayerMessageManager.addMessage(UUID.fromString(chatData.playerId), chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
                     }
+
+                    // Play sound with volume based on distance (from player or entity)
+                    playNearbyUISound(client, entity, 0.2f);
                 }
             });
         });
@@ -156,16 +162,32 @@ public class ClientPackets {
             UUID playerId = UUID.fromString(buffer.readString());
             boolean isChatOpen = buffer.readBoolean();
 
+            // Get player instance
+            PlayerEntity player = ClientEntityFinder.getPlayerEntityFromUUID(playerId);
+
             // Update the player status data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
                 if (isChatOpen) {
                     PlayerMessageManager.openChatUI(playerId);
+                    playNearbyUISound(client, player, 0.2f);
                 } else {
                     PlayerMessageManager.closeChatUI(playerId);
                 }
             });
         });
+    }
 
+    private static void playNearbyUISound(MinecraftClient client, Entity player, float maxVolume) {
+        // Play sound with volume based on distance
+        int distance_squared = 64;
+        if (client.player != null) {
+            double distance = client.player.squaredDistanceTo(player.getX(), player.getY(), player.getZ());
+            if (distance <= distance_squared) {
+                // Decrease volume based on distance
+                float volume = maxVolume - (float)distance / distance_squared * maxVolume;
+                client.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), volume, 0.8F);
+            }
+        }
     }
 }
 
