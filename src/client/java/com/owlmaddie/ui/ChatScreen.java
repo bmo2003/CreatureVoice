@@ -1,7 +1,7 @@
 package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
-import com.owlmaddie.network.ModPackets;
+import com.owlmaddie.network.ClientPackets;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -72,7 +72,7 @@ public class ChatScreen extends Screen {
     private void sendChatMessage() {
         // Send message to server
         String message = textField.getText();
-        ModPackets.sendChat(screenEntity, message);
+        ClientPackets.sendChat(screenEntity, message);
         close();
     }
 

@@ -1,6 +1,7 @@
 package com.owlmaddie;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.ClickHandler;
 import com.owlmaddie.ui.PlayerMessageManager;
@@ -23,7 +24,9 @@ public class ClientInit implements ClientModInitializer {
             PlayerMessageManager.tickUpdate();
         });
 
+        // Register events
         ClickHandler.register();
+        ClientPackets.register();
 
         // Register an event callback to render text bubbles
         WorldRenderEvents.LAST.register((context) -> {

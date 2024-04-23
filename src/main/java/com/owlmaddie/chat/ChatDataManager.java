@@ -2,7 +2,6 @@ package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.owlmaddie.ModInit;
 import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
 import com.owlmaddie.items.RarityItemCollector;
@@ -10,6 +9,7 @@ import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
+import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.ServerEntityFinder;
 import net.minecraft.entity.mob.MobEntity;
@@ -303,7 +303,7 @@ public class ChatDataManager {
                 }
 
                 // Broadcast to all players
-                ModInit.BroadcastPacketMessage(this);
+                ServerPackets.BroadcastPacketMessage(this);
             });
         }
 
@@ -329,7 +329,7 @@ public class ChatDataManager {
             this.playerId = playerId;
 
             // Broadcast to all players
-            ModInit.BroadcastPacketMessage(this);
+            ServerPackets.BroadcastPacketMessage(this);
         }
 
         // Get wrapped lines
@@ -349,14 +349,14 @@ public class ChatDataManager {
             currentLineNumber = Math.min(Math.max(lineNumber, 0), totalLines);
 
             // Broadcast to all players
-            ModInit.BroadcastPacketMessage(this);
+            ServerPackets.BroadcastPacketMessage(this);
         }
 
         public void setStatus(ChatStatus new_status) {
             status = new_status;
 
             // Broadcast to all players
-            ModInit.BroadcastPacketMessage(this);
+            ServerPackets.BroadcastPacketMessage(this);
         }
     }
 

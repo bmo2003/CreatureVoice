@@ -1,9 +1,9 @@
 package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
-import com.owlmaddie.ModInit;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.json.ChatGPTResponse;
+import com.owlmaddie.network.ServerPackets;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -99,7 +99,7 @@ public class ChatGPTRequest {
 
     public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
         // Get config (api key, url, settings)
-        ConfigurationHandler.Config config = new ConfigurationHandler(ModInit.serverInstance).loadConfig();
+        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
 
         // Init API & LLM details
         String apiUrl = config.getUrl();
@@ -113,7 +113,7 @@ public class ChatGPTRequest {
             try {
                 String systemMessage = "";
                 if (systemPrompt != null && !systemPrompt.isEmpty()) {
-                    systemMessage = loadPromptFromResource(ModInit.serverInstance.getResourceManager(), "prompts/" + systemPrompt);
+                    systemMessage = loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), "prompts/" + systemPrompt);
                     systemMessage = replacePlaceholders(systemMessage, context);
                 }
 
