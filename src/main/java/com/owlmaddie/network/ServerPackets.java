@@ -7,7 +7,7 @@ import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.LivingEntityInterface;
-import com.owlmaddie.utils.RandomUtils;
+import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
@@ -236,13 +236,18 @@ public class ServerPackets {
         // Only generate a new greeting if not already doing so
         String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
 
+        // Grab random adjective
+        String randomAdjective = Randomizer.getRandomMessage(Randomizer.RandomType.ADJECTIVE);
+        String randomFrequency = Randomizer.getRandomMessage(Randomizer.RandomType.FREQUENCY);
+
         StringBuilder userMessageBuilder = new StringBuilder();
-        userMessageBuilder.append("Please generate a new character ");
+        userMessageBuilder.append("Please generate a " + randomFrequency + " " + randomAdjective);
+        userMessageBuilder.append(" character ");
         if (entity.getCustomName() != null && !entity.getCustomName().getLiteralString().equals("N/A")) {
             userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
         } else {
-            userMessageBuilder.append("whose name starts with the letter '").append(RandomUtils.RandomLetter()).append("' ");
-            userMessageBuilder.append("and which uses ").append(RandomUtils.RandomNumber(4) + 1).append(" syllables ");
+            userMessageBuilder.append("whose name starts with the letter '").append(Randomizer.RandomLetter()).append("' ");
+            userMessageBuilder.append("and which uses ").append(Randomizer.RandomNumber(4) + 1).append(" syllables ");
         }
         userMessageBuilder.append("of type '").append(entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)).append("' ");
         userMessageBuilder.append("who lives near the ").append(player_biome).append(".");

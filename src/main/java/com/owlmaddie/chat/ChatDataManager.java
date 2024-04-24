@@ -12,6 +12,7 @@ import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.ServerEntityFinder;
+import com.owlmaddie.utils.Randomizer;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -286,14 +287,14 @@ public class ChatDataManager {
                     // Get cleaned message (i.e. no <BEHAVIOR> strings)
                     String cleanedMessage = result.getCleanedMessage();
                     if (cleanedMessage.isEmpty()) {
-                        cleanedMessage = ParsedMessage.getRandomNoResponseMessage();
+                        cleanedMessage = Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE);
                     }
                     // Update the current message to a 'cleaned version'
                     this.currentMessage = cleanedMessage;
 
                 } else {
                     // Error / No Chat Message (Failure)
-                    String randomErrorMessage = ParsedMessage.getRandomErrorMessage();
+                    String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
                     this.addMessage(randomErrorMessage, ChatSender.ASSISTANT, player.getUuidAsString());
 
                     // Clear history (if no character sheet was generated)
