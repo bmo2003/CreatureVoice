@@ -83,6 +83,7 @@ public class ChatDataManager {
         public String characterSheet;
         public ChatSender sender;
         public int friendship; // -3 to 3 (0 = neutral)
+        public boolean auto_generated;
 
         public EntityChatData(String entityId, String playerId) {
             this.entityId = entityId;
@@ -94,6 +95,7 @@ public class ChatDataManager {
             this.status = ChatStatus.NONE;
             this.sender = ChatSender.USER;
             this.friendship = 0;
+            this.auto_generated = false;
         }
 
         // Light version with no 'previousMessages' attribute
@@ -203,8 +205,9 @@ public class ChatDataManager {
         }
 
         // Generate greeting
-        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage) {
+        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage, boolean is_auto_message) {
             this.status = ChatStatus.PENDING;
+            this.auto_generated = is_auto_message;
             // Add USER Message
             if (systemPrompt == "system-character") {
                 // Add message without playerId (so it does not display)

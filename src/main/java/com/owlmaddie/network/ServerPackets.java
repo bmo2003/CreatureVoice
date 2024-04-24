@@ -146,7 +146,7 @@ public class ServerPackets {
                     if (chatData.characterSheet.isEmpty()) {
                         generate_character(chatData, player, entity);
                     } else {
-                        generate_chat(chatData, player, entity, message);
+                        generate_chat(chatData, player, entity, message, false);
                     }
                 }
             });
@@ -253,17 +253,17 @@ public class ServerPackets {
         userMessageBuilder.append("who lives near the ").append(player_biome).append(".");
         LOGGER.info(userMessageBuilder.toString());
 
-        chatData.generateMessage(player, "system-character", userMessageBuilder.toString());
+        chatData.generateMessage(player, "system-character", userMessageBuilder.toString(), false);
     }
 
-    public static void generate_chat(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message) {
+    public static void generate_chat(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message, boolean is_auto_message) {
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
         // Add new message
         LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());
-        chatData.generateMessage(player, "system-chat", message);
+        chatData.generateMessage(player, "system-chat", message, is_auto_message);
     }
 
     // Send new message to all connected players
