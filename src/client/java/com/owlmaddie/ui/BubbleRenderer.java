@@ -278,6 +278,7 @@ public class BubbleRenderer {
                 .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
                 .filter(entity -> !entity.hasPassengers())
                 .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
+                .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
                 .collect(Collectors.toList());
 
         for (Entity entity : relevantEntities) {
@@ -457,13 +458,19 @@ public class BubbleRenderer {
                 // Scale down before rendering textures (otherwise font is huge)
                 matrices.scale(-0.02F, -0.02F, 0.02F);
 
+                boolean showPendingIcon = false;
+                if (PlayerMessageManager.isChatUIOpen(entity.getUuid())) {
+                    showPendingIcon = true;
+                    scaledTextHeight += minTextHeight; // raise height of player name and icon
+                }
+
                 // Translate above the player
                 matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
 
                 // Draw Player Name
                 drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING);
 
-                if (PlayerMessageManager.isChatUIOpen(entity.getUuid())) {
+                if (showPendingIcon) {
                     // Draw 'pending' button (when Chat UI is open)
                     drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
                 }
