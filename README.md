@@ -48,7 +48,7 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ## Screenshots
-![Interact with Minecraft Creatures](src/main/resources/assets/creaturechat/screenshots/fish-follow.png)
+![Interact with Minecraft Creatures](src/main/resources/assets/creaturechat/screenshots/salmon-follow.png)
 ![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.png)
 ![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.png)
 ![Enderman Following the Player](src/main/resources/assets/creaturechat/screenshots/enderman-follow.png)
