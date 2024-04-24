@@ -32,9 +32,9 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 - `/creaturechat key set <key>`
   Sets the **OpenAI API key**. This is required for making requests to the LLM.
 - `/creaturechat url set <url>`
-  **Optional:** Sets the URL of the API used to make LLM requests.
+  **OPTIONAL:** Sets the URL of the API used to make LLM requests.
 - `/creaturechat model set <model>`
-  **Optional:** Sets the model used for generating responses in chats.
+  **OPTIONAL:** Sets the model used for generating responses in chats.
 
 ### Configuration Scope:
   You can specify the **optional** configuration scope at the end of each command to determine where settings should be applied:
@@ -63,16 +63,6 @@ be updated. Below are the general steps for this upgrade process.
 1. Re-run: `./gradlew runClient`
 1. **Optional:** Re-start **IntelliJ IDEA** to clear cached gradle
 
-## Authors
-
-- Jonathan Thomas <jonathan@openshot.org>
-- owlmaddie <owlmaddie@gmail.com>
-
-## Contact & Resources
-
-- [Source Code](http://gitlab.openshot.org/minecraft/creature-chat)
-- [Join us on Discord](https://discord.gg/m9dvPFmN3e)
-
 ## Costs Associated with Third-Party LLM APIs
 Using third-party Large Language Model (LLM) APIs, such as OpenAI, will incur usage-based fees. 
 These fees are typically based on the amount of data processed or the number of requests made 
@@ -89,6 +79,16 @@ Always keep your API keys confidential to prevent unauthorized access and potent
 Exposing your API key publicly can lead to security risks, unauthorized usage, and potential
 service abuse. Treat your API keys as sensitive information and only share them with trusted
 parties within secure environments.
+
+## Authors
+
+- Jonathan Thomas <jonathan@openshot.org>
+- owlmaddie <owlmaddie@gmail.com>
+
+## Contact & Resources
+
+- [Source Code](http://gitlab.openshot.org/minecraft/creature-chat)
+- [Join us on Discord](https://discord.gg/m9dvPFmN3e)
 
 ## License
 
