@@ -8,12 +8,14 @@
 - **Dynamic Dialogues**: Engage with Minecraft creatures like never before, each with a unique character sheet.
 - **AI-Driven Chats**: Powered by ChatGPT, ensuring each conversation is fresh and engaging.
 - **Custom Behaviors**: Creatures can make decisions on their own and **Follow, Flee, Attack**, and more!
+- **Reactive Interactions**: Creatures automatically react to being damaged or receiving items from players.
 - **Friendship Status**: Track your relationships on a 7-point scale, from foes to friends.
+- **Custom UI Artwork**: Features beautiful hand-drawn icons for entities, expressive chat bubbles.
 - **Multi-Player Interaction**: Share the experience; conversations sync across server & players.
 - **Personalized Memory**: Creatures remember past interactions, making each chat more personal.
 - **Model Support**: Flexible backend, compatible with various GPT and open-sources LLM models.
 
-Looking to enrich your Minecraft journey with deep conversations and lasting alliances?
+Ready to deepen your Minecraft journey with meaningful conversations and enduring friendships?
 **Step into the world of CreatureChat 🗨 and spark your first conversation today!**
 
 ## Installation
@@ -46,10 +48,11 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ## Screenshots
-![Sheep Greeting a Player](src/main/resources/assets/creaturechat/screenshots/sheep-greeting.png "Sheep Greeting a Player")
-![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png "Chat User-Interface")
-![Sheep Following a Player](src/main/resources/assets/creaturechat/screenshots/sheep-following.png "Sheep Following a Player")
-![Skeleton with Chat Bubble](src/main/resources/assets/creaturechat/screenshots/skeleton-chat.png "Skeleton with Chat Bubble")
+![Interact with Minecraft Creatures](src/main/resources/assets/creaturechat/screenshots/fish-follow.png)
+![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.png)
+![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.png)
+![Enderman Following the Player](src/main/resources/assets/creaturechat/screenshots/enderman-follow.png)
+![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png)
 
 ## Upgrade Dependencies
 
@@ -93,7 +96,7 @@ parties within secure environments.
 ## License
 
     CreatureChat is a Minecraft mod which allows chat conversations with entities.
-    Copyright (C) 2024 Owlmaddie LLC
+    Copyright (C) 2024 owlmaddie LLC
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
