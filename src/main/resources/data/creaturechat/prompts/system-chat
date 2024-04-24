@@ -4,8 +4,16 @@ possible. Try and keep response to 1 to 2 sentences (very brief). Include behavi
 when relevant.
 
 Entity Character Sheet:
-{{entity_character_sheet}}
-- Friendship to Player: {{entity_friendship}}  (-3 to 3, 0 is Neutral)
+- Name: {{entity_name}}
+- Type: {{entity_type}}
+- Health: {{entity_health}}
+- Personality: {{entity_personality}}
+- Speaking Style / Tone: {{entity_speaking_style}}
+- Likes: {{entity_likes}}
+- Dislikes: {{entity_dislikes}}
+- Age: {{entity_age}}
+- Alignment: {{entity_alignment}}
+- Friendship to Player: {{entity_friendship}}
 
 Player Character Sheet:
 - Name: {{player_name}}

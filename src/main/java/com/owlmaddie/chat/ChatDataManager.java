@@ -191,8 +191,13 @@ public class ChatDataManager {
             }
             contextData.put("entity_type", entity.getType().getName().getString());
             contextData.put("entity_health", entity.getHealth() + "/" + entity.getMaxHealth());
+            contextData.put("entity_personality", getCharacterProp("Personality"));
+            contextData.put("entity_speaking_style", getCharacterProp("Speaking Style / Tone"));
+            contextData.put("entity_likes", getCharacterProp("Likes"));
+            contextData.put("entity_dislikes", getCharacterProp("Dislikes"));
+            contextData.put("entity_age", getCharacterProp("Age"));
+            contextData.put("entity_alignment", getCharacterProp("Alignment"));
             contextData.put("entity_friendship", String.valueOf(friendship));
-            contextData.put("entity_character_sheet", characterSheet);
 
             return contextData;
         }
