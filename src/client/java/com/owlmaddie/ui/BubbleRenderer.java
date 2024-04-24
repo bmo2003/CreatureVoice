@@ -223,7 +223,7 @@ public class BubbleRenderer {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
         // Get Name of entity
-        String nameText = "N/A";
+        String nameText = "CreatureChat";
         if (entity instanceof MobEntity) {
             // Custom Name Tag (MobEntity)
             if (entity.getCustomName() != null) {
@@ -370,13 +370,13 @@ public class BubbleRenderer {
                 chatData = PlayerMessageManager.getMessage(entity.getUuid());
             }
 
-            float linesDisplayed = 0;
             float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
-            float scaledTextHeight = minTextHeight;
+            float scaledTextHeight = 0;
 
             if (chatData != null) {
                 // Set the range of lines to display
                 List<String> lines = chatData.getWrappedLines();
+                float linesDisplayed = 0;
                 int starting_line = chatData.currentLineNumber;
                 int ending_line = Math.min(chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES, lines.size());
 
