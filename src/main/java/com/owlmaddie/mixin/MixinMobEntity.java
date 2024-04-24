@@ -1,14 +1,49 @@
 package com.owlmaddie.mixin;
 
-import org.spongepowered.asm.mixin.Mixin;
+import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
-import org.spongepowered.asm.mixin.gen.Accessor;
-import net.minecraft.entity.ai.goal.GoalSelector;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
  */
 @Mixin(MobEntity.class)
-public interface MixinMobEntity {
-    @Accessor("goalSelector") public GoalSelector getGoalSelector();
+public class MixinMobEntity {
+
+    @Inject(method = "interact", at = @At(value = "RETURN"))
+    private void onItemGiven(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+        if (!cir.getReturnValue().isAccepted() || player.getWorld().isClient()) {
+            // If interaction was not successful, return early
+            return;
+        }
+
+        ItemStack itemStack = player.getStackInHand(hand);
+        MobEntity thisEntity = (MobEntity) (Object) this;
+
+        // Check if the player successfully interacts with an item
+        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity) {
+            ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+            String itemName = itemStack.getItem().toString();
+            int itemCount = itemStack.getCount();
+
+            // Prepare a message about the interaction
+            String giveItemMessage = "<" + serverPlayer.getName().getString() +
+                    " hands you " + itemCount + " " + itemName + ">";
+
+            ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
+            ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+            if (!chatData.characterSheet.isEmpty() && !chatData.auto_generated) {
+                ServerPackets.generate_chat(chatData, serverPlayer, thisEntity, giveItemMessage, true);
+            }
+        }
+    }
 }
