@@ -80,7 +80,7 @@ public class ServerPackets {
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
                     ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-                    LOGGER.info("Update read lines to " + lineNumber + " for: " + entity.getType().toString());
+                    LOGGER.debug("Update read lines to " + lineNumber + " for: " + entity.getType().toString());
                     chatData.setLineNumber(lineNumber);
                 }
             });
@@ -100,7 +100,7 @@ public class ServerPackets {
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
                     ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
-                    LOGGER.info("Hiding chat bubble for: " + entity.getType().toString());
+                    LOGGER.debug("Hiding chat bubble for: " + entity.getType().toString());
                     chatData.setStatus(ChatDataManager.ChatStatus.valueOf(status_name));
                 }
             });

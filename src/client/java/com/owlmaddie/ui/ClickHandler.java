@@ -98,7 +98,7 @@ public class ClickHandler {
 
                 // Determine area clicked inside chat bubble (top, left, right)
                 String hitRegion = determineHitRegion(closestHitResult.get(), closestBubbleData.position, camera, closestBubbleData.height);
-                LOGGER.info("Clicked region: " + hitRegion);
+                LOGGER.debug("Clicked region: " + hitRegion);
 
                 if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                     // Start conversation

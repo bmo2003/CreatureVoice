@@ -39,7 +39,7 @@ public class EntityBehaviorManager {
 
         GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
         goalSelector.add(priority.getPriority(), goal);
-        LOGGER.info("Goal of type {} added to entity UUID: {}", goal.getClass().getSimpleName(), entityId);
+        LOGGER.debug("Goal of type {} added to entity UUID: {}", goal.getClass().getSimpleName(), entityId);
     }
 
     public static void removeGoal(MobEntity entity, Class<? extends Goal> goalClass) {
@@ -51,7 +51,7 @@ public class EntityBehaviorManager {
             goals.removeIf(goal -> {
                 if (goalClass.isInstance(goal)) {
                     goalSelector.remove(goal);
-                    LOGGER.info("Goal of type {} removed for entity UUID: {}", goalClass.getSimpleName(), entityId);
+                    LOGGER.debug("Goal of type {} removed for entity UUID: {}", goalClass.getSimpleName(), entityId);
                     return true;
                 }
                 return false;
