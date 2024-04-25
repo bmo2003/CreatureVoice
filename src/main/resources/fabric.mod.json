@@ -2,8 +2,8 @@
 	"schemaVersion": 1,
 	"id": "creaturechat",
 	"version": "${version}",
-	"name": "Creature Chat",
-	"description": "Elevate your Minecraft experiences with Creature Chat, a cutting-edge mod that brings intelligent, dynamic conversation to Minecraft creatures! We harnesses the power of GPT (Generative Pre-trained Transformer) to make your world more interactive and communicative.",
+	"name": "CreatureChat",
+	"description": "Chat, befriend, and interact with a rich world of creatures like never before! All creatures can talk and respond naturally using AI.",
 	"authors": [
 		"Jonathan Thomas <jonathan@openshot.org>",
 		"owlmaddie <owlmaddie@gmail.com>"
@@ -36,8 +36,5 @@
 		"minecraft": "~1.20.2",
 		"java": ">=17",
 		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
 	}
 }

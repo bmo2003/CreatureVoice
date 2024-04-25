@@ -20,7 +20,7 @@ Ready to deepen your Minecraft journey with meaningful conversations and endurin
 
 ## Installation
 1. **Install Fabric Loader**: Follow the instructions [here](https://fabricmc.net/use/).
-1. **Install CreatureChat Mod**: Place `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
+1. **Install CreatureChat Mod**: Download and move `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
    folder.
 1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the `+ Create new secret key` button.
    Copy/Paste your key into the `/creaturechat key set <your-secret-key-here>` command. 
@@ -54,34 +54,16 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 ![Enderman Following the Player](src/main/resources/assets/creaturechat/screenshots/enderman-follow.png)
 ![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png)
 
-## Upgrade Dependencies
-
-When Fabric or Minecraft is updated, the build dependencies need to also
-be updated. Below are the general steps for this upgrade process.
-
-1. Visit https://fabricmc.net/develop for updated version #s
-1. Copy/paste the recommended versions into `gradle.properties`
-1. **Optional:** Update the Loom version in `build.gradle` 
-1. Re-build: `./gradlew build` and watch for any errors
-1. Re-run: `./gradlew runClient`
-1. **Optional:** Re-start **IntelliJ IDEA** to clear cached gradle
-
-## Costs Associated with Third-Party LLM APIs
-Using third-party Large Language Model (LLM) APIs, such as OpenAI, will incur usage-based fees. 
+## Costs & Security
+Using third-party Large Language Model (LLM) APIs, such as OpenAI, will incur usage-based **fees**. 
 These fees are typically based on the amount of data processed or the number of requests made 
 to the service. Before integrating or using these APIs, please review the pricing details 
-provided by the API provider. Be aware of the potential costs and plan your usage accordingly 
+provided by the API provider. Be aware of the **potential costs** and plan your usage accordingly 
 to avoid unexpected charges.
 
 By using this software and integrating third-party APIs, you acknowledge and agree to take 
-full responsibility for securing your API keys and managing API usage within the terms and 
+full responsibility for **securing** your API keys and managing API usage within the terms and 
 cost structures outlined by the providers.
-
-## API Key Confidentiality
-Always keep your API keys confidential to prevent unauthorized access and potential misuse.
-Exposing your API key publicly can lead to security risks, unauthorized usage, and potential
-service abuse. Treat your API keys as sensitive information and only share them with trusted
-parties within secure environments.
 
 ## Authors
 
@@ -90,8 +72,12 @@ parties within secure environments.
 
 ## Contact & Resources
 
-- [Source Code](http://gitlab.openshot.org/minecraft/creature-chat)
 - [Join us on Discord](https://discord.gg/m9dvPFmN3e)
+- [Build Instructions](INSTALL.md) ([Source Code](http://gitlab.openshot.org/minecraft/creature-chat))
+- Download from [Modrinth](https://modrinth.com/project/creaturechat) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/creaturechat)
+- Follow Us: [YouTube](https://www.youtube.com/@CreatureChat/featured) | 
+[Twitter](https://twitter.com/TheCreatureChat) |
+[TikTok](https://www.tiktok.com/@creaturechat)
 
 ## License
 
