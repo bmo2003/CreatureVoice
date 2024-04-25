@@ -21,11 +21,6 @@ public class MixinMobEntity {
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
     private void onItemGiven(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
-        if (!cir.getReturnValue().isAccepted() || player.getWorld().isClient()) {
-            // If interaction was not successful, return early
-            return;
-        }
-
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
 
