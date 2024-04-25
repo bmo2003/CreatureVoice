@@ -438,7 +438,16 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
 
                     // Draw 'resume chat' button
-                    drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+                    if (chatData.friendship == 3) {
+                        // Friend chat bubble
+                        drawIcon("button-chat-friend", matrices, -16, textHeaderHeight, 32, 17);
+                    } else if (chatData.friendship == -3) {
+                        // Enemy chat bubble
+                        drawIcon("button-chat-enemy", matrices, -16, textHeaderHeight, 32, 17);
+                    } else {
+                        // Normal chat bubble
+                        drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+                    }
 
                 } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
                     // Draw Player Name
