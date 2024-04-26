@@ -1,10 +1,11 @@
 package com.owlmaddie.goals;
 
+import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.GoalSelector;
+import net.minecraft.entity.ai.goal.PrioritizedGoal;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.entity.ai.goal.PrioritizedGoal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +38,12 @@ public class EntityBehaviorManager {
         List<Goal> goals = entityGoals.computeIfAbsent(entityId, k -> new ArrayList<>());
         goals.add(goal);
 
-        GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-        goalSelector.add(priority.getPriority(), goal);
-        LOGGER.debug("Goal of type {} added to entity UUID: {}", goal.getClass().getSimpleName(), entityId);
+        // Ensure that the task is synced with the server thread
+        ServerPackets.serverInstance.execute(() -> {
+            GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+            goalSelector.add(priority.getPriority(), goal);
+            LOGGER.debug("Goal of type {} added to entity UUID: {}", goal.getClass().getSimpleName(), entityId);
+        });
     }
 
     public static void removeGoal(MobEntity entity, Class<? extends Goal> goalClass) {
@@ -47,48 +51,54 @@ public class EntityBehaviorManager {
         List<Goal> goals = entityGoals.get(entityId);
 
         if (goals != null) {
-            GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-            goals.removeIf(goal -> {
-                if (goalClass.isInstance(goal)) {
-                    goalSelector.remove(goal);
-                    LOGGER.debug("Goal of type {} removed for entity UUID: {}", goalClass.getSimpleName(), entityId);
-                    return true;
-                }
-                return false;
+            // Ensure that the task is synced with the server thread
+            ServerPackets.serverInstance.execute(() -> {
+                GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+                goals.removeIf(goal -> {
+                    if (goalClass.isInstance(goal)) {
+                        goalSelector.remove(goal);
+                        LOGGER.debug("Goal of type {} removed for entity UUID: {}", goalClass.getSimpleName(), entityId);
+                        return true;
+                    }
+                    return false;
+                });
             });
         }
     }
 
     private static void moveConflictingGoals(MobEntity entity, GoalPriority newGoalPriority) {
-        GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+        // Ensure that the task is synced with the server thread
+        ServerPackets.serverInstance.execute(() -> {
+            GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
 
-        // Retrieve the existing goals
-        Set<PrioritizedGoal> existingGoals = new HashSet<>(goalSelector.getGoals());
+            // Retrieve the existing goals
+            Set<PrioritizedGoal> existingGoals = new HashSet<>(goalSelector.getGoals());
 
-        // Flag to check if there is a goal with the same priority as the new goal
-        boolean conflictExists = existingGoals.stream()
-                .anyMatch(goal -> goal.getPriority() == newGoalPriority.getPriority());
+            // Flag to check if there is a goal with the same priority as the new goal
+            boolean conflictExists = existingGoals.stream()
+                    .anyMatch(goal -> goal.getPriority() == newGoalPriority.getPriority());
 
-        if (!conflictExists) {
-            // If there's no conflict, no need to adjust priorities
-            return;
-        }
-
-        // If there's a conflict, collect goals that need their priority incremented
-        List<PrioritizedGoal> goalsToModify = new ArrayList<>();
-        for (PrioritizedGoal prioritizedGoal : existingGoals) {
-            if (prioritizedGoal.getPriority() >= newGoalPriority.getPriority()) {
-                goalsToModify.add(prioritizedGoal);
+            if (!conflictExists) {
+                // If there's no conflict, no need to adjust priorities
+                return;
             }
-        }
 
-        // Increment priorities and re-add goals
-        for (PrioritizedGoal goalToModify : goalsToModify) {
-            // Remove the original goal
-            goalSelector.remove(goalToModify.getGoal());
+            // If there's a conflict, collect goals that need their priority incremented
+            List<PrioritizedGoal> goalsToModify = new ArrayList<>();
+            for (PrioritizedGoal prioritizedGoal : existingGoals) {
+                if (prioritizedGoal.getPriority() >= newGoalPriority.getPriority()) {
+                    goalsToModify.add(prioritizedGoal);
+                }
+            }
 
-            // Increment the priority and re-add the goal
-            goalSelector.add(goalToModify.getPriority() + 1, goalToModify.getGoal());
-        }
+            // Increment priorities and re-add goals
+            for (PrioritizedGoal goalToModify : goalsToModify) {
+                // Remove the original goal
+                goalSelector.remove(goalToModify.getGoal());
+
+                // Increment the priority and re-add the goal
+                goalSelector.add(goalToModify.getPriority() + 1, goalToModify.getGoal());
+            }
+        });
     }
 }
