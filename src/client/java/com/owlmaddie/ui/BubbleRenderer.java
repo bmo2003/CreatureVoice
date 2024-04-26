@@ -471,6 +471,8 @@ public class BubbleRenderer {
                 if (PlayerMessageManager.isChatUIOpen(entity.getUuid())) {
                     showPendingIcon = true;
                     scaledTextHeight += minTextHeight; // raise height of player name and icon
+                } else {
+                    scaledTextHeight -= 15; // lower a bit more (when no pending icon is visible)
                 }
 
                 // Translate above the player
