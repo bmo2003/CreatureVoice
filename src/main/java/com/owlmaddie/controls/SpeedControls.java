@@ -17,11 +17,11 @@ public class SpeedControls {
         } else if (entity instanceof VillagerEntity) {
             speed = 0.5F;
         } else if (entity instanceof IllagerEntity) {
-            speed = 0.75F;
+            speed = 0.5F;
         } else if (entity instanceof WitchEntity) {
-            speed = 0.75F;
+            speed = 0.5F;
         } else if (entity instanceof WanderingTraderEntity) {
-            speed = 0.75F;
+            speed = 0.5F;
         } else if (entity instanceof AllayEntity) {
             speed = 1.5F;
         } else if (entity instanceof CamelEntity) {
