@@ -21,6 +21,7 @@ build_mod:
     - export DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${FABRIC_VERSION//+/%2B}/${FABRIC_API_JAR}"
     - echo Download Fabric API from $DOWNLOAD_URL
     - wget -q -O "${FABRIC_API_JAR}" $DOWNLOAD_URL
+    - ls . -la
 
   artifacts:
     paths:
