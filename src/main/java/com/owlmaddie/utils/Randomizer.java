@@ -65,16 +65,15 @@ public class Randomizer {
     private static List<String> characterAdjectives = Arrays.asList(
             "mystical", "fiery", "ancient", "cursed", "ethereal",
             "clumsy", "stealthy", "legendary", "toxic", "enigmatic",
-            "frosty", "celestial", "rambunctious", "shadowy", "golden",
-            "invisible", "screaming", "radiant", "savage", "whimsical",
-            "turbulent", "crystalline", "ominous", "jubilant", "arcane",
-            "rugged", "luminous", "venomous", "timeworn", "zephyr",
+            "celestial", "rambunctious", "shadowy", "brave",
+            "screaming", "radiant", "savage", "whimsical", "positive",
+            "turbulent", "ominous", "jubilant", "arcane", "hopeful",
+            "rugged", "venomous", "timeworn", "heinous", "friendly",
             "humorous", "silly", "goofy", "irate", "furious",
-            "wrathful", "nefarious", "sinister", "malevolent", "tricky",
-            "sly", "roguish", "deceitful", "untruthful", "duplicitous",
-            "noble", "dignified", "righteous", "defensive", "guardian",
-            "shielding", "amiable", "congenial", "affable", "wicked",
-            "maleficent", "heinous"
+            "wrathful", "nefarious", "sinister", "malevolent",
+            "sly", "roguish", "deceitful", "untruthful", "loving",
+            "noble", "dignified", "righteous", "defensive", "protective",
+            "heroic", "amiable", "congenial", "intelligent", "wicked"
     );
     private static List<String> frequencyTerms = Arrays.asList(
             "always", "frequently", "usually", "often", "sometimes",
