@@ -247,10 +247,8 @@ public class ServerPackets {
             userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
         } else {
             userMessageBuilder.append("whose name starts with the letter '").append(Randomizer.RandomLetter()).append("' ");
-            userMessageBuilder.append("and which uses ").append(Randomizer.RandomNumber(4) + 1).append(" syllables ");
+            userMessageBuilder.append("and uses ").append(Randomizer.RandomNumber(4) + 1).append(" syllables ");
         }
-        userMessageBuilder.append("of type '").append(entity.getType().getUntranslatedName().toLowerCase(Locale.ROOT)).append("' ");
-        userMessageBuilder.append("who lives near the ").append(player_biome).append(".");
         LOGGER.info(userMessageBuilder.toString());
 
         chatData.generateMessage(player, "system-character", userMessageBuilder.toString(), false);
