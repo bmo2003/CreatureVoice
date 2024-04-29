@@ -186,14 +186,27 @@ public class BubbleRenderer {
         float v1 = 8.0F / textureHeight;
         float u2 = 16.0F / textureWidth;
         float v2 = 16.0F / textureHeight;
-
         float z = -0.01F;
+
+        // Draw face
         bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(u1, v2).next();  // bottom left
         bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(u2, v2).next();   // bottom right
         bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(u2, v1).next();  // top right
         bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(u1, v1).next(); // top left
-        tessellator.draw();
 
+        // Coordinates for the hat (overlay)
+        float hatU1 = 40.0F / textureWidth;
+        float hatV1 = 8.0F / textureHeight;
+        float hatU2 = 48.0F / textureWidth;
+        float hatV2 = 16.0F / textureHeight;
+
+        // Draw hat (overlay)
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(hatU1, hatV2).next();
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(hatU2, hatV2).next();
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(hatU2, hatV1).next();
+        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(hatU1, hatV1).next();
+
+        tessellator.draw();
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }
