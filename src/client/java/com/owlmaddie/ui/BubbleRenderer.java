@@ -478,12 +478,14 @@ public class BubbleRenderer {
                 // Translate above the player
                 matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
 
-                // Draw Player Name
-                drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING);
+                // Draw Player Name (if not self and HUD is visible)
+                if (!entity.equals(cameraEntity) && !MinecraftClient.getInstance().options.hudHidden) {
+                    drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING);
 
-                if (showPendingIcon) {
-                    // Draw 'pending' button (when Chat UI is open)
-                    drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
+                    if (showPendingIcon) {
+                        // Draw 'pending' button (when Chat UI is open)
+                        drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
+                    }
                 }
             }
 
