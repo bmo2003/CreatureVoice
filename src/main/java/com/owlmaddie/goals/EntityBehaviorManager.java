@@ -9,16 +9,16 @@ import net.minecraft.server.world.ServerWorld;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * The {@code EntityBehaviorManager} class keeps track of all Mob Entities which have
- * custom goals attached to them, and prevents the same goal from being added to an
- * entity more than once.
+ * The {@code EntityBehaviorManager} class now directly interacts with the goal selectors of entities
+ * to manage goals, while avoiding concurrent modification issues.
  */
 public class EntityBehaviorManager {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-    private static final Map<UUID, List<Goal>> entityGoals = new HashMap<>();
 
     public static void addGoal(MobEntity entity, Goal goal, GoalPriority priority) {
         if (!(entity.getWorld() instanceof ServerWorld)) {
@@ -26,79 +26,54 @@ public class EntityBehaviorManager {
             return;
         }
 
-        UUID entityId = entity.getUuid();
-
-        // Use removeGoal to remove any existing goal of the same type
-        removeGoal(entity, goal.getClass());
-
-        // Move any conflicting goals +1 in priority
-        moveConflictingGoals(entity, priority);
-
-        // Now that any existing goal of the same type has been removed, we can add the new goal
-        List<Goal> goals = entityGoals.computeIfAbsent(entityId, k -> new ArrayList<>());
-        goals.add(goal);
-
-        // Ensure that the task is synced with the server thread
         ServerPackets.serverInstance.execute(() -> {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+
+            // First clear any existing goals of the same type to avoid duplicates
+            goalSelector.clear(g -> g.getClass().isAssignableFrom(goal.getClass()));
+
+            // Handle potential priority conflicts before adding the new goal
+            moveConflictingGoals(goalSelector, priority);
+
+            // Now add the new goal at the specified priority
             goalSelector.add(priority.getPriority(), goal);
-            LOGGER.debug("Goal of type {} added to entity UUID: {}", goal.getClass().getSimpleName(), entityId);
+            LOGGER.debug("Goal of type {} added with priority {}", goal.getClass().getSimpleName(), priority);
         });
     }
 
     public static void removeGoal(MobEntity entity, Class<? extends Goal> goalClass) {
-        UUID entityId = entity.getUuid();
-        List<Goal> goals = entityGoals.get(entityId);
-
-        if (goals != null) {
-            // Ensure that the task is synced with the server thread
-            ServerPackets.serverInstance.execute(() -> {
-                GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-                goals.removeIf(goal -> {
-                    if (goalClass.isInstance(goal)) {
-                        goalSelector.remove(goal);
-                        LOGGER.debug("Goal of type {} removed for entity UUID: {}", goalClass.getSimpleName(), entityId);
-                        return true;
-                    }
-                    return false;
-                });
-            });
-        }
-    }
-
-    private static void moveConflictingGoals(MobEntity entity, GoalPriority newGoalPriority) {
-        // Ensure that the task is synced with the server thread
         ServerPackets.serverInstance.execute(() -> {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
+            goalSelector.clear(g -> goalClass.isInstance(g));
+            LOGGER.debug("All goals of type {} removed.", goalClass.getSimpleName());
+        });
+    }
 
-            // Retrieve the existing goals
-            Set<PrioritizedGoal> existingGoals = new HashSet<>(goalSelector.getGoals());
+    public static void moveConflictingGoals(GoalSelector goalSelector, GoalPriority newGoalPriority) {
+        // Collect all prioritized goals currently in the selector.
+        List<PrioritizedGoal> sortedGoals = goalSelector.getGoals().stream()
+                .sorted(Comparator.comparingInt(PrioritizedGoal::getPriority))
+                .collect(Collectors.toList());
 
-            // Flag to check if there is a goal with the same priority as the new goal
-            boolean conflictExists = existingGoals.stream()
-                    .anyMatch(goal -> goal.getPriority() == newGoalPriority.getPriority());
+        // Check if there is an existing goal at the new priority level.
+        boolean conflictExists = sortedGoals.stream()
+                .anyMatch(pg -> pg.getPriority() == newGoalPriority.getPriority());
 
-            if (!conflictExists) {
-                // If there's no conflict, no need to adjust priorities
-                return;
-            }
-
-            // If there's a conflict, collect goals that need their priority incremented
-            List<PrioritizedGoal> goalsToModify = new ArrayList<>();
-            for (PrioritizedGoal prioritizedGoal : existingGoals) {
-                if (prioritizedGoal.getPriority() >= newGoalPriority.getPriority()) {
-                    goalsToModify.add(prioritizedGoal);
+        // If there is a conflict, we need to shift priorities of this and all higher priorities.
+        if (conflictExists) {
+            int shiftPriority = newGoalPriority.getPriority();
+            for (PrioritizedGoal pg : sortedGoals) {
+                if (pg.getPriority() >= shiftPriority) {
+                    // Remove the goal and increment its priority.
+                    goalSelector.remove(pg.getGoal());
+                    goalSelector.add(shiftPriority + 1, pg.getGoal());
+                    shiftPriority++;  // Update the shift priority for the next possible conflict.
                 }
             }
 
-            // Increment priorities and re-add goals
-            for (PrioritizedGoal goalToModify : goalsToModify) {
-                // Remove the original goal
-                goalSelector.remove(goalToModify.getGoal());
-
-                // Increment the priority and re-add the goal
-                goalSelector.add(goalToModify.getPriority() + 1, goalToModify.getGoal());
-            }
-        });
+            LOGGER.debug("Moved conflicting goals starting from priority {}", newGoalPriority);
+        } else {
+            LOGGER.debug("No conflicting goal at priority {}, no action taken.", newGoalPriority);
+        }
     }
 }
