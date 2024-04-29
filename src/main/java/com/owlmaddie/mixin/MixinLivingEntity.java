@@ -44,7 +44,7 @@ public class MixinLivingEntity implements LivingEntityInterface {
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
             ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
-            if (!chatData.characterSheet.isEmpty() && !chatData.auto_generated) {
+            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
                 // Only auto-generate a response to being attacked if chat data already exists
                 // and this is the first attack event.
                 ServerPlayerEntity player = (ServerPlayerEntity)attacker;

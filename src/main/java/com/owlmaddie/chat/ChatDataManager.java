@@ -44,6 +44,7 @@ public class ChatDataManager {
     public static int DISPLAY_NUM_LINES = 3;
     public static int MAX_CHAR_IN_USER_MESSAGE = 512;
     public static int TICKS_TO_DISPLAY_USER_MESSAGE = 70;
+    public static int MAX_AUTOGENERATE_RESPONSES = 3;
     public QuestJson quest = null;
     private static final Gson GSON = new Gson();
 
@@ -83,7 +84,7 @@ public class ChatDataManager {
         public String characterSheet;
         public ChatSender sender;
         public int friendship; // -3 to 3 (0 = neutral)
-        public boolean auto_generated;
+        public int auto_generated;
 
         public EntityChatData(String entityId, String playerId) {
             this.entityId = entityId;
@@ -95,7 +96,7 @@ public class ChatDataManager {
             this.status = ChatStatus.NONE;
             this.sender = ChatSender.USER;
             this.friendship = 0;
-            this.auto_generated = false;
+            this.auto_generated = 0;
         }
 
         // Light version with no 'previousMessages' attribute
@@ -210,7 +211,14 @@ public class ChatDataManager {
         // Generate greeting
         public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage, boolean is_auto_message) {
             this.status = ChatStatus.PENDING;
-            this.auto_generated = is_auto_message;
+            if (is_auto_message) {
+                // Increment an auto-generated message
+                this.auto_generated++;
+            } else {
+                // Reset auto-generated counter
+                this.auto_generated = 0;
+            }
+
             // Add USER Message
             if (systemPrompt == "system-character") {
                 // Add message without playerId (so it does not display)
