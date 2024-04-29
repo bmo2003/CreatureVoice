@@ -199,6 +199,9 @@ public class ChatDataManager {
             contextData.put("entity_dislikes", getCharacterProp("Dislikes"));
             contextData.put("entity_age", getCharacterProp("Age"));
             contextData.put("entity_alignment", getCharacterProp("Alignment"));
+            contextData.put("entity_class", getCharacterProp("Class"));
+            contextData.put("entity_skills", getCharacterProp("Skills"));
+            contextData.put("entity_background", getCharacterProp("Background"));
             contextData.put("entity_friendship", String.valueOf(friendship));
 
             return contextData;
