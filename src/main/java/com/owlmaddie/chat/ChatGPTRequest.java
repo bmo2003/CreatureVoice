@@ -174,7 +174,7 @@ public class ChatGPTRequest {
                         while ((errorLine = errorReader.readLine()) != null) {
                             errorResponse.append(errorLine.trim());
                         }
-                        LOGGER.error("Error response from OpenAI: " + errorResponse.toString());
+                        LOGGER.error("Error response from API: " + errorResponse);
                     }
                     return null;
                 }
