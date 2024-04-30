@@ -8,6 +8,7 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.world.ServerWorld;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.function.Predicate;
 
 import java.util.Comparator;
 import java.util.List;
@@ -30,7 +31,7 @@ public class EntityBehaviorManager {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
 
             // First clear any existing goals of the same type to avoid duplicates
-            goalSelector.clear(g -> g.getClass().isAssignableFrom(goal.getClass()));
+            clearAndRemove(g -> goal.getClass().equals(g.getClass()), goalSelector);
 
             // Handle potential priority conflicts before adding the new goal
             moveConflictingGoals(goalSelector, priority);
@@ -41,10 +42,23 @@ public class EntityBehaviorManager {
         });
     }
 
+    public static void clearAndRemove(Predicate<Goal> predicate, GoalSelector goalSelector) {
+        // Collect all goals that need to be removed
+        List<PrioritizedGoal> toBeRemoved = goalSelector.getGoals().stream()
+                .filter(prioritizedGoal -> predicate.test(prioritizedGoal.getGoal()))
+                .collect(Collectors.toList());
+
+        // Stop if running and remove each goal
+        toBeRemoved.forEach(prioritizedGoal -> {
+            goalSelector.remove(prioritizedGoal.getGoal());  // Remove the goal
+        });
+    }
+
     public static void removeGoal(MobEntity entity, Class<? extends Goal> goalClass) {
         ServerPackets.serverInstance.execute(() -> {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
-            goalSelector.clear(g -> goalClass.isInstance(g));
+            // First clear any existing goals of the same type to avoid duplicates
+            clearAndRemove(g -> goalClass.equals(g.getClass()), goalSelector);
             LOGGER.debug("All goals of type {} removed.", goalClass.getSimpleName());
         });
     }
