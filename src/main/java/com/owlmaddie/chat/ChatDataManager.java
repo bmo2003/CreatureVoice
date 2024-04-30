@@ -239,6 +239,9 @@ public class ChatDataManager {
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
                     String shortGreeting = getCharacterProp("short greeting");
+                    if (shortGreeting.isEmpty()) {
+                        shortGreeting = Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE);
+                    }
                     this.addMessage(shortGreeting.replace("\n", " "), ChatSender.ASSISTANT, player.getUuidAsString());
 
                 } else if (output_message != null && systemPrompt == "system-chat") {
