@@ -21,13 +21,15 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -312,5 +314,15 @@ public class ServerPackets {
             LOGGER.debug("Server broadcast " + player.getName().getString() + " player status to client: " + serverPlayer.getName().getString() + " | isChatOpen: " + isChatOpen);
             ServerPlayNetworking.send(serverPlayer, PACKET_S2C_PLAYER_STATUS, buffer);
         }
+    }
+
+    // Send a chat message to a player which is clickable (for error messages with a link for help)
+    public static void SendClickableError(PlayerEntity player, String message, String url) {
+        MutableText text = Text.literal(message)
+                .formatted(Formatting.BLUE)
+                .styled(style -> style
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+                        .withUnderline(true));
+        player.sendMessage(text, false);
     }
 }

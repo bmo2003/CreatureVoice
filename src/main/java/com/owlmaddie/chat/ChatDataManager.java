@@ -319,6 +319,11 @@ public class ChatDataManager {
                     String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
                     this.addMessage(randomErrorMessage, ChatSender.ASSISTANT, player.getUuidAsString());
 
+                    // Send clickable error message
+                    ServerPackets.SendClickableError(player,
+                            "Help is available at discord.creaturechat.com",
+                            "http://discord.creaturechat.com");
+
                     // Clear history (if no character sheet was generated)
                     if (characterSheet.isEmpty()) {
                         previousMessages.clear();
