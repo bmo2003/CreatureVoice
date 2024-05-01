@@ -37,7 +37,7 @@ public class MixinMobEntity {
             ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
             ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
             if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                ServerPackets.generate_chat(chatData, serverPlayer, thisEntity, giveItemMessage, true);
+                ServerPackets.generate_chat("N/A", chatData, serverPlayer, thisEntity, giveItemMessage, true);
             }
         }
     }

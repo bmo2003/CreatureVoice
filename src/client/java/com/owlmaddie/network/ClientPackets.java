@@ -31,8 +31,13 @@ public class ClientPackets {
     static HashMap<Integer, byte[]> receivedChunks = new HashMap<>();
 
     public static void sendGenerateGreeting(Entity entity) {
+        // Get user language
+        String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
+        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getLiteralString();
+
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeString(entity.getUuidAsString());
+        buf.writeString(userLanguageName);
 
         // Send C2S packet
         ClientPlayNetworking.send(ServerPackets.PACKET_C2S_GREETING, buf);
@@ -72,9 +77,14 @@ public class ClientPackets {
     }
 
     public static void sendChat(Entity entity, String message) {
+        // Get user language
+        String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
+        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getLiteralString();
+
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeString(entity.getUuidAsString());
         buf.writeString(message);
+        buf.writeString(userLanguageName);
 
         // Send C2S packet
         ClientPlayNetworking.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);

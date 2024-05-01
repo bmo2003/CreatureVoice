@@ -135,7 +135,7 @@ public class ChatDataManager {
         }
 
         // Generate context object
-        public Map<String, String> getPlayerContext(ServerPlayerEntity player) {
+        public Map<String, String> getPlayerContext(ServerPlayerEntity player, String userLanguage) {
             // Add PLAYER context information
             Map<String, String> contextData = new HashMap<>();
             contextData.put("player_name", player.getDisplayName().getString());
@@ -146,6 +146,7 @@ public class ChatDataManager {
             contextData.put("player_is_creative", player.isCreative() ? "yes" : "no");
             contextData.put("player_is_swimming", player.isSwimming() ? "yes" : "no");
             contextData.put("player_is_on_ground", player.isOnGround() ? "yes" : "no");
+            contextData.put("player_language", userLanguage);
 
             ItemStack feetArmor = player.getInventory().armor.get(0);
             ItemStack legsArmor = player.getInventory().armor.get(1);
@@ -209,7 +210,7 @@ public class ChatDataManager {
         }
 
         // Generate greeting
-        public void generateMessage(ServerPlayerEntity player, String systemPrompt, String userMessage, boolean is_auto_message) {
+        public void generateMessage(String userLanguage, ServerPlayerEntity player, String systemPrompt, String userMessage, boolean is_auto_message) {
             this.status = ChatStatus.PENDING;
             if (is_auto_message) {
                 // Increment an auto-generated message
@@ -228,7 +229,7 @@ public class ChatDataManager {
             }
 
             // Add PLAYER context information
-            Map<String, String> contextData = getPlayerContext(player);
+            Map<String, String> contextData = getPlayerContext(player, userLanguage);
 
             // fetch HTTP response from ChatGPT
             ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages, false).thenAccept(output_message -> {

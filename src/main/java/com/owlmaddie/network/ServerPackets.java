@@ -55,6 +55,7 @@ public class ServerPackets {
         // Handle packet for Greeting
         ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_GREETING, (server, player, handler, buf, responseSender) -> {
             UUID entityId = UUID.fromString(buf.readString());
+            String userLanguage = buf.readString(32767);
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
@@ -62,7 +63,7 @@ public class ServerPackets {
                 if (entity != null) {
                     ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
                     if (chatData.characterSheet.isEmpty()) {
-                        generate_character(chatData, player, entity);
+                        generate_character(userLanguage, chatData, player, entity);
                     }
                 }
             });
@@ -139,6 +140,7 @@ public class ServerPackets {
         ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_SEND_CHAT, (server, player, handler, buf, responseSender) -> {
             UUID entityId = UUID.fromString(buf.readString());
             String message = buf.readString(32767);
+            String userLanguage = buf.readString(32767);
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
@@ -146,9 +148,9 @@ public class ServerPackets {
                 if (entity != null) {
                     ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
                     if (chatData.characterSheet.isEmpty()) {
-                        generate_character(chatData, player, entity);
+                        generate_character(userLanguage, chatData, player, entity);
                     } else {
-                        generate_chat(chatData, player, entity, message, false);
+                        generate_chat(userLanguage, chatData, player, entity, message, false);
                     }
                 }
             });
@@ -230,13 +232,10 @@ public class ServerPackets {
 
     }
 
-    public static void generate_character(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity) {
+    public static void generate_character(String userLanguage, ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity) {
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
-
-        // Only generate a new greeting if not already doing so
-        String player_biome = player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath();
 
         // Grab random adjective
         String randomAdjective = Randomizer.getRandomMessage(Randomizer.RandomType.ADJECTIVE);
@@ -251,19 +250,20 @@ public class ServerPackets {
             userMessageBuilder.append("whose name starts with the letter '").append(Randomizer.RandomLetter()).append("' ");
             userMessageBuilder.append("and uses ").append(Randomizer.RandomNumber(4) + 1).append(" syllables ");
         }
+        userMessageBuilder.append("and speaks in '" + userLanguage + "'" );
         LOGGER.info(userMessageBuilder.toString());
 
-        chatData.generateMessage(player, "system-character", userMessageBuilder.toString(), false);
+        chatData.generateMessage(userLanguage, player, "system-character", userMessageBuilder.toString(), false);
     }
 
-    public static void generate_chat(ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message, boolean is_auto_message) {
+    public static void generate_chat(String userLanguage, ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message, boolean is_auto_message) {
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
         // Add new message
         LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());
-        chatData.generateMessage(player, "system-chat", message, is_auto_message);
+        chatData.generateMessage(userLanguage, player, "system-chat", message, is_auto_message);
     }
 
     // Send new message to all connected players
