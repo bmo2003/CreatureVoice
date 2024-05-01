@@ -200,6 +200,9 @@ public class BubbleRenderer {
         float hatU2 = 48.0F / textureWidth;
         float hatV2 = 16.0F / textureHeight;
 
+        // Adjust depth for hat layer
+        z -= 0.01F;
+
         // Draw hat (overlay)
         bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(hatU1, hatV2).next();
         bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(hatU2, hatV2).next();
