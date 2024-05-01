@@ -262,7 +262,7 @@ public class BubbleRenderer {
         float textHeaderHeight = 40F;
         float textFooterHeight = 5F;
         int fullBright = 0xF000F0;
-        double renderDistance = 9.0;
+        double renderDistance = 11.0;
 
         // Get camera
         Camera camera = context.camera();
