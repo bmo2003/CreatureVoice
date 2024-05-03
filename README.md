@@ -19,10 +19,10 @@ Ready to deepen your Minecraft journey with meaningful conversations and endurin
 **Step into the world of CreatureChat 🗨 and spark your first conversation today!**
 
 ## Installation
-1. **Install Fabric Loader**: Follow the instructions [here](https://fabricmc.net/use/).
-1. **Install CreatureChat Mod**: Download and move `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
+1. **Install Fabric Loader & API**: Follow the instructions [here](https://fabricmc.net/use/).
+1. **Install CreatureChat Mod**: Download and copy `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
    folder.
-1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the `+ Create new secret key` button.
+1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the **+ Create new secret key** button.
    Copy/Paste your key into the `/creaturechat key set <your-secret-key-here>` command. 
    By default, we use the `gpt-3.5-turbo`, although we support most models. Review pricing at 
    https://openai.com/pricing#language-models.
