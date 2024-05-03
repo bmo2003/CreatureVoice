@@ -79,6 +79,10 @@ cost structures outlined by the providers.
 [Twitter](https://twitter.com/TheCreatureChat) |
 [TikTok](https://www.tiktok.com/@creaturechat)
 
+## Legal Information
+
+Please review our [Terms of Service](TERMS.md) and [Privacy Policy](PRIVACY.md) before using CreatureChat. By using our services, you agree to comply with these documents.
+
 ## License
 
     CreatureChat is a Minecraft mod which allows chat conversations with entities.
