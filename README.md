@@ -23,23 +23,21 @@ Ready to deepen your Minecraft journey with meaningful conversations and endurin
 1. **Install CreatureChat Mod**: Download and copy `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods`
    folder.
 1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the **+ Create new secret key** button.
-   Copy/Paste your key into the `/creaturechat key set <your-secret-key-here>` command. 
-   By default, we use the `gpt-3.5-turbo`, although we support most models. Review pricing at 
-   https://openai.com/pricing#language-models.
+   Copy/Paste your key into the `/creaturechat key set <YOUR-SECRET-KEY-HERE>` command.
 
 ## Commands
 The CreatureChat mod allows users to configure settings via in-game commands. Here's how to use them:
 
 ### Command Usage
-- `/creaturechat key set <key>`
-  Sets the **OpenAI API key**. This is required for making requests to the LLM.
-- `/creaturechat url set <url>`
-  **OPTIONAL:** Sets the URL of the API used to make LLM requests.
-- `/creaturechat model set <model>`
-  **OPTIONAL:** Sets the model used for generating responses in chats.
+- **REQUIRED:** `/creaturechat key set <key>`
+  - Sets the *OpenAI API key*. This is required for making requests to the LLM.
+- **OPTIONAL:** `/creaturechat url set <url>`
+  - Sets the URL of the API used to make LLM requests. Defaults to `"https://api.openai.com/v1/chat/completions"`
+- **OPTIONAL:** `/creaturechat model set <model>`
+  - Sets the model used for generating responses in chats. Defaults to `gpt-3.5-turbo`.
 
 ### Configuration Scope:
-  You can specify the **optional** configuration scope at the end of each command to determine where settings should be applied:
+**OPTIONAL:** You can specify the configuration scope at the end of each command to determine where settings should be applied:
 
 - **Default** Configuration (`--config default`):
   Applies the configuration universally, unless overridden by a server-specific configuration.
@@ -47,23 +45,24 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
   Applies the configuration only to the server where the command is executed.
 - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
+## Costs & Security
+Using third-party Large Language Model (LLM) APIs, such as OpenAI, will incur usage-based **fees**.
+These fees are based on the amount of data processed. Before integrating your API key, please
+[review the pricing](https://openai.com/pricing#language-models) details provided by the API provider.
+Be aware of the **potential costs** and plan your usage accordingly to avoid unexpected charges.
+
+## Does OpenAI offer a **FREE** model?
+While ChatGPT is a popular product and does offer a free version to their users on their website,
+the OpenAI developer API does not extend any free models or free usage. You will be charged for each token
+consumed and generated. We use the `gpt-3.5-turbo` model by default, due to its extremely low cost
+and fast performance... however it is not free.
+
 ## Screenshots
 ![Interact with Minecraft Creatures](src/main/resources/assets/creaturechat/screenshots/salmon-follow.png)
 ![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.png)
 ![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.png)
 ![Enderman Following the Player](src/main/resources/assets/creaturechat/screenshots/enderman-follow.png)
 ![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png)
-
-## Costs & Security
-Using third-party Large Language Model (LLM) APIs, such as OpenAI, will incur usage-based **fees**. 
-These fees are typically based on the amount of data processed or the number of requests made 
-to the service. Before integrating or using these APIs, please review the pricing details 
-provided by the API provider. Be aware of the **potential costs** and plan your usage accordingly 
-to avoid unexpected charges.
-
-By using this software and integrating third-party APIs, you acknowledge and agree to take 
-full responsibility for **securing** your API keys and managing API usage within the terms and 
-cost structures outlined by the providers.
 
 ## Authors
 
