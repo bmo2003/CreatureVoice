@@ -31,7 +31,7 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
 ### Command Usage
 - **REQUIRED:** `/creaturechat key set <key>`
   - Sets the *OpenAI API key*. This is required for making requests to the LLM.
-- **OPTIONAL:** `/creaturechat url set <url>`
+- **OPTIONAL:** `/creaturechat url set "<url>"`
   - Sets the URL of the API used to make LLM requests. Defaults to `"https://api.openai.com/v1/chat/completions"`
 - **OPTIONAL:** `/creaturechat model set <model>`
   - Sets the model used for generating responses in chats. Defaults to `gpt-3.5-turbo`.
