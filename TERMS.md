@@ -35,6 +35,7 @@ affect the terms under which you have purchased or used the CreatureChat API key
 ## 7. Refunds and Expiration Policy
 - All purchases of CreatureChat API keys and tokens are final and non-refundable. We do not offer refunds for any transactions made through our services.
 - CreatureChat API keys and tokens expire 36 months from the date of purchase. Users must use their keys and tokens within this time frame as any unused keys and tokens will be forfeited upon expiration.
+- Gameplay Hours Disclaimer: Estimated gameplay hours are based on average usage during our tests. Actual playtime may vary depending on individual play styles and token usage.
 
 ## 8. Intellectual Property
 All rights, title, and interest in and to the CreatureChat services, including all associated intellectual property 
