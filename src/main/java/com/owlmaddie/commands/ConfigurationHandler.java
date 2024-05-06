@@ -63,7 +63,13 @@ public class ConfigurationHandler {
 
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
-        public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+        public void setApiKey(String apiKey) {
+            // Update URL if a CreatureChat API key is detected
+            if (apiKey.startsWith("cc_") && apiKey.length() == 15) {
+                setUrl("https://api.creaturechat.com/v1/chat/completions");
+            }
+            this.apiKey = apiKey;
+        }
 
         public String getUrl() { return url; }
         public void setUrl(String url) { this.url = url; }
