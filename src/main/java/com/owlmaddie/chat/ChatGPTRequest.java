@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
  */
 public class ChatGPTRequest {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static String lastErrorMessage;
 
     static class ChatGPTRequestMessage {
         String role;
@@ -175,8 +176,11 @@ public class ChatGPTRequest {
                             errorResponse.append(errorLine.trim());
                         }
                         LOGGER.error("Error response from API: " + errorResponse);
+                        lastErrorMessage = errorResponse.toString();
                     }
                     return null;
+                } else {
+                    lastErrorMessage = null;
                 }
 
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {

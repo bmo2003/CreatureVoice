@@ -320,10 +320,15 @@ public class ChatDataManager {
                     String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
                     this.addMessage(randomErrorMessage, ChatSender.ASSISTANT, player.getUuidAsString());
 
+                    // Determine error message to display
+                    String errorMessage = "Help is available at discord.creaturechat.com";
+                    if (!ChatGPTRequest.lastErrorMessage.isEmpty()) {
+                        errorMessage = "Error: " + truncateString(ChatGPTRequest.lastErrorMessage, 55) + "\n" + errorMessage;
+                    }
+
                     // Send clickable error message
                     ServerPackets.SendClickableError(player,
-                            "Help is available at discord.creaturechat.com",
-                            "http://discord.creaturechat.com");
+                            errorMessage, "http://discord.creaturechat.com");
 
                     // Clear history (if no character sheet was generated)
                     if (characterSheet.isEmpty()) {
@@ -334,6 +339,10 @@ public class ChatDataManager {
                 // Broadcast to all players
                 ServerPackets.BroadcastPacketMessage(this);
             });
+        }
+
+        public static String truncateString(String input, int maxLength) {
+            return input.length() > maxLength ? input.substring(0, maxLength - 3) + "..." : input;
         }
 
         // Add a message to the history and update the current message
