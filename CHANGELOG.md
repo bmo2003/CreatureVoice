@@ -4,6 +4,14 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Added support for Minecraft 1.20, 1.20.1, 1.20.2, 1.20.3, and 1.20.4 (new build pipeline)
+
+### Changed
+- Replaced calls to getLiteralString() with getString() for wider compatability
+
 ## [1.0.1] - 2024-05-06
 
 ### Added
