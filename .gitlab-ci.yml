@@ -50,6 +50,6 @@ build_mod:
       - creaturechat-*.jar
       - fabric-api-*.jar
   only:
-    - 1.20-minecraft-support
+    - develop
   tags:
     - minecraft
