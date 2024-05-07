@@ -33,7 +33,7 @@ public class ClientPackets {
     public static void sendGenerateGreeting(Entity entity) {
         // Get user language
         String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
-        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getLiteralString();
+        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getString();
 
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeString(entity.getUuidAsString());
@@ -79,7 +79,7 @@ public class ClientPackets {
     public static void sendChat(Entity entity, String message) {
         // Get user language
         String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
-        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getLiteralString();
+        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getString();
 
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeString(entity.getUuidAsString());

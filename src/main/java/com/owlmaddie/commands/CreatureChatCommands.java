@@ -66,7 +66,7 @@ public class CreatureChatCommands {
 
         Text feedbackMessage = Text.literal(settingDescription + " Set Successfully!").formatted(Formatting.GREEN);;
         source.sendFeedback(() -> feedbackMessage, false);
-        LOGGER.info("Command executed: " + feedbackMessage.getLiteralString());
+        LOGGER.info("Command executed: " + feedbackMessage.getString());
         return 1;
     }
 

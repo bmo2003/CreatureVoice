@@ -243,11 +243,11 @@ public class BubbleRenderer {
         if (entity instanceof MobEntity) {
             // Custom Name Tag (MobEntity)
             if (entity.getCustomName() != null) {
-                nameText = entity.getCustomName().getLiteralString();
+                nameText = entity.getCustomName().getString();
             }
         } else if (entity instanceof PlayerEntity) {
             // Player Name
-            nameText = entity.getName().getLiteralString();
+            nameText = entity.getName().getString();
         }
 
         // Truncate long names
