@@ -244,8 +244,8 @@ public class ServerPackets {
         StringBuilder userMessageBuilder = new StringBuilder();
         userMessageBuilder.append("Please generate a " + randomFrequency + " " + randomAdjective);
         userMessageBuilder.append(" character ");
-        if (entity.getCustomName() != null && !entity.getCustomName().getLiteralString().equals("N/A")) {
-            userMessageBuilder.append("named '").append(entity.getCustomName().getLiteralString()).append("' ");
+        if (entity.getCustomName() != null && !entity.getCustomName().getString().equals("N/A")) {
+            userMessageBuilder.append("named '").append(entity.getCustomName().getString()).append("' ");
         } else {
             userMessageBuilder.append("whose name starts with the letter '").append(Randomizer.RandomLetter()).append("' ");
             userMessageBuilder.append("and uses ").append(Randomizer.RandomNumber(4) + 1).append(" syllables ");

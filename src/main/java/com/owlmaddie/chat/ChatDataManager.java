@@ -191,7 +191,7 @@ public class ChatDataManager {
             if (entity.getCustomName() == null) {
                 contextData.put("entity_name", "");
             } else {
-                contextData.put("entity_name", entity.getCustomName().getLiteralString());
+                contextData.put("entity_name", entity.getCustomName().getString());
             }
             contextData.put("entity_type", entity.getType().getName().getString());
             contextData.put("entity_health", entity.getHealth() + "/" + entity.getMaxHealth());
