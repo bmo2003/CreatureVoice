@@ -26,7 +26,9 @@ build_mod:
         yarn_mappings="${mappings[$i]}"
         fabric_version="${fabric_versions[$i]}"
 
-        echo "\nBuilding for Minecraft Version $minecraft_version with Fabric $fabric_version\n"
+        echo "****"
+        echo "Building for Minecraft Version $minecraft_version with Fabric $fabric_version\n"
+        echo "****"
 
         # Replace versions before build attempt
         sed -i "s/minecraft_version=.*/minecraft_version=$minecraft_version/" gradle.properties
