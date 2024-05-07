@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +27,9 @@ public class CreatureChatCommands {
 
     public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("creaturechat")
-                .then(registerSetCommand("key", "API key"))
+                .then(registerSetCommand("key", "API Key"))
                 .then(registerSetCommand("url", "URL"))
-                .then(registerSetCommand("model", "model"))
+                .then(registerSetCommand("model", "Model"))
                 .then(registerHelpCommand()));
     }
 
@@ -63,8 +64,7 @@ public class CreatureChatCommands {
         }
         configHandler.saveConfig(config, useServerConfig);
 
-        String playerName = source.getName();
-        Text feedbackMessage = Text.literal(settingDescription + " set to: " + value + " in " + (useServerConfig ? "server" : "default") + " configuration by " + playerName);
+        Text feedbackMessage = Text.literal(settingDescription + " Set Successfully!").formatted(Formatting.GREEN);;
         source.sendFeedback(() -> feedbackMessage, false);
         LOGGER.info("Command executed: " + feedbackMessage.getLiteralString());
         return 1;
@@ -75,7 +75,7 @@ public class CreatureChatCommands {
                 .executes(context -> {
                     String helpMessage = "Usage of CreatureChat Commands:\n"
                             + "/creaturechat key set <key> - Sets the API key.\n"
-                            + "/creaturechat url set <url> - Sets the URL.\n"
+                            + "/creaturechat url set \"<url>\" - Sets the URL.\n"
                             + "/creaturechat model set <model> - Sets the model.\n"
                             + "\n"
                             + "Optional: Append [--config default | server] to any command to specify configuration scope. If --config is not specified, 'default' is assumed'.\n"
