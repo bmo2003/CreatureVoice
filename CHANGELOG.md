@@ -4,7 +4,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.2] - 2024-05-07
 
 ### Added
 - Added support for Minecraft 1.20, 1.20.1, 1.20.2, 1.20.3, and 1.20.4 (new build pipeline)
@@ -17,12 +17,12 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - Added support for CreatureChat API (switch URL when a CreatureChat key is detected)
 - Upgrade to Fabric Loader: `0.15.10`, Fabric API: `0.97.0+1.20.4`, Fabric Loom: `1.6.5`, Gradle: `8.6`
-- New [TERMS.md](TERMS.md) and [PRIVACY.md](PRIVACY.md) documents (terms of service and privacy policy for CreatureChat)
+- New TERMS.md and PRIVACY.md documents (terms of service and privacy policy for CreatureChat)
 
 ### Changed
 - Improved error messages onscreen (Invalid API Key, No tokens remaining, etc...), for improved troubleshooting
 - Improved privacy by not outputting API keys in logs or onscreen
-- Updated [README.md](README.md) with improved instructions and info
+- Updated README.md with improved instructions and info
 
 ## [1.0.0] - 2024-05-01
 
