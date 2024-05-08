@@ -37,7 +37,7 @@ build_mod:
         sed -i "s/fabric_version=.*/fabric_version=$fabric_version/" gradle.properties
 
         # Update minecraft version in fabric.mod.json
-        sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \">=$minecraft_version <${minecraft_version%.*}.$((${minecraft_version##*.}+1))\"/" src/main/resources/fabric.mod.json
+        sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$minecraft_version\"/" src/main/resources/fabric.mod.json
         echo "Contents of fabric.mod.json:"
         cat src/main/resources/fabric.mod.json
 
