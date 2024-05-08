@@ -35,6 +35,15 @@ build_mod:
         sed -i "s/yarn_mappings=.*/yarn_mappings=$yarn_mappings/" gradle.properties
         sed -i "s/loader_version=.*/loader_version=0.15.11/" gradle.properties
         sed -i "s/fabric_version=.*/fabric_version=$fabric_version/" gradle.properties
+        echo "Contents of gradle.properties:"
+        cat gradle.properties
+        echo ""
+
+        # Update minecraft version dependency in fabric.mod.json
+        sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$minecraft_version\"/" src/main/resources/fabric.mod.json
+        echo "Contents of fabric.mod.json:"
+        cat src/main/resources/fabric.mod.json
+        echo ""
 
         ./gradlew build
         find build/libs -type f -name '*sources*.jar' -exec rm {} \;
