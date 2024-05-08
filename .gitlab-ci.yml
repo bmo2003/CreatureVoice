@@ -17,9 +17,9 @@ build_mod:
     - java -version
   script:
     - |
-      declare -a versions=("1.20" "1.20.1" "1.20.2" "1.20.3" "1.20.4")
-      declare -a mappings=("1.20+build.1" "1.20.1+build.10" "1.20.2+build.4" "1.20.3+build.1" "1.20.4+build.3")
-      declare -a fabric_versions=("0.83.0+1.20" "0.92.1+1.20.1" "0.91.6+1.20.2" "0.91.1+1.20.3" "0.97.0+1.20.4")
+      declare -a versions=("1.20")
+      declare -a mappings=("1.20+build.1")
+      declare -a fabric_versions=("0.83.0+1.20")
 
       for i in "${!versions[@]}"; do
         minecraft_version="${versions[$i]}"
@@ -36,6 +36,10 @@ build_mod:
         sed -i "s/loader_version=.*/loader_version=0.15.11/" gradle.properties
         sed -i "s/fabric_version=.*/fabric_version=$fabric_version/" gradle.properties
 
+        # Print the contents of gradle.properties
+        echo "Contents of gradle.properties:"
+        cat gradle.properties
+
         ./gradlew build
         find build/libs -type f -name '*sources*.jar' -exec rm {} \;
         mv build/libs/creaturechat-*.jar .
@@ -50,6 +54,6 @@ build_mod:
       - creaturechat-*.jar
       - fabric-api-*.jar
   only:
-    - develop
+    - improve-1.20-support
   tags:
     - minecraft
