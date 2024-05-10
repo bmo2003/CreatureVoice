@@ -325,4 +325,14 @@ public class ServerPackets {
                         .withUnderline(true));
         player.sendMessage(text, false);
     }
+
+    // Send a clickable message to ALL Ops
+    public static void sendMessageToAllOps(MinecraftServer server, String message) {
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+            // Check if the player is an operator
+            if (server.getPlayerManager().isOperator(player.getGameProfile())) {
+                ServerPackets.SendClickableError(player, message, "http://discord.creaturechat.com");
+            }
+        }
+    }
 }

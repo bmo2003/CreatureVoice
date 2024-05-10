@@ -4,6 +4,12 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Simplified saving of chat data (no more renaming files)
+- Send message to all ops when saving chat data errors (first auto-save happens at 1 minute after launching)
+
 ## [1.0.2] - 2024-05-07
 
 ### Added

@@ -14,7 +14,7 @@ public class ChatDataSaverScheduler {
 
     public void startAutoSaveTask(MinecraftServer server, long interval, TimeUnit timeUnit) {
         ChatDataAutoSaver saverTask = new ChatDataAutoSaver(server);
-        scheduler.scheduleAtFixedRate(saverTask, interval, interval, timeUnit);
+        scheduler.scheduleAtFixedRate(saverTask, 1, interval, timeUnit);
     }
 
     public void stopAutoSaveTask() {

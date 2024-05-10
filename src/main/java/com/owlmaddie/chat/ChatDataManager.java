@@ -480,19 +480,14 @@ public class ChatDataManager {
     // Save chat data to file
     public void saveChatData(MinecraftServer server) {
         File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
-        File tempFile = new File(saveFile.getAbsolutePath() + ".tmp");
         LOGGER.info("Saving chat data to " + saveFile.getAbsolutePath());
 
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(saveFile), StandardCharsets.UTF_8)) {
             GSON.toJson(this.entityChatDataMap, writer);
-            if (saveFile.exists()) {
-                saveFile.delete();
-            }
-            if (!tempFile.renameTo(saveFile)) {
-                throw new IOException("Failed to rename temporary chat data file to " + saveFile.getName());
-            }
         } catch (Exception e) {
-            LOGGER.error("Error saving chat data", e);
+            String errorMessage = "Error saving chat data to file system. No chat history will be saved. Check file permissions. " + e.getMessage();
+            LOGGER.error(errorMessage, e);
+            ServerPackets.sendMessageToAllOps(server, errorMessage);
         }
     }
 
