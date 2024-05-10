@@ -2,8 +2,11 @@ package com.owlmaddie.commands;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -19,6 +22,7 @@ import java.nio.file.Paths;
  */
 
 public class ConfigurationHandler {
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final Path serverConfigPath;
     private final Path defaultConfigPath;
@@ -36,12 +40,16 @@ public class ConfigurationHandler {
         return config != null ? config : new Config(); // Return new config if both are null
     }
 
-    public void saveConfig(Config config, boolean useServerConfig) {
+    public boolean saveConfig(Config config, boolean useServerConfig) {
         Path path = useServerConfig ? serverConfigPath : defaultConfigPath;
         try (Writer writer = Files.newBufferedWriter(path)) {
             gson.toJson(config, writer);
+            return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            String errorMessage = "Error saving `creaturechat.json`. CreatureChat config was not saved. " + e.getMessage();
+            LOGGER.error(errorMessage, e);
+            ServerPackets.sendMessageToAllOps(ServerPackets.serverInstance, errorMessage);
+            return false;
         }
     }
 

@@ -62,9 +62,15 @@ public class CreatureChatCommands {
                 config.setModel(value);
                 break;
         }
-        configHandler.saveConfig(config, useServerConfig);
 
-        Text feedbackMessage = Text.literal(settingDescription + " Set Successfully!").formatted(Formatting.GREEN);;
+        Text feedbackMessage;
+        if (configHandler.saveConfig(config, useServerConfig)) {
+            // succeeded
+            feedbackMessage = Text.literal(settingDescription + " Set Successfully!").formatted(Formatting.GREEN);
+        } else {
+            // failed
+            feedbackMessage = Text.literal(settingDescription + " Set Failed!").formatted(Formatting.RED);
+        }
         source.sendFeedback(() -> feedbackMessage, false);
         LOGGER.info("Command executed: " + feedbackMessage.getString());
         return 1;

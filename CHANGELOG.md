@@ -8,7 +8,8 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Changed
 - Simplified saving of chat data (no more renaming files)
-- Send message to all ops when saving chat data errors (first auto-save happens at 1 minute after launching)
+- If chat data fails to save, send message to all ops (first auto-save happens at 1 minute after launching)
+- If /creaturechat commands fail to save, send message to all ops (fail loudly) and display RED error message
 
 ## [1.0.2] - 2024-05-07
 

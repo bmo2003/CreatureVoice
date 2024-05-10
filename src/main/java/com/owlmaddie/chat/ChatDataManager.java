@@ -485,7 +485,7 @@ public class ChatDataManager {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(saveFile), StandardCharsets.UTF_8)) {
             GSON.toJson(this.entityChatDataMap, writer);
         } catch (Exception e) {
-            String errorMessage = "Error saving chat data to file system. No chat history will be saved. Check file permissions. " + e.getMessage();
+            String errorMessage = "Error saving `chatdata.json`. No CreatureChat chat history was saved! " + e.getMessage();
             LOGGER.error(errorMessage, e);
             ServerPackets.sendMessageToAllOps(server, errorMessage);
         }
