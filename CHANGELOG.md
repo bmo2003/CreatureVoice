@@ -4,6 +4,17 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Added new `/creaturechat timeout set <seconds>` command
+- Added support for commands to use different data types (`String`, `Integer`)
+
+### Changed
+- Updated error messages to `RED` color for maximum attention
+- Updated `/creaturechat help` output
+- Updated `README.md` with new command documentation
+
 ## [1.0.3] - 2024-05-10
 
 ### Changed

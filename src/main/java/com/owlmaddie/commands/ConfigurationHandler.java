@@ -48,7 +48,7 @@ public class ConfigurationHandler {
         } catch (IOException e) {
             String errorMessage = "Error saving `creaturechat.json`. CreatureChat config was not saved. " + e.getMessage();
             LOGGER.error(errorMessage, e);
-            ServerPackets.sendMessageToAllOps(ServerPackets.serverInstance, errorMessage);
+            ServerPackets.sendErrorToAllOps(ServerPackets.serverInstance, errorMessage);
             return false;
         }
     }
@@ -68,6 +68,7 @@ public class ConfigurationHandler {
         private int maxContextTokens = 16385;
         private int maxOutputTokens = 200;
         private double percentOfContext = 0.75;
+        private int timeout = 10;
 
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
@@ -84,6 +85,9 @@ public class ConfigurationHandler {
 
         public String getModel() { return model; }
         public void setModel(String model) { this.model = model; }
+
+        public int getTimeout() { return timeout; }
+        public void setTimeout(int timeout) { this.timeout = timeout; }
 
         // Getters and setters for new fields
         public int getMaxContextTokens() { return maxContextTokens; }

@@ -106,6 +106,7 @@ public class ChatGPTRequest {
         String apiUrl = config.getUrl();
         String apiKey = config.getApiKey();
         String modelName = config.getModel();
+        Integer timeout = config.getTimeout() * 1000;
         int maxContextTokens = config.getMaxContextTokens();
         int maxOutputTokens = config.getMaxOutputTokens();
         double percentOfContext = config.getPercentOfContext();
@@ -124,8 +125,8 @@ public class ChatGPTRequest {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestProperty("Authorization", "Bearer " + apiKey);
                 connection.setDoOutput(true);
-                connection.setConnectTimeout(10000); // 10 seconds connection timeout
-                connection.setReadTimeout(10000); // 10 seconds read timeout
+                connection.setConnectTimeout(timeout); // 10 seconds connection timeout
+                connection.setReadTimeout(timeout); // 10 seconds read timeout
 
                 // Create messages list (for chat history)
                 List<ChatGPTRequestMessage> messages = new ArrayList<>();

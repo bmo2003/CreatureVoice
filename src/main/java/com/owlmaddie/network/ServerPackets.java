@@ -319,7 +319,7 @@ public class ServerPackets {
     // Send a chat message to a player which is clickable (for error messages with a link for help)
     public static void SendClickableError(PlayerEntity player, String message, String url) {
         MutableText text = Text.literal(message)
-                .formatted(Formatting.BLUE)
+                .formatted(Formatting.RED)
                 .styled(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
                         .withUnderline(true));
@@ -327,7 +327,7 @@ public class ServerPackets {
     }
 
     // Send a clickable message to ALL Ops
-    public static void sendMessageToAllOps(MinecraftServer server, String message) {
+    public static void sendErrorToAllOps(MinecraftServer server, String message) {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             // Check if the player is an operator
             if (server.getPlayerManager().isOperator(player.getGameProfile())) {

@@ -35,6 +35,8 @@ The CreatureChat mod allows users to configure settings via in-game commands. He
   - Sets the URL of the API used to make LLM requests. Defaults to `"https://api.openai.com/v1/chat/completions"`
 - **OPTIONAL:** `/creaturechat model set <model>`
   - Sets the model used for generating responses in chats. Defaults to `gpt-3.5-turbo`.
+- **OPTIONAL:** `/creaturechat timeout set <seconds>`
+    - Sets the timeout (in seconds) for API HTTP requests. Defaults to `10` seconds.
 
 ### Configuration Scope:
 **OPTIONAL:** You can specify the configuration scope at the end of each command to determine where settings should be applied:
