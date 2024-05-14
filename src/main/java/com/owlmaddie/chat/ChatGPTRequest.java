@@ -13,10 +13,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
@@ -138,7 +135,7 @@ public class ChatGPTRequest {
                 // Iterate backwards through the message history
                 for (int i = messageHistory.size() - 1; i >= 0; i--) {
                     ChatDataManager.ChatMessage chatMessage = messageHistory.get(i);
-                    String senderName = chatMessage.sender.toString().toLowerCase();
+                    String senderName = chatMessage.sender.toString().toLowerCase(Locale.ENGLISH);
                     String messageText = replacePlaceholders(chatMessage.message, context);
                     int messageTokens = estimateTokenSize(senderName + ": " + messageText);
 

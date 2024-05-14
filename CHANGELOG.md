@@ -15,6 +15,9 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Updated `/creaturechat help` output
 - Updated `README.md` with new command documentation
 
+### Fixed
+- Chats broken when OS locale is non-English language (i.e. `assistant to ass\u0131stant`)
+
 ## [1.0.3] - 2024-05-10
 
 ### Changed
