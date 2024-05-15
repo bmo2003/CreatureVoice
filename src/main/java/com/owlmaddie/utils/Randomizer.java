@@ -63,17 +63,23 @@ public class Randomizer {
             "This message is temporarily out of order. Order yours at http://discord.creaturechat.com"
     );
     private static List<String> characterAdjectives = Arrays.asList(
-            "mystical", "fiery", "ancient", "cursed", "ethereal",
-            "clumsy", "stealthy", "legendary", "toxic", "enigmatic",
-            "celestial", "rambunctious", "shadowy", "brave",
-            "screaming", "radiant", "savage", "whimsical", "positive",
-            "turbulent", "ominous", "jubilant", "arcane", "hopeful",
-            "rugged", "venomous", "timeworn", "heinous", "friendly",
-            "humorous", "silly", "goofy", "irate", "furious",
-            "wrathful", "nefarious", "sinister", "malevolent",
-            "sly", "roguish", "deceitful", "untruthful", "loving",
-            "noble", "dignified", "righteous", "defensive", "protective",
-            "heroic", "amiable", "congenial", "intelligent", "wicked"
+            "mystical", "fiery", "ancient", "cursed", "ethereal", "clumsy", "stealthy",
+            "legendary", "toxic", "enigmatic", "celestial", "rambunctious", "shadowy",
+            "brave", "screaming", "radiant", "savage", "whimsical", "positive", "turbulent",
+            "ominous", "jubilant", "arcane", "hopeful", "rugged", "venomous", "timeworn",
+            "heinous", "friendly", "humorous", "silly", "goofy", "irate", "furious",
+            "wrathful", "nefarious", "sinister", "malevolent", "sly", "roguish", "deceitful",
+            "untruthful", "loving", "noble", "dignified", "righteous", "defensive",
+            "protective", "heroic", "amiable", "congenial", "happy", "sarcastic", "funny",
+            "short", "zany", "cooky", "wild", "fearless insane", "cool", "chill",
+            "cozy", "comforting", "stern", "stubborn", "scatterbrain", "scaredy", "aloof",
+            "gullible", "mischievous", "prankster", "trolling", "clingy", " manipulative",
+            "weird", "famous", "persuasive", "sweet", "wholesome", "innocent", "annoying",
+            "trusting", "hyper", "egotistical", "slow", "obsessive", "compulsive", "impulsive",
+            "unpredictable", "wildcard", "stuttering", "hypochondriac", "hypocritical",
+            "optimistic", "overconfident", "jumpy", "brief", "flighty", "visionary", "adorable",
+            "sparkly", "bubbly", "unstable", "sad", "angry", "bossy", "altruistic", "quirky",
+            "nostalgic", "essentially", "emotional", "enthusiastic", "unusual", "conspirator"
     );
     private static List<String> frequencyTerms = Arrays.asList(
             "always", "frequently", "usually", "often", "sometimes",

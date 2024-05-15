@@ -7,6 +7,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## [Unreleased]
 
 ### Added
+- Doubled the number of character personality traits (to balance things out) 
 - Added new `/creaturechat timeout set <seconds>` command
 - Added support for commands to use different data types (`String`, `Integer`)
 
