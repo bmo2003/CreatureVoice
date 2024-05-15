@@ -5,6 +5,7 @@ import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -25,7 +26,7 @@ public class MixinMobEntity {
         MobEntity thisEntity = (MobEntity) (Object) this;
 
         // Check if the player successfully interacts with an item
-        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity) {
+        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity && itemStack.getItem() != Items.WATER_BUCKET) {
             ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
             String itemName = itemStack.getItem().toString();
             int itemCount = itemStack.getCount();

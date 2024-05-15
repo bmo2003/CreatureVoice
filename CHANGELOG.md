@@ -12,11 +12,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Added support for commands to use different data types (`String`, `Integer`)
 
 ### Changed
+- Water bucket is now ignored for item-giving detection (since the entity is despawned immediately)
 - Updated error messages to `RED` color for maximum attention
 - Updated `/creaturechat help` output
 - Updated `README.md` with new command documentation
 
 ### Fixed
+- Bucketing a creature now maintains chat history when respawned
 - Chats broken when OS locale is non-English language (i.e. `assistant to ass\u0131stant`)
 
 ## [1.0.3] - 2024-05-10

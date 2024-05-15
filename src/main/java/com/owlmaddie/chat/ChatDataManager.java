@@ -429,6 +429,21 @@ public class ChatDataManager {
         return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId, ""));
     }
 
+    // Update the UUID in the map (i.e. bucketed entity and then released, changes their UUID)
+    public void updateUUID(String oldUUID, String newUUID) {
+        EntityChatData data = entityChatDataMap.remove(oldUUID);
+        if (data != null) {
+            data.entityId = newUUID;
+            entityChatDataMap.put(newUUID, data);
+            LOGGER.info("Updated chat data from UUID (" + oldUUID + ") to UUID (" + newUUID + ")");
+
+            // Broadcast to all players
+            ServerPackets.BroadcastPacketMessage(data);
+        } else {
+            LOGGER.info("Unable to update chat data, UUID not found: " + oldUUID);
+        }
+    }
+
     // Generate quest data for this server session
     public void generateQuest() {
         // Get items needed for Quest prompt
