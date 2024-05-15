@@ -5,7 +5,8 @@
 	"mixins": [
 		"MixinMobEntity",
 		"MixinMobEntityAccessor",
-		"MixinLivingEntity"
+		"MixinLivingEntity",
+		"MixinBucketable"
 	],
 	"injectors": {
 		"defaultRequire": 1
