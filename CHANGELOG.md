@@ -12,7 +12,8 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Added support for commands to use different data types (`String`, `Integer`)
 
 ### Changed
-- Water bucket is now ignored for item-giving detection (since the entity is despawned immediately)
+- All buckets are now ignored for item-giving detection (since the entity is despawned immediately)
+- Item giving is now aware if the entity accepts the item. It uses either "shows" or "gives" in the prompt now.
 - Updated error messages to `RED` color for maximum attention
 - Updated `/creaturechat help` output
 - Updated `README.md` with new command documentation

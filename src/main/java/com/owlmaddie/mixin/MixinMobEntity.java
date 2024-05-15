@@ -4,6 +4,7 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -25,15 +26,38 @@ public class MixinMobEntity {
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
 
+        // Determine if the item is a bucket
+        // We don't want to interact on buckets
+        Item item = itemStack.getItem();
+        if (item == Items.BUCKET ||
+                item == Items.WATER_BUCKET ||
+                item == Items.LAVA_BUCKET ||
+                item == Items.POWDER_SNOW_BUCKET ||
+                item == Items.MILK_BUCKET ||
+                item == Items.PUFFERFISH_BUCKET ||
+                item == Items.SALMON_BUCKET ||
+                item == Items.COD_BUCKET ||
+                item == Items.TROPICAL_FISH_BUCKET ||
+                item == Items.AXOLOTL_BUCKET ||
+                item == Items.TADPOLE_BUCKET) {
+            return;
+        }
+
         // Check if the player successfully interacts with an item
-        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity && itemStack.getItem() != Items.WATER_BUCKET) {
+        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity) {
             ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
-            String itemName = itemStack.getItem().toString();
+            String itemName = itemStack.getItem().getName().getString();
             int itemCount = itemStack.getCount();
+
+            // Decide verb
+            String action_verb = " shows ";
+            if (cir.getReturnValue().isAccepted()) {
+                action_verb = " hands ";
+            }
 
             // Prepare a message about the interaction
             String giveItemMessage = "<" + serverPlayer.getName().getString() +
-                    " hands you " + itemCount + " " + itemName + ">";
+                    action_verb + "you " + itemCount + " " + itemName + ">";
 
             ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
             ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
