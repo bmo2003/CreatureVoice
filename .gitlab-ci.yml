@@ -9,7 +9,9 @@ cache:
 
 stages:
   - build
+  - deploy
 
+# Build JAR files for each Minecraft & Fabric version
 build_mod:
   stage: build
   before_script:
@@ -58,6 +60,30 @@ build_mod:
     paths:
       - creaturechat-*.jar
       - fabric-api-*.jar
+  only:
+    - develop
+  tags:
+    - minecraft
+
+# Deploy to Modrinth
+Modrinth:
+  stage: deploy
+  when: manual
+  script:
+    - chmod +x ./deploy-modrinth.sh
+    - ./deploy-modrinth.sh
+  only:
+    - develop
+  tags:
+    - minecraft
+
+# Deploy to CurseForge
+CurseForge:
+  stage: deploy
+  when: manual
+  script:
+    - chmod +x ./deploy-curseforge.sh
+    - ./deploy-curseforge.sh
   only:
     - develop
   tags:
