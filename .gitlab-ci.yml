@@ -66,7 +66,7 @@ build_mod:
     - minecraft
 
 # Deploy to Modrinth
-deploy_modrinth:
+Modrinth:
   stage: deploy
   script:
     - chmod +x ./deploy_modrinth.sh
@@ -80,7 +80,7 @@ deploy_modrinth:
     name: production
 
 # Deploy to CurseForge
-deploy_curseforge:
+CurseForge:
   stage: deploy
   script:
     - chmod +x ./deploy_curseforge.sh
