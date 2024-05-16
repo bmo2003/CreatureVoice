@@ -2,6 +2,9 @@
 
 set -e
 
+TEST_KEY=${TEST_KEY}
+echo "TEST_KEY: $TEST_KEY"
+
 MODRINTH_API_KEY=${MODRINTH_API_KEY}
 CHANGELOG_FILE="./CHANGELOG.md"
 API_URL="https://api.modrinth.com/v2"
@@ -84,15 +87,16 @@ for FILE in creaturechat*.jar; do
 
     # Upload the version with the file
     echo "Uploading $FILE_BASENAME as version $VERSION_NUMBER..."
-    RESPONSE=$(curl --fail -s -X POST "$API_URL/version" \
+    HTTP_RESPONSE=$(curl --fail -o response.txt -w "\nHTTP Code: %{http_code}\n" -X POST "$API_URL/version" \
       -H "Authorization: $MODRINTH_API_KEY" \
       -H "User-Agent: $USER_AGENT" \
       -F "data=@metadata.json;type=application/json;filename=metadata.json" \
       -F "file=@$FILE;type=application/java-archive;filename=$FILE_BASENAME")
 
-    # Output the response
+    # Output the response and HTTP code
     echo "Response:"
-    echo "$RESPONSE"
+    cat response.txt
+    echo "$HTTP_RESPONSE"
 
     # Check if the response contains errors
     if [ $? -ne 0 ]; then

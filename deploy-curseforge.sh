@@ -2,6 +2,9 @@
 
 set -e
 
+TEST_KEY=${TEST_KEY}
+echo "TEST_KEY: $TEST_KEY"
+
 CURSEFORGE_API_KEY=${CURSEFORGE_API_KEY}
 CHANGELOG_FILE="./CHANGELOG.md"
 API_URL="https://minecraft.curseforge.com/api"
@@ -95,10 +98,10 @@ for FILE in creaturechat*.jar; do
       -F "metadata=<metadata.json;type=application/json" \
       -F "file=@$FILE;type=application/java-archive")
 
-      # Output the response and HTTP code
-      echo "Response:"
-      cat response.txt
-      echo "$HTTP_RESPONSE"
+    # Output the response and HTTP code
+    echo "Response:"
+    cat response.txt
+    echo "$HTTP_RESPONSE"
 
     echo "Uploaded $FILE_BASENAME as version $VERSION_NUMBER."
   fi
