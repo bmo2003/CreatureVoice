@@ -68,6 +68,7 @@ build_mod:
 # Deploy to Modrinth
 Modrinth:
   stage: deploy
+  when: manual
   script:
     - chmod +x ./deploy_modrinth.sh
     - ./deploy_modrinth.sh
@@ -82,6 +83,7 @@ Modrinth:
 # Deploy to CurseForge
 CurseForge:
   stage: deploy
+  when: manual
   script:
     - chmod +x ./deploy_curseforge.sh
     - ./deploy_curseforge.sh
