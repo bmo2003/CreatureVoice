@@ -71,7 +71,7 @@ Modrinth:
   when: manual
   script:
     - chmod +x ./deploy_modrinth.sh
-    - ./deploy_modrinth.sh
+    - ./deploy-modrinth.sh
   only:
     - new-deploy-ci
   artifacts:
@@ -86,7 +86,7 @@ CurseForge:
   when: manual
   script:
     - chmod +x ./deploy_curseforge.sh
-    - ./deploy_curseforge.sh
+    - ./deploy-curseforge.sh
   only:
     - new-deploy-ci
   artifacts:
