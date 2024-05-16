@@ -77,8 +77,8 @@ Modrinth:
   artifacts:
     paths:
       - creaturechat*.jar
-  environment:
-    name: production
+  tags:
+    - minecraft
 
 # Deploy to CurseForge
 CurseForge:
@@ -92,5 +92,5 @@ CurseForge:
   artifacts:
     paths:
       - creaturechat*.jar
-  environment:
-    name: production
+  tags:
+    - minecraft
