@@ -70,7 +70,7 @@ Modrinth:
   stage: deploy
   when: manual
   script:
-    - chmod +x ./deploy_modrinth.sh
+    - chmod +x ./deploy-modrinth.sh
     - ./deploy-modrinth.sh
   only:
     - new-deploy-ci
@@ -85,7 +85,7 @@ CurseForge:
   stage: deploy
   when: manual
   script:
-    - chmod +x ./deploy_curseforge.sh
+    - chmod +x ./deploy-curseforge.sh
     - ./deploy-curseforge.sh
   only:
     - new-deploy-ci
