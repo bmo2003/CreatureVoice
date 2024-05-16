@@ -2,20 +2,18 @@
 
 set -e
 
-TEST_KEY=${TEST_KEY}
-echo "TEST_KEY: $TEST_KEY"
-
 CURSEFORGE_API_KEY=${CURSEFORGE_API_KEY}
 CHANGELOG_FILE="./CHANGELOG.md"
 API_URL="https://minecraft.curseforge.com/api"
 PROJECT_ID=1012118
 DEPENDENCY_SLUG="fabric-api"
 USER_AGENT="CreatureChat-Minecraft-Mod:curseforge@owlmaddie.com"
+SLEEP_DURATION=10
 
 # Function to fetch game version IDs
 fetch_game_version_ids() {
   local minecraft_version="$1"
-  local response=$(curl -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/versions")
+  local response=$(curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/versions")
 
   local client_id=$(echo "$response" | jq -r '.[] | select(.name == "Client") | .id')
   local server_id=$(echo "$response" | jq -r '.[] | select(.name == "Server") | .id')
@@ -90,9 +88,12 @@ for FILE in creaturechat*.jar; do
     # Write the payload to a temporary file to avoid issues with large payloads
     echo "$PAYLOAD" > metadata.json
 
+    # Sleep for the specified duration
+    sleep $SLEEP_DURATION
+
     # Upload the version with the file
     echo "Uploading $FILE_BASENAME as version $VERSION_NUMBER..."
-    HTTP_RESPONSE=$(curl --fail -o response.txt -w "\nHTTP Code: %{http_code}\n" -X POST "$API_URL/projects/$PROJECT_ID/upload-file" \
+    HTTP_RESPONSE=$(curl --retry 3 --retry-delay 5 --fail -o response.txt -w "\nHTTP Code: %{http_code}\n" -X POST "$API_URL/projects/$PROJECT_ID/upload-file" \
       -H "X-Api-Token: $CURSEFORGE_API_KEY" \
       -H "User-Agent: $USER_AGENT" \
       -F "metadata=<metadata.json;type=application/json" \

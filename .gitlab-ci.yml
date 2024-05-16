@@ -61,7 +61,7 @@ build_mod:
       - creaturechat-*.jar
       - fabric-api-*.jar
   only:
-    - new-deploy-ci
+    - develop
   tags:
     - minecraft
 
@@ -73,10 +73,7 @@ Modrinth:
     - chmod +x ./deploy-modrinth.sh
     - ./deploy-modrinth.sh
   only:
-    - new-deploy-ci
-  artifacts:
-    paths:
-      - creaturechat*.jar
+    - develop
   tags:
     - minecraft
 
@@ -88,9 +85,6 @@ CurseForge:
     - chmod +x ./deploy-curseforge.sh
     - ./deploy-curseforge.sh
   only:
-    - new-deploy-ci
-  artifacts:
-    paths:
-      - creaturechat*.jar
+    - develop
   tags:
     - minecraft

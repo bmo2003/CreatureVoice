@@ -2,16 +2,13 @@
 
 set -e
 
-TEST_KEY=${TEST_KEY}
-echo "TEST_KEY: $TEST_KEY"
-
 MODRINTH_API_KEY=${MODRINTH_API_KEY}
 CHANGELOG_FILE="./CHANGELOG.md"
 API_URL="https://api.modrinth.com/v2"
 USER_AGENT="CreatureChat-Minecraft-Mod:modrinth@owlmaddie.com"
-
 PROJECT_ID="rvR0de1E"
 AUTHOR_ID="k6RiShdd"
+SLEEP_DURATION=10
 
 # Read the first changelog block
 CHANGELOG=$(awk '/^## \[/{ if (p) exit; p=1 } p' "$CHANGELOG_FILE")
@@ -47,7 +44,7 @@ for FILE in creaturechat*.jar; do
 
     # Check if the version already exists
     echo "Checking if version $VERSION_NUMBER already exists on Modrinth..."
-    if curl --silent --fail -X GET "$API_URL/project/creaturechat/version/$VERSION_NUMBER" > /dev/null 2>&1; then
+    if curl --retry 3 --retry-delay 5 --silent --fail -X GET "$API_URL/project/creaturechat/version/$VERSION_NUMBER" > /dev/null 2>&1; then
       echo "Version $VERSION_NUMBER already exists, skipping."
       continue
     fi
@@ -85,9 +82,12 @@ for FILE in creaturechat*.jar; do
     # Write the payload to a temporary file to avoid issues with large payloads
     echo "$PAYLOAD" > metadata.json
 
+    # Sleep for the specified duration
+    sleep $SLEEP_DURATION
+
     # Upload the version with the file
     echo "Uploading $FILE_BASENAME as version $VERSION_NUMBER..."
-    HTTP_RESPONSE=$(curl --fail -o response.txt -w "\nHTTP Code: %{http_code}\n" -X POST "$API_URL/version" \
+    HTTP_RESPONSE=$(curl --retry 3 --retry-delay 5 --fail -o response.txt -w "\nHTTP Code: %{http_code}\n" -X POST "$API_URL/version" \
       -H "Authorization: $MODRINTH_API_KEY" \
       -H "User-Agent: $USER_AGENT" \
       -F "data=@metadata.json;type=application/json;filename=metadata.json" \
