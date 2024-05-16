@@ -78,10 +78,6 @@ deploy_modrinth:
       - creaturechat*.jar
   environment:
     name: production
-  secrets:
-    MODRINTH_API_KEY:
-      description: "API key for Modrinth"
-      required: true
 
 # Deploy to CurseForge
 deploy_curseforge:
@@ -96,7 +92,3 @@ deploy_curseforge:
       - creaturechat*.jar
   environment:
     name: production
-  secrets:
-    CURSEFORGE_API_KEY:
-      description: "API key for CurseForge"
-      required: true
