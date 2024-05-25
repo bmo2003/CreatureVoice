@@ -12,6 +12,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Fixed
 - Parse OpenAI JSON error messages, to display a more readable error message
 - Remove quotes from CreatureChat API error messages
+- If OpenAI key is set, switch URL automatically back to OpenAI endpoint
 
 ## [1.0.4] - 2024-05-15
 
