@@ -9,6 +9,10 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - New automated deployments for Modrinth and CurseForge (GitLab CI Pipeline)
 
+### Fixed
+- Parse OpenAI JSON error messages, to display a more readable error message
+- Remove quotes from CreatureChat API error messages
+
 ## [1.0.4] - 2024-05-15
 
 ### Added

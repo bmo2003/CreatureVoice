@@ -1,6 +1,7 @@
 package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.json.ChatGPTResponse;
 import com.owlmaddie.network.ServerPackets;
@@ -61,6 +62,47 @@ public class ChatGPTRequest {
         public ResponseFormat(String type) {
             this.type = type;
         }
+    }
+
+    public static String removeQuotes(String str) {
+        if (str != null && str.length() > 1 && str.startsWith("\"") && str.endsWith("\"")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
+    }
+
+    // Class to represent the error response structure
+    public static class ErrorResponse {
+        Error error;
+
+        static class Error {
+            String message;
+            String type;
+            String code;
+        }
+    }
+
+    public static String parseAndLogErrorResponse(String errorResponse) {
+        try {
+            Gson gson = new Gson();
+            ErrorResponse response = gson.fromJson(errorResponse, ErrorResponse.class);
+
+            if (response.error != null) {
+                LOGGER.error("Error Message: " + response.error.message);
+                LOGGER.error("Error Type: " + response.error.type);
+                LOGGER.error("Error Code: " + response.error.code);
+                return response.error.message;
+            } else {
+                LOGGER.error("Unknown error response: " + errorResponse);
+                return "Unknown";
+            }
+        } catch (JsonSyntaxException e) {
+            LOGGER.warn("Failed to parse error response as JSON, falling back to plain text");
+            LOGGER.error("Error response: " + errorResponse);
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse error response", e);
+        }
+        return removeQuotes(errorResponse);
     }
 
     // This method should be called in an appropriate context where ResourceManager is available
@@ -173,8 +215,12 @@ public class ChatGPTRequest {
                         while ((errorLine = errorReader.readLine()) != null) {
                             errorResponse.append(errorLine.trim());
                         }
-                        LOGGER.error("Error response from API: " + errorResponse);
-                        lastErrorMessage = errorResponse.toString();
+
+                        // Parse and log the error response using Gson
+                        String cleanError = parseAndLogErrorResponse(errorResponse.toString());
+                        lastErrorMessage = cleanError;
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to read error response", e);
                     }
                     return null;
                 } else {
