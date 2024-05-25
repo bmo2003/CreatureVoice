@@ -8,6 +8,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Added
 - New automated deployments for Modrinth and CurseForge (GitLab CI Pipeline)
+- Death messages added for all named creatures (RIP)
 
 ### Fixed
 - Parse OpenAI JSON error messages, to display a more readable error message

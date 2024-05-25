@@ -316,6 +316,13 @@ public class ServerPackets {
         }
     }
 
+    // Send a chat message to all players (i.e. death message)
+    public static void BroadcastMessage(Text message) {
+        for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
+            serverPlayer.sendMessage(message, false);
+        };
+    }
+
     // Send a chat message to a player which is clickable (for error messages with a link for help)
     public static void SendClickableError(PlayerEntity player, String message, String url) {
         MutableText text = Text.literal(message)
