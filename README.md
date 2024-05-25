@@ -23,16 +23,18 @@ Ready to deepen your Minecraft journey with meaningful conversations and endurin
 1. **Install CreatureChat Mod**: Download and copy `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods` folder.
 1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the **+ Create new secret key** button.
    Copy/Paste your key into the `/creaturechat key set <YOUR-SECRET-KEY-HERE>` command.
+1. **Launch Minecraft** with the Fabric profile
 
 ## OR
 
 ## Forge Installation (with Sinytra Connector)
-1. **Install Forge:** Download [Forge Installer](https://files.minecraftforge.net/), run it, select "Install client," and launch Minecraft with the Forge profile.
+1. **Install Forge:** Download [Forge Installer](https://files.minecraftforge.net/), run it, select "Install client".
 1. **Install Forgified Fabric API:** Download [Forgified Fabric API](https://curseforge.com/minecraft/mc-mods/forgified-fabric-api) and copy the `*.jar` into your `.minecraft/mods` folder.
 1. **Install Sinytra Connector:** Download [Sinytra Connector](https://www.curseforge.com/minecraft/mc-mods/sinytra-connector) and copy the `*.jar` into your `.minecraft/mods` folder.
 1. **Install CreatureChat Mod**: Download and copy `creaturechat-*.jar` into your `.minecraft/mods` folder.
 1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the **+ Create new secret key** button.
    Copy/Paste your key into the `/creaturechat key set <YOUR-SECRET-KEY-HERE>` command.
+1. **Launch Minecraft** with the Forge profile 
 
 ## Commands
 The CreatureChat mod allows users to configure settings via in-game commands. Here's how to use them:
