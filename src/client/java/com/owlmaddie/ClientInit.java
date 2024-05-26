@@ -29,7 +29,7 @@ public class ClientInit implements ClientModInitializer {
         ClientPackets.register();
 
         // Register an event callback to render text bubbles
-        WorldRenderEvents.LAST.register((context) -> {
+        WorldRenderEvents.BEFORE_DEBUG_RENDER.register((context) -> {
             BubbleRenderer.drawTextAboveEntities(context, tickCounter, context.tickDelta());
         });
 

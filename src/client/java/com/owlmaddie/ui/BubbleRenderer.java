@@ -41,18 +41,26 @@ public class BubbleRenderer {
     public static int DISPLAY_PADDING = 2;
     public static int animationFrame = 0;
     public static long lastTick = 0;
+    public static int light = 15728880;
+    public static int overlay = OverlayTexture.DEFAULT_UV;
 
     public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
-        RenderSystem.enableDepthTest();
+        // Set shader & texture
+        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+
+        // Enable depth test and blending
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
 
+        // Prepare the tessellator and buffer
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         float z = 0.01F;
 
         // Draw UI text background (based on friendship)
+        // Draw TOP
         if (friendship == -3) {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-enemy"));
         } else if (friendship == 3) {
@@ -62,45 +70,64 @@ public class BubbleRenderer {
         }
         drawTexturePart(matrices, buffer, x - 50, y, z, 228, 40);
 
+        // Draw MIDDLE
         RenderSystem.setShaderTexture(0, textures.GetUI("text-middle"));
         drawTexturePart(matrices, buffer, x, y + 40, z, width, height);
 
+        // Draw BOTTOM
         RenderSystem.setShaderTexture(0, textures.GetUI("text-bottom"));
         drawTexturePart(matrices, buffer, x, y + 40 + height, z, width, 5);
 
+        // Disable blending and depth test
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }
 
     private static void drawTexturePart(MatrixStack matrices, BufferBuilder buffer, float x, float y, float z, float width, float height) {
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-        buffer.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(0, 1).next();  // bottom left
-        buffer.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(1, 1).next();   // bottom right
-        buffer.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(1, 0).next();  // top right
-        buffer.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(0, 0).next(); // top left
+        // Define the vertices with color, texture, light, and overlay
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
+        // Begin drawing quads with the correct vertex format
+        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+
+        buffer.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay).next();  // bottom left
+        buffer.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(1, 1).light(light).overlay(overlay).next();   // bottom right
+        buffer.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(1, 0).light(light).overlay(overlay).next();  // top right
+        buffer.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(0, 0).light(light).overlay(overlay).next(); // top left
         Tessellator.getInstance().draw();
     }
 
     private static void drawIcon(String ui_icon_name, MatrixStack matrices, float x, float y, float width, float height) {
         // Draw button icon
         Identifier button_texture = textures.GetUI(ui_icon_name);
+
+        // Set shader & texture
+        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
         RenderSystem.setShaderTexture(0, button_texture);
-        RenderSystem.enableDepthTest();
+
+        // Enable depth test and blending
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
 
+        // Prepare the tessellator and buffer
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        BufferBuilder buffer = tessellator.getBuffer();
 
-        float z = -0.01F;
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(0, 1).next();  // bottom left
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(1, 1).next();   // bottom right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(1, 0).next();  // top right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(0, 0).next(); // top left
+        // Get the current matrix position
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
+        // Begin drawing quads with the correct vertex format
+        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+
+        buffer.vertex(matrix4f, x, y + height, 0.0F).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay).next(); // bottom left
+        buffer.vertex(matrix4f, x + width, y + height, 0.0F).color(255, 255, 255, 255).texture(1, 1).light(light).overlay(overlay).next(); // bottom right
+        buffer.vertex(matrix4f, x + width, y, 0.0F).color(255, 255, 255, 255).texture(1, 0).light(light).overlay(overlay).next(); // top right
+        buffer.vertex(matrix4f, x, y, 0.0F).color(255, 255, 255, 255).texture(0, 0).light(light).overlay(overlay).next(); // top left
         tessellator.draw();
 
+        // Disable blending and depth test
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }
@@ -109,25 +136,37 @@ public class BubbleRenderer {
         // dynamically calculate friendship ui image name
         String ui_icon_name = "friendship" + friendship;
 
-        // Draw texture
+        // Set shader
+        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+
+        // Set texture
         Identifier button_texture = textures.GetUI(ui_icon_name);
         RenderSystem.setShaderTexture(0, button_texture);
-        RenderSystem.enableDepthTest();
+
+        // Enable depth test and blending
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
 
+        // Prepare the tessellator and buffer
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+        // Get the current matrix position
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
+        // Begin drawing quads with the correct vertex format
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
 
         float z = -0.01F;
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(0, 1).next();  // bottom left
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(1, 1).next();   // bottom right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(1, 0).next();  // top right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(0, 0).next(); // top left
+        bufferBuilder.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay).next();  // bottom left
+        bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(1, 1).light(light).overlay(overlay).next();   // bottom right
+        bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(1, 0).light(light).overlay(overlay).next();  // top right
+        bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(0, 0).light(light).overlay(overlay).next(); // top left
         tessellator.draw();
 
+        // Disable blending and depth test
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }
@@ -143,23 +182,34 @@ public class BubbleRenderer {
             return;
         }
 
+        // Set shader & texture
+        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
         RenderSystem.setShaderTexture(0, entity_id);
-        RenderSystem.enableDepthTest();
+
+        // Enable depth test and blending
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
 
+        // Prepare the tessellator and buffer
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+        // Get the current matrix position
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
+        // Begin drawing quads with the correct vertex format
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
 
         float z = -0.01F;
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(0, 1).next();  // bottom left
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(1, 1).next();   // bottom right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(1, 0).next();  // top right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(0, 0).next(); // top left
+        bufferBuilder.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay).next();  // bottom left
+        bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(1, 1).light(light).overlay(overlay).next();   // bottom right
+        bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(1, 0).light(light).overlay(overlay).next();  // top right
+        bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(0, 0).light(light).overlay(overlay).next(); // top left
         tessellator.draw();
 
+        // Disable blending and depth test
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }
@@ -169,15 +219,25 @@ public class BubbleRenderer {
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
         Identifier playerTexture = renderer.getTexture(entity);
 
+        // Set shader & texture
+        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
         RenderSystem.setShaderTexture(0, playerTexture);
-        RenderSystem.enableDepthTest();
+
+        // Enable depth test and blending
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
 
+        // Prepare the tessellator and buffer
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+        // Get the current matrix position
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
+        // Begin drawing quads with the correct vertex format
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
 
         // Texture coordinates for the face region (8, 8) to (16, 16) in a 64x64 texture
         float textureWidth = 64.0F;
@@ -189,10 +249,10 @@ public class BubbleRenderer {
         float z = -0.01F;
 
         // Draw face
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(u1, v2).next();  // bottom left
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(u2, v2).next();   // bottom right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(u2, v1).next();  // top right
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(u1, v1).next(); // top left
+        bufferBuilder.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(u1, v2).light(light).overlay(overlay).next();  // bottom left
+        bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(u2, v2).light(light).overlay(overlay).next();   // bottom right
+        bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(u2, v1).light(light).overlay(overlay).next();  // top right
+        bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(u1, v1).light(light).overlay(overlay).next(); // top left
 
         // Coordinates for the hat (overlay)
         float hatU1 = 40.0F / textureWidth;
@@ -204,12 +264,13 @@ public class BubbleRenderer {
         z -= 0.01F;
 
         // Draw hat (overlay)
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y + height, z).texture(hatU1, hatV2).next();
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y + height, z).texture(hatU2, hatV2).next();
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x + width, y, z).texture(hatU2, hatV1).next();
-        bufferBuilder.vertex(matrices.peek().getPositionMatrix(), x, y, z).texture(hatU1, hatV1).next();
-
+        bufferBuilder.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(hatU1, hatV2).light(light).overlay(overlay).next();
+        bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(hatU2, hatV2).light(light).overlay(overlay).next();
+        bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(hatU2, hatV1).light(light).overlay(overlay).next();
+        bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(hatU1, hatV1).light(light).overlay(overlay).next();
         tessellator.draw();
+
+        // Disable blending and depth test
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
     }

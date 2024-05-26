@@ -12,6 +12,8 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Added Minecraft Forge installation instructions
 
 ### Fixed
+- Fabulous video bug causing chat bubbles to be invisible
+- Shader support (i.e. Iris, etc...)
 - Parse OpenAI JSON error messages, to display a more readable error message
 - Remove quotes from CreatureChat API error messages
 - If OpenAI key is set, switch URL automatically back to OpenAI endpoint
