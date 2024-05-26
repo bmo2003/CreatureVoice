@@ -4,6 +4,18 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New automated deployments for Modrinth and CurseForge (GitLab CI Pipeline)
+- Death messages added for all named creatures except players and tamed ones (RIP)
+- Added Minecraft Forge installation instructions
+
+### Fixed
+- Parse OpenAI JSON error messages, to display a more readable error message
+- Remove quotes from CreatureChat API error messages
+- If OpenAI key is set, switch URL automatically back to OpenAI endpoint
+
 ## [1.0.4] - 2024-05-15
 
 ### Added

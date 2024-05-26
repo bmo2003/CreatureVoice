@@ -7,12 +7,16 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 
@@ -58,6 +62,28 @@ public class MixinLivingEntity implements LivingEntityInterface {
                 String attackedMessage = "<" + player.getName().getString() + " attacked you " + directness + " with " + weaponName + ">";
                 ServerPackets.generate_chat("N/A", chatData, player, (MobEntity)thisEntity, attackedMessage, true);
             }
+        }
+    }
+
+    @Inject(method = "onDeath", at = @At("HEAD"))
+    private void onDeath(DamageSource source, CallbackInfo info) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        World world = entity.getWorld();
+
+        if (!world.isClient() && entity.hasCustomName()) {
+            // Skip tamed entities and players
+            if (entity instanceof TameableEntity && ((TameableEntity) entity).isTamed()) {
+                return;
+            }
+
+            if (entity instanceof PlayerEntity) {
+                return;
+            }
+
+            // Get the original death message
+            Text deathMessage = entity.getDamageTracker().getDeathMessage();
+            // Broadcast the death message to all players in the world
+            ServerPackets.BroadcastMessage(deathMessage);
         }
     }
 
