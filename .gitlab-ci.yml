@@ -61,7 +61,7 @@ build_mod:
       - creaturechat-*.jar
       - fabric-api-*.jar
   only:
-    - alexmobs
+    - develop
   tags:
     - minecraft
 
