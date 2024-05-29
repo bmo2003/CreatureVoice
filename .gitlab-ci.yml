@@ -60,8 +60,6 @@ build_mod:
     paths:
       - creaturechat-*.jar
       - fabric-api-*.jar
-  only:
-    - develop
   tags:
     - minecraft
 
