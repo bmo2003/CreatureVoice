@@ -1,12 +1,16 @@
-# Privacy Policy for CreatureChat
+# Privacy Policy for *CreatureChat API* & *Token Shop*
 
 ## 1. Introduction
-This Privacy Policy outlines the types of information collected and recorded by CreatureChat and how we use it. 
-This policy applies to our use of all data collected by us in relation to your use of CreatureChat services.
+This Privacy Policy outlines the types of information collected and recorded by the CreatureChat API, Token Shop, and
+how we use it. This policy applies to our use of all data collected by us in relation to your use of CreatureChat API 
+services. 
+
+**We collect no information from the CreatureChat mod when using OpenAI API keys, Local LLMs, or other API services.**
 
 ## 2. Information We Collect
 - **Discord Data:** We collect your Discord username and ID to facilitate service delivery, key generation, and maintain usage statistics.
-- **Transaction Data:** Transactions are processed via Stripe. We do not store credit card details or any personally identifiable financial information on our servers.
+- **Payment Data:** Payment transactions are processed via [FastSpring](https://fastspring.com/purchasing-through-fastspring/). We do not store credit card details, email, phone number, or any personally identifiable financial information on our servers. Please review the FastSpring [Terms and Conditions](https://fastspring.com/legal/terms-sale/) and [Privacy](https://fastspring.com/privacy/) policies for details on how your financial data is processed and stored.
+- **Chat Data:** We temporarily collect chat message data in order to process the request through our LLM provider, log errors, and return chat completions to the user.
 
 ## 3. Use of Your Information
 We use the information we collect from you to:
@@ -15,8 +19,8 @@ We use the information we collect from you to:
 - Enhance and improve our services and customer support.
 
 ## 4. Storage of Your Information
-- **Data Storage:** We store token codes, usage statistics, and metadata that do not contain customer personal data.
-- **Security:** All data transmissions are secured via SSL/HTTPS. Data flows securely from Stripe to AWS, and then to Discord as part of our operational processes.
+- **Data Storage:** We store CreatureChat API keys, usage statistics, and metadata in order to fulfill the services.
+- **Security:** All data transmissions are secured via SSL/HTTPS. Data flows securely from FastSpring to AWS, and then to Discord as part of our operational processes.
 
 ## 5. Sharing of Your Information
 - **Service Providers:** We use OpenAI for natural language model requests and may use other similar providers in the future. Data necessary for these operations may be shared with these providers as required to fulfill the services.
