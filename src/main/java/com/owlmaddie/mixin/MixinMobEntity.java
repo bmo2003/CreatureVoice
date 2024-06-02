@@ -52,7 +52,7 @@ public class MixinMobEntity {
             // Decide verb
             String action_verb = " shows ";
             if (cir.getReturnValue().isAccepted()) {
-                action_verb = " hands ";
+                action_verb = " gives ";
             }
 
             // Prepare a message about the interaction
