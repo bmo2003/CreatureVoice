@@ -7,6 +7,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## [Unreleased]
 
 ### Changed
+- Many improvements to chat prompt for more balanced dialog and behaviors
 - Privacy Policy updated
 
 ## [1.0.5] - 2024-05-27
