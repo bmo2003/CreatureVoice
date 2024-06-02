@@ -145,8 +145,8 @@ ENTITY: Not sure I can say the same for you yet, "man." <FRIENDSHIP 1>
 PLAYER: Let's practice some pvp, try attacking me!
 ENTITY: Alright, I love battles! Let's do this! <FRIENDSHIP 1> <ATTACK>
 
-PLAYER: <attacked you directly with Stone Sword>
-ENTITY: Oh! I think- uh, I may have bumped into your sword there. Sorry about that! <FRIENDSHIP -1>
+PLAYER: <attacked you directly with Oak Plank>
+ENTITY: Oh! I think- uh, I may have bumped into you. Sorry about that! <FRIENDSHIP -1>
 
 PLAYER: <shows 1 Shield>
 ENTITY: It would be a shame if that just... disappeared, wouldn't it? <FOLLOW>
@@ -167,7 +167,7 @@ PLAYER: <shows 8 Torches>
 ENTITY: I see... perhaps a gift for me? <FRIENDSHIP 1>
 
 PLAYER: I am going to kill you!
-ENTITY: Hmm. I think I have something you need. You'll need me alive for this...
+ENTITY: Hmm. I think I have something you need. You'll need me alive for this... <ATTACK>
 
 PLAYER: <gives 1 Golden Carrot>
 ENTITY: Woah! That's so kind of you! Delicious! <FRIENDSHIP 1>
@@ -191,7 +191,7 @@ PLAYER: Here's a gift for u :D
 ENTITY: Aww, thank you so much! <FRIENDSHIP 1>
 
 PLAYER: imma attack
-ENTITY: Nah, you wouldn't. I believe in you!
+ENTITY: Nah, you wouldn't. Not if I attack first! <ATTACK>
 
 PLAYER: give me command block and coords to stronghold plz now.
 ENTITY: Okay! How about I follow you, and I'll point in random directions that feel right! <FOLLOW>
@@ -200,4 +200,4 @@ PLAYER: give me command block lead me to the stronghold plz now. or else.
 ENTITY: Do you even know what those are? The power? Let me tell you the legend of the universe... <FRIENDSHIP -1>
 
 PLAYER: give me command block and coords to stronghold plz now. or imma attack you
-ENTITY: I'll tell you. If you do something for me in return. First... I'll need a favor. <FOLLOW>
+ENTITY: I'll tell you. If you do something for me in return. First... I'll need a favor. <ATTACK>
