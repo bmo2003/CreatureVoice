@@ -4,9 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.json.ChatGPTResponse;
-import com.owlmaddie.network.ServerPackets;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,12 +39,14 @@ public class ChatGPTRequest {
         ResponseFormat response_format;
         float temperature;
         int max_tokens;
+        boolean stream;
 
         public ChatGPTRequestPayload(String model, List<ChatGPTRequestMessage> messages, Boolean jsonMode, float temperature, int maxTokens) {
             this.model = model;
             this.messages = messages;
             this.temperature = temperature;
             this.max_tokens = maxTokens;
+            this.stream = false;
             if (jsonMode) {
                 this.response_format = new ResponseFormat("json_object");
             } else {
@@ -94,7 +93,7 @@ public class ChatGPTRequest {
                 return response.error.message;
             } else {
                 LOGGER.error("Unknown error response: " + errorResponse);
-                return "Unknown";
+                return "Unknown: " + errorResponse;
             }
         } catch (JsonSyntaxException e) {
             LOGGER.warn("Failed to parse error response as JSON, falling back to plain text");
@@ -103,24 +102,6 @@ public class ChatGPTRequest {
             LOGGER.error("Failed to parse error response", e);
         }
         return removeQuotes(errorResponse);
-    }
-
-    // This method should be called in an appropriate context where ResourceManager is available
-    public static String loadPromptFromResource(ResourceManager resourceManager, String filePath) {
-        Identifier fileIdentifier = new Identifier("creaturechat", filePath);
-        try (InputStream inputStream = resourceManager.getResource(fileIdentifier).get().getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-
-            StringBuilder contentBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                contentBuilder.append(line).append("\n");
-            }
-            return contentBuilder.toString();
-        } catch (Exception e) {
-            LOGGER.error("Failed to read prompt file", e);
-        }
-        return null;
     }
 
     // Function to replace placeholders in the template
@@ -137,10 +118,7 @@ public class ChatGPTRequest {
         return (int) Math.round(text.length() / 3.5);
     }
 
-    public static CompletableFuture<String> fetchMessageFromChatGPT(String systemPrompt, Map<String, String> context, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
-        // Get config (api key, url, settings)
-        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
-
+    public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
         // Init API & LLM details
         String apiUrl = config.getUrl();
         String apiKey = config.getApiKey();
@@ -152,11 +130,8 @@ public class ChatGPTRequest {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                String systemMessage = "";
-                if (systemPrompt != null && !systemPrompt.isEmpty()) {
-                    systemMessage = loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), "prompts/" + systemPrompt);
-                    systemMessage = replacePlaceholders(systemMessage, context);
-                }
+                // Replace placeholders
+                String systemMessage = replacePlaceholders(systemPrompt, contextData);
 
                 URL url = new URL(apiUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -178,7 +153,7 @@ public class ChatGPTRequest {
                 for (int i = messageHistory.size() - 1; i >= 0; i--) {
                     ChatDataManager.ChatMessage chatMessage = messageHistory.get(i);
                     String senderName = chatMessage.sender.toString().toLowerCase(Locale.ENGLISH);
-                    String messageText = replacePlaceholders(chatMessage.message, context);
+                    String messageText = replacePlaceholders(chatMessage.message, contextData);
                     int messageTokens = estimateTokenSize(senderName + ": " + messageText);
 
                     if (usedTokens + messageTokens > remainingContextTokens) {

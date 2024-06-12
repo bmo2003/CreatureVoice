@@ -6,8 +6,14 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+- New **Prompt Testing** module, for faster validation of LLMs and prompt changes
+- New `stream = false` parameter to HTTP API requests (since some APIs default to `true`)
+
 ### Changed
-- Many improvements to chat prompt for more balanced dialog and behaviors
+- **Huge improvements** to **chat prompt** for more *balanced* dialog and *predictable* behaviors
+- Improved **Behavior regex** to include both `<BEHAVIOR arg>` and `*BEHAVIOR arg*` syntax
+- Improved **message cleaning** to remove any remaining `**` and `<>` after parsing behaviors
 - Privacy Policy updated
 
 ## [1.0.5] - 2024-05-27

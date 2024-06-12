@@ -19,7 +19,7 @@ public class MessageParser {
         LOGGER.info("Parsing message: {}", input);
         StringBuilder cleanedMessage = new StringBuilder();
         List<Behavior> behaviors = new ArrayList<>();
-        Pattern pattern = Pattern.compile("<(\\w+)(?:\\s+(-?\\d+))?>");
+        Pattern pattern = Pattern.compile("[<*](\\w+)(?:\\s+(-?\\d+))?[>*]");
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
@@ -34,8 +34,14 @@ public class MessageParser {
             matcher.appendReplacement(cleanedMessage, "");
         }
         matcher.appendTail(cleanedMessage);
-        LOGGER.info("Cleaned message: {}", cleanedMessage.toString());
 
-        return new ParsedMessage(cleanedMessage.toString().trim(), input.trim(), behaviors);
+        // Get final cleaned string
+        String displayMessage = cleanedMessage.toString().trim();
+
+        // Remove all occurrences of "<>" and "**" (if any)
+        displayMessage = displayMessage.replaceAll("<>", "").replaceAll("\\*\\*", "").trim();
+        LOGGER.info("Cleaned message: {}", displayMessage);
+
+        return new ParsedMessage(displayMessage, input.trim(), behaviors);
     }
 }

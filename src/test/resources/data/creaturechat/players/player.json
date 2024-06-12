@@ -1,0 +1,16 @@
+{
+  "player_active_effects": "",
+  "player_armor_chest": "air",
+  "player_armor_feet": "air",
+  "player_armor_head": "air",
+  "player_armor_legs": "air",
+  "player_biome": "plains",
+  "player_health": "8.5/20.0",
+  "player_held_item": "porkchop",
+  "player_hunger": "17",
+  "player_is_creative": "yes",
+  "player_is_on_ground": "yes",
+  "player_is_swimming": "no",
+  "player_language": "English (US)",
+  "player_name": "Steve"
+}
