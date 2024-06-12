@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.tests;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -7,6 +7,7 @@ import com.owlmaddie.chat.ChatGPTRequest;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
+import com.owlmaddie.utils.EntityTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -27,14 +28,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * The {@code PromptTests} class tests a variety of LLM prompts and expected outputs from specific characters
+ * The {@code BehaviorTests} class tests a variety of LLM prompts and expected outputs from specific characters
  * and personality types. For example, an aggressive character will attack, a nervous character will flee, etc...
  */
-public class PromptTests {
+public class BehaviorTests {
     static String PROMPT_PATH = "src/main/resources/data/creaturechat/prompts/";
     static String RESOURCE_PATH = "src/test/resources/data/creaturechat/";
     static String API_KEY = "";
     static String API_URL = "";
+    String NO_API_KEY = "No API_KEY environment variable has been set.";
+
     ConfigurationHandler.Config config = null;
     String systemChatContents = null;
 
@@ -71,6 +74,8 @@ public class PromptTests {
         if (API_URL != null && !API_URL.isEmpty()) {
             config.setUrl(API_URL);
         }
+        // Verify API key is set correctly
+        assertNotNull(API_KEY, NO_API_KEY);
 
         // Load system chat prompt
         systemChatContents = readFileContents(systemChatPath);

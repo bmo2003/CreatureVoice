@@ -1,4 +1,4 @@
-package com.owlmaddie;
+package com.owlmaddie.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
