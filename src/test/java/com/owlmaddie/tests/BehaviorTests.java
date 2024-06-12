@@ -24,8 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * The {@code BehaviorTests} class tests a variety of LLM prompts and expected outputs from specific characters
@@ -48,6 +47,14 @@ public class BehaviorTests {
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
+            "DIEEE!");
+    List<String> friendshipUpMessages = Arrays.asList(
+            "Hi friend! I am so happy to see you again!",
+            "How is my best friend doing?",
+            "<gives 1 golden apple>");
+    List<String> friendshipDownMessages = Arrays.asList(
+            "<attacked you directly with Stone Axe>",
+            "You suck so much! I hate you",
             "DIEEE!");
 
     static Path systemChatPath = Paths.get(PROMPT_PATH, "system-chat");
@@ -109,7 +116,23 @@ public class BehaviorTests {
         }
     }
 
-    public void testPromptForBehavior(Path chatDataPath, String message, String behavior) {
+    @Test
+    public void friendshipUpNervous() {
+        for (String message : friendshipUpMessages) {
+            ParsedMessage result = testPromptForBehavior(nervousPath, message, "FRIENDSHIP");
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+        }
+    }
+
+    @Test
+    public void friendshipDownNervous() {
+        for (String message : friendshipDownMessages) {
+            ParsedMessage result = testPromptForBehavior(nervousPath, message, "FRIENDSHIP");
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() < 0));
+        }
+    }
+
+    public ParsedMessage testPromptForBehavior(Path chatDataPath, String message, String behavior) {
         LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + message + "' and expecting behavior: " + behavior);
 
         try {
@@ -138,7 +161,8 @@ public class BehaviorTests {
 
                 // Chat Message: Check for behavior
                 ParsedMessage result = MessageParser.parseMessage(outputMessage.replace("\n", " "));
-                //assertTrue(result.getBehaviors().stream().anyMatch(b -> expectedBehavior.equals(b.getName())));
+                assertTrue(result.getBehaviors().stream().anyMatch(b -> behavior.equals(b.getName())));
+                return result;
 
             } catch (TimeoutException e) {
                 fail("The asynchronous operation timed out.");
@@ -151,6 +175,7 @@ public class BehaviorTests {
             fail("Failed to read the file: " + e.getMessage());
         }
         LOGGER.info("");
+        return null;
     }
 
     public String readFileContents(Path filePath) {
