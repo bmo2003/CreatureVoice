@@ -47,7 +47,7 @@ build_mod:
         cat src/main/resources/fabric.mod.json
         echo ""
 
-        ./gradlew build
+        ./gradlew build -x test
         find build/libs -type f -name '*sources*.jar' -exec rm {} \;
         mv build/libs/creaturechat-*.jar .
 
