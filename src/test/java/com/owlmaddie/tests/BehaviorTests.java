@@ -77,6 +77,7 @@ public class BehaviorTests {
 
         // Config
         config = new ConfigurationHandler.Config();
+        config.setTimeout(0);
         if (API_KEY != null && !API_KEY.isEmpty()) {
             config.setApiKey(API_KEY);
         }
