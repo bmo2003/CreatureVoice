@@ -65,17 +65,17 @@ build_mod:
     - minecraft
 
 # Optional test (gpt 3.5)
-test_gpt_35:
+gpt-3.5-turbo:
   stage: test
   script:
     - echo "Running tests with `gpt-3.5-turbo`"
     - ./gradlew test
   when: manual
   tags:
-    - test
+    - minecraft
 
 # Optional test (gpt 4o)
-test_gpt_4o:
+gpt-4o:
   stage: test
   script:
     - echo "Running tests with `gpt-4o`"
@@ -83,7 +83,7 @@ test_gpt_4o:
     - ./gradlew test
   when: manual
   tags:
-    - test
+    - minecraft
 
 # Deploy to Modrinth
 Modrinth:
