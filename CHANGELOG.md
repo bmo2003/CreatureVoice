@@ -7,6 +7,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## [Unreleased]
 
 ### Added
+- **Naturalist** mod **icon art** and full-support for all entities, expect snails (owlmaddie)
 - New **Prompt Testing** module, for faster validation of LLMs and prompt changes
 - New `stream = false` parameter to HTTP API requests (since some APIs default to `true`)
 
