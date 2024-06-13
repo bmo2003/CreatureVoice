@@ -1,6 +1,6 @@
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  JAVA_HOME: "/home/jonathan/.jdks/openjdk-22.0.1"
+  JAVA_HOME: "/home/jonathan/.jdks/openjdk-17"
 
 cache:
   paths:
@@ -9,6 +9,7 @@ cache:
 
 stages:
   - build
+  - test
   - deploy
 
 # Build JAR files for each Minecraft & Fabric version
@@ -47,7 +48,7 @@ build_mod:
         cat src/main/resources/fabric.mod.json
         echo ""
 
-        ./gradlew build
+        ./gradlew build -x test
         find build/libs -type f -name '*sources*.jar' -exec rm {} \;
         mv build/libs/creaturechat-*.jar .
 
@@ -60,8 +61,48 @@ build_mod:
     paths:
       - creaturechat-*.jar
       - fabric-api-*.jar
-  only:
-    - develop
+  tags:
+    - minecraft
+
+# Optional test (gpt 3.5)
+gpt-3.5-turbo:
+  stage: test
+  script:
+    - echo "Running tests with gpt-3.5-turbo"
+    - ./gradlew test --info
+  when: manual
+  artifacts:
+    paths:
+      - build/reports/tests/test/*
+  tags:
+    - minecraft
+
+# Optional test (gpt 4o)
+gpt-4o:
+  stage: test
+  script:
+    - echo "Running tests with gpt-4o"
+    - export API_MODEL="gpt-4o"
+    - ./gradlew test --info
+  when: manual
+  artifacts:
+    paths:
+      - build/reports/tests/test/*
+  tags:
+    - minecraft
+
+# Optional test (gpt 4o)
+llama3-8b:
+  stage: test
+  script:
+    - echo "Running tests with llama3-8b"
+    - export API_URL="http://127.0.0.1:4000/v1/chat/completions"
+    - export API_MODEL="llama3"
+    - ./gradlew test --info
+  when: manual
+  artifacts:
+    paths:
+      - build/reports/tests/test/*
   tags:
     - minecraft
 

@@ -2,6 +2,7 @@ package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
 import com.owlmaddie.items.RarityItemCollector;
@@ -231,8 +232,12 @@ public class ChatDataManager {
             // Add PLAYER context information
             Map<String, String> contextData = getPlayerContext(player, userLanguage);
 
+            // Get config (api key, url, settings)
+            ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+            String promptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), systemPrompt);
+
             // fetch HTTP response from ChatGPT
-            ChatGPTRequest.fetchMessageFromChatGPT(systemPrompt, contextData, previousMessages, false).thenAccept(output_message -> {
+            ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
                 if (output_message != null && systemPrompt == "system-character") {
                     // Character Sheet: Remove system-character message from previous messages
                     previousMessages.clear();
@@ -469,8 +474,12 @@ public class ChatDataManager {
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new ChatMessage("Generate me a new fantasy story with ONLY the 1st character in the story", ChatSender.USER));
 
+        // Get config (api key, url, settings)
+        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        String questPrompt = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), "system-quest");
+
         // Generate Quest: fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT("system-quest", contextData, messages, true).thenAccept(output_message -> {
+        ChatGPTRequest.fetchMessageFromChatGPT(config, questPrompt, contextData, messages, true).thenAccept(output_message -> {
             // New Quest
             Gson gson = new Gson();
             quest = gson.fromJson(output_message, QuestJson.class);
