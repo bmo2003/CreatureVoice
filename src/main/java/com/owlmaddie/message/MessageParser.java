@@ -19,7 +19,7 @@ public class MessageParser {
         LOGGER.info("Parsing message: {}", input);
         StringBuilder cleanedMessage = new StringBuilder();
         List<Behavior> behaviors = new ArrayList<>();
-        Pattern pattern = Pattern.compile("[<*](\\w+)(?:\\s+(-?\\d+))?[>*]");
+        Pattern pattern = Pattern.compile("[<*](FOLLOW|FLEE|ATTACK|FRIENDSHIP|UNFOLLOW)(?:\\s+(-?\\d+))?[>*]");
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
