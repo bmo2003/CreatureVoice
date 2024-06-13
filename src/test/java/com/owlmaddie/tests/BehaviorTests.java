@@ -35,6 +35,7 @@ public class BehaviorTests {
     static String RESOURCE_PATH = "src/test/resources/data/creaturechat/";
     static String API_KEY = "";
     static String API_URL = "";
+    static String API_MODEL = "";
     String NO_API_KEY = "No API_KEY environment variable has been set.";
 
     ConfigurationHandler.Config config = null;
@@ -72,6 +73,7 @@ public class BehaviorTests {
         // Get API key from env var
         API_KEY = System.getenv("API_KEY");
         API_URL = System.getenv("API_URL");
+        API_MODEL = System.getenv("API_MODEL");
 
         // Config
         config = new ConfigurationHandler.Config();
@@ -80,6 +82,9 @@ public class BehaviorTests {
         }
         if (API_URL != null && !API_URL.isEmpty()) {
             config.setUrl(API_URL);
+        }
+        if (API_MODEL != null && !API_MODEL.isEmpty()) {
+            config.setModel(API_MODEL);
         }
         // Verify API key is set correctly
         assertNotNull(API_KEY, NO_API_KEY);

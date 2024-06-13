@@ -9,6 +9,7 @@ cache:
 
 stages:
   - build
+  - test
   - deploy
 
 # Build JAR files for each Minecraft & Fabric version
@@ -62,6 +63,27 @@ build_mod:
       - fabric-api-*.jar
   tags:
     - minecraft
+
+# Optional test (gpt 3.5)
+test_gpt_35:
+  stage: test
+  script:
+    - echo "Running tests with `gpt-3.5-turbo`"
+    - ./gradlew test
+  when: manual
+  tags:
+    - test
+
+# Optional test (gpt 4o)
+test_gpt_4o:
+  stage: test
+  script:
+    - echo "Running tests with `gpt-4o`"
+    - export API_MODEL="gpt-4o"
+    - ./gradlew test
+  when: manual
+  tags:
+    - test
 
 # Deploy to Modrinth
 Modrinth:
