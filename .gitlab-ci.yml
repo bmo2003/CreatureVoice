@@ -68,8 +68,8 @@ build_mod:
 gpt-3.5-turbo:
   stage: test
   script:
-    - echo "Running tests with `gpt-3.5-turbo`"
-    - ./gradlew test
+    - echo "Running tests with gpt-3.5-turbo"
+    - ./gradlew test --scan
   when: manual
   tags:
     - minecraft
@@ -78,9 +78,21 @@ gpt-3.5-turbo:
 gpt-4o:
   stage: test
   script:
-    - echo "Running tests with `gpt-4o`"
+    - echo "Running tests with gpt-4o"
     - export API_MODEL="gpt-4o"
-    - ./gradlew test
+    - ./gradlew test --scan
+  when: manual
+  tags:
+    - minecraft
+
+# Optional test (gpt 4o)
+llama3-8b:
+  stage: test
+  script:
+    - echo "Running tests with llama3-8b"
+    - export API_URL="http://127.0.0.1:4000/v1/chat/completions"
+    - export API_MODEL="llama3"
+    - ./gradlew test --scan
   when: manual
   tags:
     - minecraft
