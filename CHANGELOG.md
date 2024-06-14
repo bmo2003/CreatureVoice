@@ -14,7 +14,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Changed
 - **Huge improvements** to **chat prompt** for more *balanced* dialog and *predictable* behaviors
 - Improved **Behavior regex** to include both `<BEHAVIOR arg>` and `*BEHAVIOR arg*` syntax, and ignore unknown behaviors.
-- Expanded regex to support args with `+` sign (i.e. `<FRIENDSHIP +1>`)
+- Expanded regex to support args with `+` sign (i.e. `<FRIENDSHIP +1>`) and case-insensitive
 - Improved **message cleaning** to remove any remaining `**` and `<>` after parsing behaviors
 - Privacy Policy updated
 

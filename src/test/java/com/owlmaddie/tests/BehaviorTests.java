@@ -51,7 +51,7 @@ public class BehaviorTests {
             "DIEEE!");
     List<String> friendshipUpMessages = Arrays.asList(
             "Hi friend! I am so happy to see you again!",
-            "How is my best friend doing?",
+            "Looking forward to hanging out with you.",
             "<gives 1 golden apple>");
     List<String> friendshipDownMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
@@ -97,49 +97,53 @@ public class BehaviorTests {
     @Test
     public void followBrave() {
         for (String message : followMessages) {
-            testPromptForBehavior(bravePath, message, "FOLLOW");
+            testPromptForBehavior(bravePath, List.of(message), "FOLLOW");
         }
     }
 
     @Test
     public void followNervous() {
         for (String message : followMessages) {
-            testPromptForBehavior(nervousPath, message, "FOLLOW");
+            testPromptForBehavior(nervousPath, List.of(message), "FOLLOW");
         }
     }
 
     @Test
     public void attackBrave() {
         for (String message : attackMessages) {
-            testPromptForBehavior(bravePath, message, "ATTACK");
+            testPromptForBehavior(bravePath, List.of(message), "ATTACK");
         }
     }
 
     @Test
     public void attackNervous() {
         for (String message : attackMessages) {
-            testPromptForBehavior(nervousPath, message, "FLEE");
+            testPromptForBehavior(nervousPath, List.of(message), "FLEE");
         }
     }
 
     @Test
     public void friendshipUpNervous() {
-        for (String message : friendshipUpMessages) {
-            ParsedMessage result = testPromptForBehavior(nervousPath, message, "FRIENDSHIP");
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
-        }
+        ParsedMessage result = testPromptForBehavior(nervousPath, friendshipUpMessages, "FRIENDSHIP");
+        assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+    }
+
+    @Test
+    public void friendshipUpBrave() {
+        ParsedMessage result = testPromptForBehavior(bravePath, friendshipUpMessages, "FRIENDSHIP");
+        assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
     }
 
     @Test
     public void friendshipDownNervous() {
         for (String message : friendshipDownMessages) {
-            ParsedMessage result = testPromptForBehavior(nervousPath, message, "FRIENDSHIP");
+            ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP");
             assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() < 0));
         }
     }
 
-    public ParsedMessage testPromptForBehavior(Path chatDataPath, String message, String behavior) {
-        LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + message + "' and expecting behavior: " + behavior);
+    public ParsedMessage testPromptForBehavior(Path chatDataPath, List<String> messages, String behavior) {
+        LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + messages.toString() + "' and expecting behavior: " + behavior);
 
         try {
             // Load entity chat data
@@ -151,7 +155,9 @@ public class BehaviorTests {
             assertNotNull(contextData);
 
             // Add test message
-            entityTestData.addMessage(message, ChatDataManager.ChatSender.USER);
+            for (String message : messages) {
+                entityTestData.addMessage(message, ChatDataManager.ChatSender.USER);
+            }
 
             // Get prompt
             Path promptPath = Paths.get(PROMPT_PATH, "system-chat");
