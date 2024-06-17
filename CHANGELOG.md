@@ -4,7 +4,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.6] - 2024-06-17
 
 ### Added
 - **Naturalist** mod **icon art** and full-support for all entities, expect snails (owlmaddie)
@@ -12,7 +12,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New `stream = false` parameter to HTTP API requests (since some APIs default to `true`)
 
 ### Changed
-- **Huge improvements** to **chat prompt** for more *balanced* dialog and *predictable* behaviors
+- **Improvements** to **chat prompt** for more *balanced* dialog and *predictable* behaviors
 - Improved **Behavior regex** to include both `<BEHAVIOR arg>` and `*BEHAVIOR arg*` syntax, and ignore unknown behaviors.
 - Expanded regex to support args with `+` sign (i.e. `<FRIENDSHIP +1>`) and case-insensitive
 - Improved **message cleaning** to remove any remaining `**` and `<>` after parsing behaviors
