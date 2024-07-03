@@ -47,6 +47,8 @@ Include as many behaviors as needed at the end of the message. These are the ONL
 <UNFOLLOW>  Stop following the player location. If the player asks you to stay, wait, or stop following them, please output this behavior.
 <FLEE>  Flee from the player (if you are weak or timid). If the player threatens or scares you, please output this behavior to stay away from the player.
 <ATTACK>  Attack the player (if you are strong and brave). If the player threatens or scares you, please output this behavior to attack the player and defend yourself.
+<PROTECT>  Protect the player when they are attacked (if you are strong and brave).
+<UNPROTECT>  Stop protecting the player
 
 Output Syntax:
 
@@ -84,3 +86,15 @@ ASSISTANT: Ahhh!!! <FLEE> <FRIENDSHIP -3>
 
 USER: Prepare to die!
 ASSISTANT: Ahhh!!! <ATTACK> <FRIENDSHIP -3>
+
+USER: Please keep me safe.
+ASSISTANT: No problem, I'll keep you safe from danger! <PROTECT>
+
+USER: Can you come with me and protect me?
+ASSISTANT: No problem, I'll keep you safe from danger. Let's go! <PROTECT> <FOLLOW>
+
+USER: Don't protect me anymore please
+ASSISTANT: Okay! Be safe out there on your own. <UNPROTECT>
+
+USER: I don't need anyone protecting me
+ASSISTANT: Okay! Be safe out there on your own. <UNPROTECT>

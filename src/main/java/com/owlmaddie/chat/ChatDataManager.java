@@ -12,8 +12,8 @@ import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
-import com.owlmaddie.utils.ServerEntityFinder;
 import com.owlmaddie.utils.Randomizer;
+import com.owlmaddie.utils.ServerEntityFinder;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -276,7 +276,7 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
 
                         } else if (behavior.getName().equals("FLEE")) {
-                            float fleeDistance = 400F; // 20 blocks squared
+                            float fleeDistance = 40F;
                             FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, entitySpeedFast, fleeDistance);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
@@ -289,6 +289,13 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
+
+                        } else if (behavior.getName().equals("PROTECT")) {
+                            ProtectPlayerGoal protectGoal = new ProtectPlayerGoal(player, entity, 1.0);
+                            EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
+
+                        } else if (behavior.getName().equals("UNPROTECT")) {
+                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));

@@ -1,13 +1,12 @@
 package com.owlmaddie.goals;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.RangedAttackMob;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
@@ -15,73 +14,91 @@ import net.minecraft.util.math.Vec3d;
 import java.util.EnumSet;
 
 /**
- * The {@code AttackPlayerGoal} class instructs a Mob Entity to show aggression towards the current player.
- * For passive entities like chickens, damage is simulated with particles. But all MobEntity instances can damage
- * the player.
+ * The {@code AttackPlayerGoal} class instructs a Mob Entity to show aggression towards a target Entity.
+ * For passive entities like chickens (or hostile entities in creative mode), damage is simulated with particles.
  */
 public class AttackPlayerGoal extends Goal {
-    private final MobEntity entity;
-    private ServerPlayerEntity targetPlayer;
-    private final EntityNavigation navigation;
-    private final double speed;
-    enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
-    private EntityState currentState = EntityState.IDLE;
-    private int cooldownTimer = 0;
-    private final int CHARGE_TIME = 15; // Time before leaping / attacking
-    private final double MOVE_DISTANCE = 200D; // 20 blocks away
-    private final double CHARGE_DISTANCE = 25D; // 5 blocks away
-    private final double ATTACK_DISTANCE = 4D; // 2 blocks away
+    protected final MobEntity attackerEntity;
+    protected LivingEntity targetEntity;
+    protected final double speed;
+    protected enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
+    protected EntityState currentState = EntityState.IDLE;
+    protected int cooldownTimer = 0;
+    protected final int CHARGE_TIME = 15; // Time before leaping / attacking
+    protected final double MOVE_DISTANCE = 200D; // 20 blocks away
+    protected final double CHARGE_DISTANCE = 25D; // 5 blocks away
+    protected final double ATTACK_DISTANCE = 4D; // 2 blocks away
 
-    public AttackPlayerGoal(ServerPlayerEntity player, MobEntity entity, double speed) {
-        this.targetPlayer = player;
-        this.entity = entity;
+    public AttackPlayerGoal(LivingEntity targetEntity, MobEntity attackerEntity, double speed) {
+        this.targetEntity = targetEntity;
+        this.attackerEntity = attackerEntity;
         this.speed = speed;
-        this.navigation = entity.getNavigation();
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.TARGET));
+
+        // Set the target
+        if (this.targetEntity != null) {
+            this.attackerEntity.setTarget(this.targetEntity);
+        }
     }
 
     @Override
     public boolean canStart() {
-        // Can start showing aggression if the player is within a certain range.
-        return this.entity.squaredDistanceTo(this.targetPlayer) < MOVE_DISTANCE;
+        return isGoalActive();
     }
 
     @Override
     public boolean shouldContinue() {
-        // Continue showing aggression as long as the player is alive and within range.
-        return this.targetPlayer.isAlive() && this.entity.squaredDistanceTo(this.targetPlayer) < MOVE_DISTANCE;
+        return isGoalActive();
     }
 
     @Override
     public void stop() {
     }
 
-    private void performAttack() {
-        // Check if the entity is a type that is capable of attacking
-        if (this.entity instanceof HostileEntity || this.entity instanceof Angerable || this.entity instanceof RangedAttackMob) {
-            // Entity attacks the player
-            this.entity.tryAttack(this.targetPlayer);
-        } else {
-            // For passive entities, apply minimal damage to simulate a 'leap' attack
-            this.targetPlayer.damage(this.entity.getDamageSources().generic(), 1.0F);
-
-            // Play damage sound
-            this.targetPlayer.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
-
-            // Spawn red particles to simulate 'injury'
-            ((ServerWorld) this.entity.getWorld()).spawnParticles(ParticleTypes.DAMAGE_INDICATOR,
-                    this.targetPlayer.getX(),
-                    this.targetPlayer.getBodyY(0.5D),
-                    this.targetPlayer.getZ(),
-                    10, // number of particles
-                    0.1, 0.1, 0.1, 0.2); // speed and randomness
+    private boolean isGoalActive() {
+        if (this.targetEntity == null || (this.targetEntity != null && !this.targetEntity.isAlive())) {
+            return false;
         }
+
+        // Is nearby to target
+        boolean isNearby = this.attackerEntity.squaredDistanceTo(this.targetEntity) < MOVE_DISTANCE;
+
+        // Check if the attacker is nearby and no native attacks
+        boolean isNearbyAndNoNativeAttacks = isNearby && !hasNativeAttacks();
+
+        // Check if it has native attacks but can't target (e.g., creative mode)
+        LivingEntity livingAttackerEntity = this.attackerEntity;
+        boolean hasNativeAttacksButCannotTarget = isNearby && hasNativeAttacks() && !livingAttackerEntity.canTarget(this.targetEntity);
+
+        // Return true if either condition is met
+        return isNearbyAndNoNativeAttacks || hasNativeAttacksButCannotTarget;
+    }
+
+    private boolean hasNativeAttacks() {
+        // Does this entity have native attacks
+        return this.attackerEntity instanceof HostileEntity || this.attackerEntity instanceof Angerable || this.attackerEntity instanceof RangedAttackMob;
+    }
+
+    private void performAttack() {
+        // For passive entities (or hostile in creative mode), apply minimal damage to simulate a 'leap' / 'melee' attack
+        this.targetEntity.damage(this.attackerEntity.getDamageSources().generic(), 1.0F);
+
+        // Play damage sound
+        this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
+
+        // Spawn red particles to simulate 'injury'
+        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ParticleTypes.DAMAGE_INDICATOR,
+                this.targetEntity.getX(),
+                this.targetEntity.getBodyY(0.5D),
+                this.targetEntity.getZ(),
+                10, // number of particles
+                0.1, 0.1, 0.1, 0.2); // speed and randomness
     }
 
     @Override
     public void tick() {
-        double squaredDistanceToPlayer = this.entity.squaredDistanceTo(this.targetPlayer);
-        this.entity.getLookControl().lookAt(this.targetPlayer, 30.0F, 30.0F); // Entity faces the player
+        double squaredDistanceToPlayer = this.attackerEntity.squaredDistanceTo(this.targetEntity);
+        this.attackerEntity.getLookControl().lookAt(this.targetEntity, 30.0F, 30.0F);
 
         // State transitions and actions
         switch (currentState) {
@@ -97,7 +114,7 @@ public class AttackPlayerGoal extends Goal {
                 break;
 
             case MOVING_TOWARDS_PLAYER:
-                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed);
+                this.attackerEntity.getNavigation().startMovingTo(this.targetEntity, this.speed);
                 if (squaredDistanceToPlayer < CHARGE_DISTANCE) {
                     currentState = EntityState.CHARGING;
                 } else {
@@ -106,7 +123,7 @@ public class AttackPlayerGoal extends Goal {
                 break;
 
             case CHARGING:
-                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed / 2.5D);
+                this.attackerEntity.getNavigation().startMovingTo(this.targetEntity, this.speed / 2.5D);
                 if (cooldownTimer <= 0) {
                     currentState = EntityState.LEAPING;
                 }
@@ -114,16 +131,16 @@ public class AttackPlayerGoal extends Goal {
 
             case LEAPING:
                 // Leap towards the player
-                Vec3d leapDirection = new Vec3d(this.targetPlayer.getX() - this.entity.getX(), 0.1D, this.targetPlayer.getZ() - this.entity.getZ()).normalize().multiply(1.0);
-                this.entity.setVelocity(leapDirection);
-                this.entity.velocityModified = true;
+                Vec3d leapDirection = new Vec3d(this.targetEntity.getX() - this.attackerEntity.getX(), 0.1D, this.targetEntity.getZ() - this.attackerEntity.getZ()).normalize().multiply(1.0);
+                this.attackerEntity.setVelocity(leapDirection);
+                this.attackerEntity.velocityModified = true;
 
                 currentState = EntityState.ATTACKING;
                 break;
 
             case ATTACKING:
                 // Attack player
-                this.entity.getNavigation().startMovingTo(this.targetPlayer, this.speed / 2.5D);
+                this.attackerEntity.getNavigation().startMovingTo(this.targetEntity, this.speed / 2.5D);
                 if (squaredDistanceToPlayer < ATTACK_DISTANCE && cooldownTimer <= 0) {
                     this.performAttack();
                     currentState = EntityState.IDLE;
