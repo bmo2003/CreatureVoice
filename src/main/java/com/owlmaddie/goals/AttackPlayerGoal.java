@@ -6,6 +6,7 @@ import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.GolemEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
@@ -76,7 +77,10 @@ public class AttackPlayerGoal extends Goal {
 
     private boolean hasNativeAttacks() {
         // Does this entity have native attacks
-        return this.attackerEntity instanceof HostileEntity || this.attackerEntity instanceof Angerable || this.attackerEntity instanceof RangedAttackMob;
+        return this.attackerEntity instanceof HostileEntity ||
+                this.attackerEntity instanceof Angerable ||
+                this.attackerEntity instanceof RangedAttackMob ||
+                this.attackerEntity instanceof GolemEntity;
     }
 
     private void performAttack() {
