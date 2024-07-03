@@ -33,11 +33,6 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         this.attackerEntity = attackerEntity;
         this.speed = speed;
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.TARGET));
-
-        // Set the target
-        if (this.targetEntity != null) {
-            this.attackerEntity.setTarget(this.targetEntity);
-        }
     }
 
     @Override
@@ -57,6 +52,11 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     private boolean isGoalActive() {
         if (this.targetEntity == null || (this.targetEntity != null && !this.targetEntity.isAlive())) {
             return false;
+        }
+
+        // Set the attack target (if not self)
+        if (!this.attackerEntity.equals(this.targetEntity)) {
+            this.attackerEntity.setTarget(this.targetEntity);
         }
 
         // Is nearby to target
@@ -82,6 +82,11 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     }
 
     private void performAttack() {
+        // Track the attacker (needed for protect to work)
+        if (!this.attackerEntity.equals(this.targetEntity)) {
+            this.targetEntity.setAttacker(this.attackerEntity);
+        }
+
         // For passive entities (or hostile in creative mode), apply minimal damage to simulate a 'leap' / 'melee' attack
         this.targetEntity.damage(this.attackerEntity.getDamageSources().generic(), 1.0F);
 
