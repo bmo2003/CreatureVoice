@@ -1,7 +1,6 @@
 package com.owlmaddie.goals;
 
 import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
@@ -14,14 +13,13 @@ import java.util.EnumSet;
  * The {@code FleePlayerGoal} class instructs a Mob Entity to flee from the current player
  * and only recalculates path when it has reached its destination and the player is close again.
  */
-public class FleePlayerGoal extends Goal {
+public class FleePlayerGoal extends PlayerBaseGoal {
     private final MobEntity entity;
-    private ServerPlayerEntity targetPlayer;
     private final double speed;
     private final float fleeDistance;
 
     public FleePlayerGoal(ServerPlayerEntity player, MobEntity entity, double speed, float fleeDistance) {
-        this.targetPlayer = player;
+        super(player);
         this.entity = entity;
         this.speed = speed;
         this.fleeDistance = fleeDistance;
@@ -30,12 +28,12 @@ public class FleePlayerGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        return this.targetPlayer != null && this.entity.squaredDistanceTo(this.targetPlayer) < fleeDistance * fleeDistance;
+        return super.canStart() && this.entity.squaredDistanceTo(this.targetEntity) < fleeDistance * fleeDistance;
     }
 
     @Override
     public boolean shouldContinue() {
-        return this.targetPlayer != null && this.entity.squaredDistanceTo(this.targetPlayer) < fleeDistance * fleeDistance;
+        return super.canStart() && this.entity.squaredDistanceTo(this.targetEntity) < fleeDistance * fleeDistance;
     }
 
     @Override
@@ -46,7 +44,7 @@ public class FleePlayerGoal extends Goal {
     private void fleeFromPlayer() {
         int roundedFleeDistance = Math.round(fleeDistance);
         Vec3d fleeTarget = FuzzyTargeting.findFrom((PathAwareEntity)this.entity, roundedFleeDistance,
-                roundedFleeDistance, this.entity.getPos());
+                roundedFleeDistance, this.targetEntity.getPos());
 
         if (fleeTarget != null) {
             Path path = this.entity.getNavigation().findPathTo(fleeTarget.x, fleeTarget.y, fleeTarget.z, 0);

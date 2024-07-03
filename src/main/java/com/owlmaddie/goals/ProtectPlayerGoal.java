@@ -29,7 +29,7 @@ public class ProtectPlayerGoal extends AttackPlayerGoal {
         }
 
         if (this.targetEntity != null && !this.targetEntity.isAlive()) {
-            // clear target
+            // clear dead target
             this.targetEntity = null;
         }
 

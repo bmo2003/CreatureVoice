@@ -2,7 +2,6 @@ package com.owlmaddie.goals;
 
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.RangedAttackMob;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
@@ -18,9 +17,8 @@ import java.util.EnumSet;
  * The {@code AttackPlayerGoal} class instructs a Mob Entity to show aggression towards a target Entity.
  * For passive entities like chickens (or hostile entities in creative mode), damage is simulated with particles.
  */
-public class AttackPlayerGoal extends Goal {
+public class AttackPlayerGoal extends PlayerBaseGoal {
     protected final MobEntity attackerEntity;
-    protected LivingEntity targetEntity;
     protected final double speed;
     protected enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
     protected EntityState currentState = EntityState.IDLE;
@@ -31,7 +29,7 @@ public class AttackPlayerGoal extends Goal {
     protected final double ATTACK_DISTANCE = 4D; // 2 blocks away
 
     public AttackPlayerGoal(LivingEntity targetEntity, MobEntity attackerEntity, double speed) {
-        this.targetEntity = targetEntity;
+        super(targetEntity);
         this.attackerEntity = attackerEntity;
         this.speed = speed;
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.TARGET));
@@ -44,12 +42,12 @@ public class AttackPlayerGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        return isGoalActive();
+        return super.canStart() && isGoalActive();
     }
 
     @Override
     public boolean shouldContinue() {
-        return isGoalActive();
+        return super.canStart() && isGoalActive();
     }
 
     @Override
