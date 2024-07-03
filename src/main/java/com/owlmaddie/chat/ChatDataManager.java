@@ -14,6 +14,7 @@ import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -311,6 +312,12 @@ public class ChatDataManager {
                                 // Stop any attack/flee if friendship improves
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+
+                                if (entity instanceof EnderDragonEntity && new_friendship == 3) {
+                                    // Trigger end of game (friendship always wins!)
+                                    EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                                    dragon.getFight().dragonKilled(dragon);
+                                }
                             }
                             this.friendship = new_friendship;
                         }
