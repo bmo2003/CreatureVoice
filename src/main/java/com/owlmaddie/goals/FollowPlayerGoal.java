@@ -30,7 +30,7 @@ public class FollowPlayerGoal extends Goal {
     @Override
     public boolean canStart() {
         // Start only if the target player is more than 8 blocks away
-        return this.targetPlayer != null && this.entity.squaredDistanceTo(this.targetPlayer) > 64;
+        return this.targetPlayer != null && this.targetPlayer.isAlive() && this.entity.squaredDistanceTo(this.targetPlayer) > 64;
     }
 
     @Override

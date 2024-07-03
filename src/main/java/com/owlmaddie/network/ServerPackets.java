@@ -59,7 +59,7 @@ public class ServerPackets {
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
-                MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+                MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
                     ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
                     if (chatData.characterSheet.isEmpty()) {
@@ -76,7 +76,7 @@ public class ServerPackets {
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
-                MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+                MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
                     // Set talk to player goal (prevent entity from walking off)
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
@@ -96,7 +96,7 @@ public class ServerPackets {
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
-                MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+                MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
                     // Set talk to player goal (prevent entity from walking off)
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
@@ -115,7 +115,7 @@ public class ServerPackets {
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
-                MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+                MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
                     // Set talk to player goal (prevent entity from walking off)
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 7F);
@@ -144,7 +144,7 @@ public class ServerPackets {
 
             // Ensure that the task is synced with the server thread
             server.execute(() -> {
-                MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
+                MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
                     ChatDataManager.EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
                     if (chatData.characterSheet.isEmpty()) {
@@ -270,7 +270,7 @@ public class ServerPackets {
     public static void BroadcastPacketMessage(ChatDataManager.EntityChatData chatData) {
         for (ServerWorld world : serverInstance.getWorlds()) {
             UUID entityId = UUID.fromString(chatData.entityId);
-            MobEntity entity = ServerEntityFinder.getEntityByUUID(world, entityId);
+            MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(world, entityId);
             if (entity != null) {
                 // Set custom name (if null)
                 String characterName = chatData.getCharacterProp("name");

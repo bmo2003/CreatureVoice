@@ -15,6 +15,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Improved **FLEE** behavior, to make it more reliable and more random.
 - Improved **FOLLOW** behavior, supporting teleporting entities (Enderman, Endermite, and Shulker)
 - Refactored **ATTACK** behavior to allow more flexibility (in order to support PROTECT behavior)
+- Updated ServerEntityFinder::getEntityByUUID to be more generic and so it can find players and mobs.
 
 ## [1.0.6] - 2024-06-17
 
