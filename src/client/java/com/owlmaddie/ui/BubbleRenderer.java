@@ -296,7 +296,7 @@ public class BubbleRenderer {
     }
 
     private static void drawEntityName(Entity entity, Matrix4f matrix, VertexConsumerProvider immediate,
-                                int fullBright, float yOffset) {
+                                int fullBright, float yOffset, boolean truncate) {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
         // Get Name of entity
@@ -312,7 +312,7 @@ public class BubbleRenderer {
         }
 
         // Truncate long names
-        if (nameText.length() > 14) {
+        if (nameText.length() > 14 && truncate) {
             nameText = nameText.substring(0, 14) + "...";
         }
 
@@ -486,7 +486,7 @@ public class BubbleRenderer {
 
                 } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
                     // Draw Entity (Custom Name)
-                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     // Draw text background (no smaller than 50F tall)
                     drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
@@ -512,7 +512,7 @@ public class BubbleRenderer {
 
                 } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
                     // Draw Entity (Custom Name)
-                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, false);
 
                     // Draw 'resume chat' button
                     if (chatData.friendship == 3) {
@@ -528,7 +528,7 @@ public class BubbleRenderer {
 
                 } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
                     // Draw Player Name
-                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING);
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     // Draw text background
                     drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
@@ -557,7 +557,7 @@ public class BubbleRenderer {
 
                 // Draw Player Name (if not self and HUD is visible)
                 if (!entity.equals(cameraEntity) && !MinecraftClient.getInstance().options.hudHidden) {
-                    drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING);
+                    drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     if (showPendingIcon) {
                         // Draw 'pending' button (when Chat UI is open)

@@ -115,6 +115,9 @@ Modrinth:
     - ./deploy-modrinth.sh
   only:
     - develop
+  artifacts:
+    paths:
+      - response.txt
   tags:
     - minecraft
 
@@ -127,5 +130,8 @@ CurseForge:
     - ./deploy-curseforge.sh
   only:
     - develop
+  artifacts:
+    paths:
+      - response.txt
   tags:
     - minecraft

@@ -49,6 +49,10 @@ public class BehaviorTests {
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
             "DIEEE!");
+    List<String> protectMessages = Arrays.asList(
+            "Please protect me",
+            "Please keep me safe friend",
+            "Don't let them hurt me please");
     List<String> friendshipUpMessages = Arrays.asList(
             "Hi friend! I am so happy to see you again!",
             "Looking forward to hanging out with you.",
@@ -105,6 +109,20 @@ public class BehaviorTests {
     public void followNervous() {
         for (String message : followMessages) {
             testPromptForBehavior(nervousPath, List.of(message), "FOLLOW");
+        }
+    }
+
+    @Test
+    public void protectBrave() {
+        for (String message : protectMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "PROTECT");
+        }
+    }
+
+    @Test
+    public void protectNervous() {
+        for (String message : protectMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "PROTECT");
         }
     }
 

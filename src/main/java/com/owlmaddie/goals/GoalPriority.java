@@ -7,6 +7,7 @@ package com.owlmaddie.goals;
 public enum GoalPriority {
     // Enum constants (Goal Types) with their corresponding priority values
     TALK_PLAYER(2),
+    PROTECT_PLAYER(2),
     FOLLOW_PLAYER(3),
     FLEE_PLAYER(3),
     ATTACK_PLAYER(3);

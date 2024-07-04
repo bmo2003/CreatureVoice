@@ -12,8 +12,9 @@ import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
-import com.owlmaddie.utils.ServerEntityFinder;
 import com.owlmaddie.utils.Randomizer;
+import com.owlmaddie.utils.ServerEntityFinder;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -188,7 +189,7 @@ public class ChatDataManager {
             contextData.put("world_moon_phase", moonPhaseDescription);
 
             // Get Entity details
-            MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+            MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
             if (entity.getCustomName() == null) {
                 contextData.put("entity_name", "");
             } else {
@@ -255,7 +256,7 @@ public class ChatDataManager {
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
 
                     // Apply behaviors (if any)
-                    MobEntity entity = ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+                    MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
                     for (Behavior behavior : result.getBehaviors()) {
                         LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
                                     ", Argument: " + behavior.getArgument() : ""));
@@ -276,7 +277,7 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
 
                         } else if (behavior.getName().equals("FLEE")) {
-                            float fleeDistance = 400F; // 20 blocks squared
+                            float fleeDistance = 40F;
                             FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, entitySpeedFast, fleeDistance);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
@@ -289,6 +290,13 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
+
+                        } else if (behavior.getName().equals("PROTECT")) {
+                            ProtectPlayerGoal protectGoal = new ProtectPlayerGoal(player, entity, 1.0);
+                            EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
+
+                        } else if (behavior.getName().equals("UNPROTECT")) {
+                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
@@ -304,6 +312,12 @@ public class ChatDataManager {
                                 // Stop any attack/flee if friendship improves
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+
+                                if (entity instanceof EnderDragonEntity && new_friendship == 3) {
+                                    // Trigger end of game (friendship always wins!)
+                                    EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                                    dragon.getFight().dragonKilled(dragon);
+                                }
                             }
                             this.friendship = new_friendship;
                         }
