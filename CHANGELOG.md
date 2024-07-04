@@ -18,6 +18,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Refactored **ATTACK** behavior to allow more flexibility (in order to support PROTECT behavior)
 - Updated `ServerEntityFinder::getEntityByUUID` to be more generic and so it can find players and mobs.
 - Added `PlayerBaseGoal` class to allow **goals/behaviors** to **continue** after a player **respawns** / logs out / logs in
+- When chat bubble is **hidden**, do **not truncate** long names
 
 ## [1.0.6] - 2024-06-17
 
