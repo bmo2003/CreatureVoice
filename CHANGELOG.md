@@ -9,16 +9,16 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - New **PROTECT** behavior: defend a player from attacks
 - New **UNPROTECT** behavior: stop defending a player from attacks
-- **Native ATTACK abilities** (when using the attack or protect behaviors) for hostile mob types
-- **End of Game** triggered by max friendship with the **EnderDragon**!
+- **Native ATTACK abilities** (when using the attack or protect behaviors for hostile mob types)
+- **Free The End** triggered by max friendship with the **EnderDragon**!
+- Added `PlayerBaseGoal` class to allow **goals/behaviors** to **continue** after a player **respawns** / logs out / logs in
 
 ### Changed
 - Improved **FLEE** behavior, to make it more reliable and more random.
 - Improved **FOLLOW** behavior, support **teleporting** entities (*Enderman, Endermite, and Shulker*)
 - Refactored **ATTACK** behavior to allow more flexibility (in order to support PROTECT behavior)
+- When chat bubble is **hidden**, do **not shorten** long names
 - Updated `ServerEntityFinder::getEntityByUUID` to be more generic and so it can find players and mobs.
-- Added `PlayerBaseGoal` class to allow **goals/behaviors** to **continue** after a player **respawns** / logs out / logs in
-- When chat bubble is **hidden**, do **not truncate** long names
 
 ## [1.0.6] - 2024-06-17
 
