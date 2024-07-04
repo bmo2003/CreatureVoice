@@ -8,7 +8,7 @@ API_URL="https://minecraft.curseforge.com/api"
 PROJECT_ID=1012118
 DEPENDENCY_SLUG="fabric-api"
 USER_AGENT="CreatureChat-Minecraft-Mod:curseforge@owlmaddie.com"
-SLEEP_DURATION=10
+SLEEP_DURATION=30
 
 # Function to fetch game version IDs
 fetch_game_version_ids() {
@@ -49,6 +49,7 @@ echo ""
 # Iterate over each jar file in the artifacts
 for FILE in creaturechat*.jar; do
   if [ -f "$FILE" ]; then
+    echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
     MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\(.*\)\.jar/\1/p')

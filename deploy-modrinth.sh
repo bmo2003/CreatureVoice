@@ -31,6 +31,7 @@ echo ""
 # Iterate over each jar file in the artifacts
 for FILE in creaturechat*.jar; do
   if [ -f "$FILE" ]; then
+    echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
     MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\(.*\)\.jar/\1/p')
