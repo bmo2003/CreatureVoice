@@ -4,6 +4,14 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Added support for non path aware entities to FLEE (i.e. Ghast)
+
+### Changed
+- Fixed a **crash with FLEE** when non-path aware entities (i.e. Ghast) attempted to flee.
+
 ## [1.0.7] - 2024-07-03
 
 ### Added
