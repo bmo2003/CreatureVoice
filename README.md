@@ -12,7 +12,7 @@
 
 ### Create meaningful conversations and enduring friendships? A betrayal perhaps?
 
-[![CreatureChat Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.png)]([https://youtu.be/huyMz4FpN3U)
+[![CreatureChat Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.png)](https://youtu.be/huyMz4FpN3U)
 
 ### Installation Instructions
 <details>
