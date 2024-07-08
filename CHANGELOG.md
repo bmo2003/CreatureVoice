@@ -7,10 +7,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## [Unreleased]
 
 ### Added
+- Added UNFLEE behavior (to stop fleeing from a player)
 - Added support for non path aware entities to FLEE (i.e. Ghast)
+- Added new LLM tests for UNFLEE
 
 ### Changed
 - Fixed a **crash with FLEE** when non-path aware entities (i.e. Ghast) attempted to flee.
+- Fixed certain behaviors from colliding with others (i.e. mutual exclusive ones)
 
 ## [1.0.7] - 2024-07-03
 
