@@ -268,6 +268,50 @@ public class BubbleRenderer {
         bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(hatU2, hatV2).light(light).overlay(overlay).next();
         bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(hatU2, hatV1).light(light).overlay(overlay).next();
         bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(hatU1, hatV1).light(light).overlay(overlay).next();
+
+        // Hidden icon UV coordinates
+        float[][] newCoordinates = {
+                {0.0F, 0.0F, 8.0F, 8.0F, 0F, 0F}, // Row 1 left
+                {24.0F, 0.0F, 32.0F, 8.0F, 8F, 0F}, // Row 1 middle
+                {32.0F, 0.0F, 40.0F, 8.0F, 16F, 0F}, // Row 1 right
+                {56.0F, 0.0F, 64.0F, 8.0F, 0F, 8F}, // Row 2 left
+                {56.0F, 20.0F, 64.0F, 28.0F, 8F, 8F}, // Row 2 middle
+                {36.0F, 16.0F, 44.0F, 20.0F, 16F, 8F}, // Row 2 right top
+                {56.0F, 16.0F, 64.0F, 20.0F, 16F, 12F}, // Row 2 right bottom
+                {56.0F, 28.0F, 64.0F, 36.0F, 0F, 16F}, // Row 3 left
+                {56.0F, 36.0F, 64.0F, 44.0F, 8F, 16F}, // Row 3 middle
+                {56.0F, 44.0F, 64.0F, 52.0F, 16F, 16F}, // Row 3 right
+        };
+
+        // Scaling factor for the new layer (24x24 to fit in 8x8)
+        float scaleFactor = 0.77F;
+
+        // Adjust depth for the new layer
+        z -= 0.01F;
+
+        // Draw new coordinates
+        for (float[] coords : newCoordinates) {
+            float newU1 = coords[0] / textureWidth;
+            float newV1 = coords[1] / textureHeight;
+            float newU2 = coords[2] / textureWidth;
+            float newV2 = coords[3] / textureHeight;
+
+            // Calculate the position within the 8x8 area
+            float offsetX = coords[4] * scaleFactor;
+            float offsetY = coords[5] * scaleFactor;
+
+            float scaledX = x + offsetX;
+            float scaledY = y + offsetY;
+            float scaledWidth = (coords[2] - coords[0]) * scaleFactor;
+            float scaledHeight = (coords[3] - coords[1]) * scaleFactor;
+
+            // Draw new layer
+            bufferBuilder.vertex(matrix4f, scaledX, scaledY + scaledHeight, z).color(255, 255, 255, 255).texture(newU1, newV2).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, scaledX + scaledWidth, scaledY + scaledHeight, z).color(255, 255, 255, 255).texture(newU2, newV2).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, scaledX + scaledWidth, scaledY, z).color(255, 255, 255, 255).texture(newU2, newV1).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, scaledX, scaledY, z).color(255, 255, 255, 255).texture(newU1, newV1).light(light).overlay(overlay).next();
+        }
+
         tessellator.draw();
 
         // Disable blending and depth test
