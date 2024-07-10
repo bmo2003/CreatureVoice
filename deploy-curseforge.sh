@@ -8,19 +8,58 @@ API_URL="https://minecraft.curseforge.com/api"
 PROJECT_ID=1012118
 DEPENDENCY_SLUG="fabric-api"
 USER_AGENT="CreatureChat-Minecraft-Mod:curseforge@owlmaddie.com"
-SLEEP_DURATION=30
+SLEEP_DURATION=5
 
-# Function to fetch game version IDs
+# Function to fetch version types and return the base game type ID
+fetch_base_version_id() {
+  local base_version="$1"
+  local version_types_cache="/tmp/version_types.json"
+
+  if [ ! -f "$version_types_cache" ]; then
+    curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/version-types" > "$version_types_cache"
+  fi
+
+  local version_types_response=$(cat "$version_types_cache")
+  local base_version_id=$(echo "$version_types_response" | jq -r --arg base_version "Minecraft $base_version" '.[] | select(.name == $base_version) | .id')
+
+  if [ -z "$base_version_id" ]; then
+    echo "ERROR: Base version ID not found."
+    exit 1
+  fi
+
+  echo "$base_version_id"
+}
+
+# Main function to fetch game version IDs
 fetch_game_version_ids() {
   local minecraft_version="$1"
-  local response=$(curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/versions")
+  local base_version=$(echo "$minecraft_version" | grep -oE '^[0-9]+\.[0-9]+')
 
+  # Fetch the base version ID
+  local base_version_id=$(fetch_base_version_id "$base_version")
+
+  # Cache the game versions JSON data
+  local game_versions_cache="/tmp/game_versions.json"
+  if [ ! -f "$game_versions_cache" ]; then
+    curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/versions" > "$game_versions_cache"
+  fi
+
+  local response=$(cat "$game_versions_cache")
+
+  # Find the specific version ID from the cached data
+  local minecraft_id=$(echo "$response" | jq -r --arg base_version_id "$base_version_id" --arg full_version "$minecraft_version" '.[] | select(.gameVersionTypeID == ($base_version_id | tonumber) and .name == $full_version) | .id' | head -n 1)
+
+  if [ -z "$minecraft_id" ]; then
+    echo "ERROR: Minecraft version ID not found."
+    exit 1
+  fi
+
+  # Retrieve the other IDs as before
   local client_id=$(echo "$response" | jq -r '.[] | select(.name == "Client") | .id')
   local server_id=$(echo "$response" | jq -r '.[] | select(.name == "Server") | .id')
   local fabric_id=$(echo "$response" | jq -r '.[] | select(.name == "Fabric") | .id')
-  local minecraft_id=$(echo "$response" | jq -r --arg mv "$minecraft_version" '.[] | select(.name == $mv) | .id' | head -n 1)
 
-  if [ -z "$client_id" ] || [ -z "$server_id" ] || [ -z "$fabric_id" ] || [ -z "$minecraft_id" ]; then
+  if [ -z "$client_id" ] || [ -z "$server_id" ] || [ -z "$fabric_id" ]; then
     echo "ERROR: One or more game version IDs not found."
     exit 1
   fi
@@ -64,14 +103,19 @@ for FILE in creaturechat*.jar; do
     echo "Preparing to upload $FILE_BASENAME as version $VERSION_NUMBER..."
 
     # Fetch game version IDs
+    GAME_TYPE_ID=$(fetch_base_version_id "$MINECRAFT_VERSION")
     GAME_VERSION_IDS=($(fetch_game_version_ids "$MINECRAFT_VERSION"))
+
+    # DEBUG
+    echo "Minecraft Type ID: $GAME_TYPE_ID"
+    echo "Minecraft Versions IDs (client_id: ${GAME_VERSION_IDS[0]}, server_id: ${GAME_VERSION_IDS[1]}, fabric_id: ${GAME_VERSION_IDS[2]}, minecraft_id: ${GAME_VERSION_IDS[3]})"
 
     # Create a new version payload
     PAYLOAD=$(jq -n --arg changelog "$CHANGELOG" \
       --arg changelogType "markdown" \
       --arg displayName "$FILE_BASENAME" \
       --argjson gameVersions "$(printf '%s\n' "${GAME_VERSION_IDS[@]}" | jq -R . | jq -s .)" \
-      --argjson gameVersionTypeIds '[75125]' \
+      --argjson gameVersionTypeIds "[$GAME_TYPE_ID]" \
       --arg releaseType "release" \
       --argjson relations '[{"slug": "'"$DEPENDENCY_SLUG"'", "type": "requiredDependency"}]' \
       '{

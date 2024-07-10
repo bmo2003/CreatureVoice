@@ -8,7 +8,7 @@ API_URL="https://api.modrinth.com/v2"
 USER_AGENT="CreatureChat-Minecraft-Mod:modrinth@owlmaddie.com"
 PROJECT_ID="rvR0de1E"
 AUTHOR_ID="k6RiShdd"
-SLEEP_DURATION=10
+SLEEP_DURATION=5
 
 # Read the first changelog block
 CHANGELOG=$(awk '/^## \[/{ if (p) exit; p=1 } p' "$CHANGELOG_FILE")
