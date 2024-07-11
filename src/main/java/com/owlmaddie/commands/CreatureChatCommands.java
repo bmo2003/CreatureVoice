@@ -5,13 +5,25 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.IdentifierArgumentType;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The {@code CreatureChatCommands} class registers custom commands to set new API key, model, and url.
@@ -33,6 +45,8 @@ public class CreatureChatCommands {
                 .then(registerSetCommand("url", "URL", StringArgumentType.string()))
                 .then(registerSetCommand("model", "Model", StringArgumentType.string()))
                 .then(registerSetCommand("timeout", "Timeout (seconds)", IntegerArgumentType.integer()))
+                .then(registerWhitelistCommand())
+                .then(registerBlacklistCommand())
                 .then(registerHelpCommand()));
     }
 
@@ -41,26 +55,13 @@ public class CreatureChatCommands {
                 .requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.literal("set")
                         .then(CommandManager.argument("value", valueType)
-                                .then(CommandManager.literal("--config")
-                                        .then(CommandManager.literal("default")
-                                                .executes(context -> {
-                                                    if (valueType instanceof StringArgumentType)
-                                                        return setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), false, settingDescription);
-                                                    else if (valueType instanceof IntegerArgumentType)
-                                                        return setConfig(context.getSource(), settingName, IntegerArgumentType.getInteger(context, "value"), false, settingDescription);
-                                                    return 1;
-                                                })
-                                        )
-                                        .then(CommandManager.literal("server")
-                                                .executes(context -> {
-                                                    if (valueType instanceof StringArgumentType)
-                                                        return setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), true, settingDescription);
-                                                    else if (valueType instanceof IntegerArgumentType)
-                                                        return setConfig(context.getSource(), settingName, IntegerArgumentType.getInteger(context, "value"), true, settingDescription);
-                                                    return 1;
-                                                })
-                                        )
-                                )
+                                .then(addConfigArgs((context, useServerConfig) -> {
+                                    if (valueType instanceof StringArgumentType)
+                                        return setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), useServerConfig, settingDescription);
+                                    else if (valueType instanceof IntegerArgumentType)
+                                        return setConfig(context.getSource(), settingName, IntegerArgumentType.getInteger(context, "value"), useServerConfig, settingDescription);
+                                    return 1;
+                                }))
                                 .executes(context -> {
                                     if (valueType instanceof StringArgumentType)
                                         return setConfig(context.getSource(), settingName, StringArgumentType.getString(context, "value"), false, settingDescription);
@@ -69,6 +70,55 @@ public class CreatureChatCommands {
                                     return 1;
                                 })
                         ));
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> registerWhitelistCommand() {
+        return CommandManager.literal("whitelist")
+                .requires(source -> source.hasPermissionLevel(4))
+                .then(CommandManager.argument("entityType", IdentifierArgumentType.identifier())
+                        .suggests((context, builder) -> CommandSource.suggestIdentifiers(Registries.ENTITY_TYPE.getIds(), builder))
+                        .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "whitelist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), useServerConfig)))
+                        .executes(context -> modifyList(context, "whitelist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), false)))
+                .then(CommandManager.literal("all")
+                        .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "whitelist", "all", useServerConfig)))
+                        .executes(context -> modifyList(context, "whitelist", "all", false)))
+                .then(CommandManager.literal("clear")
+                        .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "whitelist", "clear", useServerConfig)))
+                        .executes(context -> modifyList(context, "whitelist", "clear", false)));
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> registerBlacklistCommand() {
+        return CommandManager.literal("blacklist")
+                .requires(source -> source.hasPermissionLevel(4))
+                .then(CommandManager.argument("entityType", IdentifierArgumentType.identifier())
+                        .suggests((context, builder) -> CommandSource.suggestIdentifiers(Registries.ENTITY_TYPE.getIds(), builder))
+                        .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "blacklist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), useServerConfig)))
+                        .executes(context -> modifyList(context, "blacklist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), false)))
+                .then(CommandManager.literal("all")
+                        .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "blacklist", "all", useServerConfig)))
+                        .executes(context -> modifyList(context, "blacklist", "all", false)))
+                .then(CommandManager.literal("clear")
+                        .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "blacklist", "clear", useServerConfig)))
+                        .executes(context -> modifyList(context, "blacklist", "clear", false)));
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> registerHelpCommand() {
+        return CommandManager.literal("help")
+                .executes(context -> {
+                    String helpMessage = "Usage of CreatureChat Commands:\n"
+                            + "/creaturechat key set <key> - Sets the API key\n"
+                            + "/creaturechat url set \"<url>\" - Sets the URL\n"
+                            + "/creaturechat model set <model> - Sets the model\n"
+                            + "/creaturechat timeout set <seconds> - Sets the API timeout\n"
+                            + "/creaturechat whitelist <entityType | all | clear> - Show chat bubbles\n"
+                            + "/creaturechat blacklist <entityType | all | clear> - Hide chat bubbles\n"
+                            + "\n"
+                            + "Optional: Append [--config default | server] to any command to specify configuration scope.\n"
+                            + "\n"
+                            + "Security: Level 4 permission required.";
+                    context.getSource().sendFeedback(() -> Text.literal(helpMessage), false);
+                    return 1;
+                });
     }
 
     private static <T> int setConfig(ServerCommandSource source, String settingName, T value, boolean useServerConfig, String settingDescription) {
@@ -109,13 +159,11 @@ public class CreatureChatCommands {
 
         Text feedbackMessage;
         if (configHandler.saveConfig(config, useServerConfig)) {
-            // succeeded
             feedbackMessage = Text.literal(settingDescription + " Set Successfully!").formatted(Formatting.GREEN);
             source.sendFeedback(() -> feedbackMessage, false);
             LOGGER.info("Command executed: " + feedbackMessage.getString());
             return 1;
         } else {
-            // failed
             feedbackMessage = Text.literal(settingDescription + " Set Failed!").formatted(Formatting.RED);
             source.sendFeedback(() -> feedbackMessage, false);
             LOGGER.info("Command executed: " + feedbackMessage.getString());
@@ -123,20 +171,84 @@ public class CreatureChatCommands {
         }
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> registerHelpCommand() {
-        return CommandManager.literal("help")
-                .executes(context -> {
-                    String helpMessage = "Usage of CreatureChat Commands:\n"
-                            + "/creaturechat key set <key> - Sets the API key\n"
-                            + "/creaturechat url set \"<url>\" - Sets the URL\n"
-                            + "/creaturechat model set <model> - Sets the model\n"
-                            + "/creaturechat timeout set <seconds> - Sets the API timeout\n"
-                            + "\n"
-                            + "Optional: Append [--config default | server] to any command to specify configuration scope.\n"
-                            + "\n"
-                            + "Security: Level 4 permission required.";
-                    context.getSource().sendFeedback(() -> Text.literal(helpMessage), false);
-                    return 1;
-                });
+    private static int modifyList(CommandContext<ServerCommandSource> context, String listName, String action, boolean useServerConfig) {
+        ServerCommandSource source = context.getSource();
+        ConfigurationHandler configHandler = new ConfigurationHandler(source.getServer());
+        ConfigurationHandler.Config config = configHandler.loadConfig();
+        List<String> entityTypes = Registries.ENTITY_TYPE.stream()
+                .filter(entityType -> LivingEntity.class.isAssignableFrom(entityType.getBaseClass()))
+                .map(EntityType::getId)
+                .map(Identifier::toString)
+                .collect(Collectors.toList());
+
+        try {
+            if ("all".equals(action)) {
+                if ("whitelist".equals(listName)) {
+                    config.setWhitelist(entityTypes);
+                    config.setBlacklist(new ArrayList<>()); // Clear blacklist
+                } else if ("blacklist".equals(listName)) {
+                    config.setBlacklist(entityTypes);
+                    config.setWhitelist(new ArrayList<>()); // Clear whitelist
+                }
+            } else if ("clear".equals(action)) {
+                if ("whitelist".equals(listName)) {
+                    config.setWhitelist(new ArrayList<>());
+                } else if ("blacklist".equals(listName)) {
+                    config.setBlacklist(new ArrayList<>());
+                }
+            } else {
+                if (!entityTypes.contains(action)) {
+                    throw new IllegalArgumentException("Invalid entity type: " + action);
+                }
+                if ("whitelist".equals(listName)) {
+                    List<String> whitelist = new ArrayList<>(config.getWhitelist());
+                    if (!whitelist.contains(action)) {
+                        whitelist.add(action);
+                        config.setWhitelist(whitelist);
+                    }
+                    // Remove from blacklist if present
+                    List<String> blacklist = new ArrayList<>(config.getBlacklist());
+                    blacklist.remove(action);
+                    config.setBlacklist(blacklist);
+                } else if ("blacklist".equals(listName)) {
+                    List<String> blacklist = new ArrayList<>(config.getBlacklist());
+                    if (!blacklist.contains(action)) {
+                        blacklist.add(action);
+                        config.setBlacklist(blacklist);
+                    }
+                    // Remove from whitelist if present
+                    List<String> whitelist = new ArrayList<>(config.getWhitelist());
+                    whitelist.remove(action);
+                    config.setWhitelist(whitelist);
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            Text errorMessage = Text.literal(e.getMessage()).formatted(Formatting.RED);
+            source.sendFeedback(() -> errorMessage, false);
+            LOGGER.error("Error modifying list: " + e.getMessage(), e);
+            return 0;
+        }
+
+        if (configHandler.saveConfig(config, useServerConfig)) {
+            Text feedbackMessage = Text.literal("Successfully updated " + listName + " with " + action).formatted(Formatting.GREEN);
+            source.sendFeedback(() -> feedbackMessage, false);
+            return 1;
+        } else {
+            Text feedbackMessage = Text.literal("Failed to update " + listName).formatted(Formatting.RED);
+            source.sendFeedback(() -> feedbackMessage, false);
+            return 0;
+        }
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> addConfigArgs(CommandExecutor executor) {
+        return CommandManager.literal("--config")
+                .then(CommandManager.literal("default").executes(context -> executor.run(context, false)))
+                .then(CommandManager.literal("server").executes(context -> executor.run(context, true)))
+                .executes(context -> executor.run(context, false));
+    }
+
+    @FunctionalInterface
+    private interface CommandExecutor {
+        int run(CommandContext<ServerCommandSource> context, boolean useServerConfig) throws CommandSyntaxException;
     }
 }

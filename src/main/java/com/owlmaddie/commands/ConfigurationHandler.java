@@ -14,6 +14,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The {@code ConfigurationHandler} class loads and saves configuration settings for this mod. It first
@@ -69,6 +71,8 @@ public class ConfigurationHandler {
         private int maxOutputTokens = 200;
         private double percentOfContext = 0.75;
         private int timeout = 10;
+        private List<String> whitelist = new ArrayList<>();
+        private List<String> blacklist = new ArrayList<>();
 
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
@@ -77,7 +81,7 @@ public class ConfigurationHandler {
                 // Update URL if a CreatureChat API key is detected
                 setUrl("https://api.creaturechat.com/v1/chat/completions");
             } else if (apiKey.startsWith("sk-")) {
-                // Update URL if a OpenAI API key is detected
+                // Update URL if an OpenAI API key is detected
                 setUrl("https://api.openai.com/v1/chat/completions");
             }
             this.apiKey = apiKey;
@@ -92,7 +96,6 @@ public class ConfigurationHandler {
         public int getTimeout() { return timeout; }
         public void setTimeout(int timeout) { this.timeout = timeout; }
 
-        // Getters and setters for new fields
         public int getMaxContextTokens() { return maxContextTokens; }
         public void setMaxContextTokens(int maxContextTokens) { this.maxContextTokens = maxContextTokens; }
 
@@ -102,5 +105,10 @@ public class ConfigurationHandler {
         public double getPercentOfContext() { return percentOfContext; }
         public void setPercentOfContext(double percentOfContext) { this.percentOfContext = percentOfContext; }
 
+        public List<String> getWhitelist() { return whitelist; }
+        public void setWhitelist(List<String> whitelist) { this.whitelist = whitelist; }
+
+        public List<String> getBlacklist() { return blacklist; }
+        public void setBlacklist(List<String> blacklist) { this.blacklist = blacklist; }
     }
 }

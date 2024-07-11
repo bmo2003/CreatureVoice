@@ -6,8 +6,12 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ## Unreleased
 
+### Added
+- New whitelist and blacklist Minecraft commands, to show and hide chat bubbles based on entity type
+
 ### Changed
 - Fixed CurseForge deploy script to be much faster, and correctly lookup valid Type and Version IDs
+- Large refactor of Minecraft commands (and how --config args are parsed)
 
 ## [1.0.7] - 2024-07-03
 
