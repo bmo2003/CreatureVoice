@@ -11,7 +11,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.IdentifierArgumentType;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -72,11 +72,27 @@ public class CreatureChatCommands {
                         ));
     }
 
+    private static List<Identifier> getLivingEntityIds() {
+        List<Identifier> livingEntityIds = Registries.ENTITY_TYPE.getIds().stream()
+                .filter(id -> {
+                    EntityType<?> entityType = Registries.ENTITY_TYPE.get(id);
+                    return entityType != null && entityType.getSpawnGroup() != SpawnGroup.MISC;
+                })
+                .collect(Collectors.toList());
+        return livingEntityIds;
+    }
+
+    private static List<String> getLivingEntityTypeNames() {
+        return getLivingEntityIds().stream()
+                .map(Identifier::toString)
+                .collect(Collectors.toList());
+    }
+
     private static LiteralArgumentBuilder<ServerCommandSource> registerWhitelistCommand() {
         return CommandManager.literal("whitelist")
                 .requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.argument("entityType", IdentifierArgumentType.identifier())
-                        .suggests((context, builder) -> CommandSource.suggestIdentifiers(Registries.ENTITY_TYPE.getIds(), builder))
+                        .suggests((context, builder) -> CommandSource.suggestIdentifiers(getLivingEntityIds(), builder))
                         .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "whitelist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), useServerConfig)))
                         .executes(context -> modifyList(context, "whitelist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), false)))
                 .then(CommandManager.literal("all")
@@ -91,7 +107,7 @@ public class CreatureChatCommands {
         return CommandManager.literal("blacklist")
                 .requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.argument("entityType", IdentifierArgumentType.identifier())
-                        .suggests((context, builder) -> CommandSource.suggestIdentifiers(Registries.ENTITY_TYPE.getIds(), builder))
+                        .suggests((context, builder) -> CommandSource.suggestIdentifiers(getLivingEntityIds(), builder))
                         .then(addConfigArgs((context, useServerConfig) -> modifyList(context, "blacklist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), useServerConfig)))
                         .executes(context -> modifyList(context, "blacklist", IdentifierArgumentType.getIdentifier(context, "entityType").toString(), false)))
                 .then(CommandManager.literal("all")
@@ -175,11 +191,7 @@ public class CreatureChatCommands {
         ServerCommandSource source = context.getSource();
         ConfigurationHandler configHandler = new ConfigurationHandler(source.getServer());
         ConfigurationHandler.Config config = configHandler.loadConfig();
-        List<String> entityTypes = Registries.ENTITY_TYPE.stream()
-                .filter(entityType -> LivingEntity.class.isAssignableFrom(entityType.getBaseClass()))
-                .map(EntityType::getId)
-                .map(Identifier::toString)
-                .collect(Collectors.toList());
+        List<String> entityTypes = getLivingEntityTypeNames();
 
         try {
             if ("all".equals(action)) {
