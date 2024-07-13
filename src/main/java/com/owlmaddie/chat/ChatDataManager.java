@@ -269,6 +269,7 @@ public class ChatDataManager {
                         // Apply behaviors to entity
                         if (behavior.getName().equals("FOLLOW")) {
                             FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeed);
+                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
@@ -282,17 +283,25 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
+
+                        } else if (behavior.getName().equals("UNFLEE")) {
+                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
 
                         } else if (behavior.getName().equals("ATTACK")) {
                             AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
 
                         } else if (behavior.getName().equals("PROTECT")) {
                             ProtectPlayerGoal protectGoal = new ProtectPlayerGoal(player, entity, 1.0);
+                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
 
                         } else if (behavior.getName().equals("UNPROTECT")) {

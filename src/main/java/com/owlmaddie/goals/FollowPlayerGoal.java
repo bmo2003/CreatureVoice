@@ -63,6 +63,9 @@ public class FollowPlayerGoal extends PlayerBaseGoal {
     }
 
     private Vec3d findTeleportPosition(int distance) {
-        return FuzzyTargeting.findTo((PathAwareEntity)this.entity, distance, distance, this.targetEntity.getPos());
+        if (this.entity instanceof PathAwareEntity) {
+            return FuzzyTargeting.findTo((PathAwareEntity) this.entity, distance, distance, this.targetEntity.getPos());
+        }
+        return null;
     }
 }
