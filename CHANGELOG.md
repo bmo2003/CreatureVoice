@@ -15,6 +15,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Fixed a **crash with FLEE** when non-path aware entities (i.e. Ghast) attempted to flee.
 - Fixed certain behaviors from colliding with others (i.e. mutual exclusive ones)
 - Updated README.md with new video thumbnail, and simplified text, added spoiler to install instructions
+- Fixed CurseForge deploy script to be much faster, and correctly lookup valid Type and Version IDs
 
 ## [1.0.7] - 2024-07-03
 
