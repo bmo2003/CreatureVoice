@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.owlmaddie.network.ServerPackets;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.IdentifierArgumentType;
@@ -244,6 +245,9 @@ public class CreatureChatCommands {
         if (configHandler.saveConfig(config, useServerConfig)) {
             Text feedbackMessage = Text.literal("Successfully updated " + listName + " with " + action).formatted(Formatting.GREEN);
             source.sendFeedback(() -> feedbackMessage, false);
+
+            // Send whitelist / blacklist to all players
+            ServerPackets.send_whitelist_blacklist(null);
             return 1;
         } else {
             Text feedbackMessage = Text.literal("Failed to update " + listName).formatted(Formatting.RED);

@@ -17,6 +17,7 @@ import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonPart;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -27,6 +28,7 @@ import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,6 +45,8 @@ public class BubbleRenderer {
     public static long lastTick = 0;
     public static int light = 15728880;
     public static int overlay = OverlayTexture.DEFAULT_UV;
+    public static List<String> whitelist = new ArrayList<>();
+    public static List<String> blacklist = new ArrayList<>();
 
     public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         // Set shader & texture
@@ -356,6 +360,16 @@ public class BubbleRenderer {
                 .filter(entity -> !entity.hasPassengers())
                 .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
                 .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
+                .filter(entity -> {
+                    Identifier entityId = Registries.ENTITY_TYPE.getId(entity.getType());
+                    String entityIdString = entityId.toString();
+                    // Check blacklist first
+                    if (blacklist.contains(entityIdString)) {
+                        return false;
+                    }
+                    // If whitelist is not empty, only include entities in the whitelist
+                    return whitelist.isEmpty() || whitelist.contains(entityIdString);
+                })
                 .collect(Collectors.toList());
 
         for (Entity entity : relevantEntities) {

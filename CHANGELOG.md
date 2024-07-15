@@ -7,19 +7,19 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## [Unreleased]
 
 ### Added
+- New whitelist / blacklist Minecraft commands, to show and hide chat bubbles based on entity type
+- New S2C packets to send whitelist / blacklist changes on login and after commands are executed
 - Added UNFLEE behavior (to stop fleeing from a player)
 - Added support for non path aware entities to FLEE (i.e. Ghast)
 - Added new LLM tests for UNFLEE
 
-### Added
-- New whitelist and blacklist Minecraft commands, to show and hide chat bubbles based on entity type
-
 ### Changed
+- Chat Bubble rendering & interacting is now dependent on whitelist / blacklist config
 - Fixed a **crash with FLEE** when non-path aware entities (i.e. Ghast) attempted to flee.
 - Fixed certain behaviors from colliding with others (i.e. mutual exclusive ones)
 - Updated README.md with new video thumbnail, and simplified text, added spoiler to install instructions
-- Fixed CurseForge deploy script to be much faster, and correctly lookup valid Type and Version IDs
 - Large refactor of Minecraft commands (and how --config args are parsed)
+- Fixed CurseForge deploy script to be much faster, and correctly lookup valid Type and Version IDs
 
 ## [1.0.7] - 2024-07-03
 
