@@ -214,7 +214,7 @@ public class ClientPackets {
 
     private static void playNearbyUISound(MinecraftClient client, Entity player, float maxVolume) {
         // Play sound with volume based on distance
-        int distance_squared = 64;
+        int distance_squared = 144;
         if (client.player != null) {
             double distance = client.player.squaredDistanceTo(player.getX(), player.getY(), player.getZ());
             if (distance <= distance_squared) {
