@@ -17,6 +17,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Chat Bubble **rendering** & interacting is now dependent on **whitelist / blacklist** config
 - Improved client **render performance** (only query nearby entities every 3rd call)
 - Fixed a **crash with FLEE** when non-path aware entities (i.e. Ghast) attempted to flee.
+- Updated ATTACK **CHARGE_TIME** to be a little **faster** (when non-native attacks are used)
 - Extended **click sounds** to 12 blocks away (from 8)
 - Fixed certain **behaviors** from colliding with others (i.e. **mutual exclusive** ones)
 - Updated README.md with new video thumbnail, and simplified text, added spoiler to install instructions
