@@ -47,6 +47,8 @@ public class BubbleRenderer {
     public static int overlay = OverlayTexture.DEFAULT_UV;
     public static List<String> whitelist = new ArrayList<>();
     public static List<String> blacklist = new ArrayList<>();
+    private static int queryEntityDataCount = 0;
+    private static List<Entity> relevantEntities;
 
     public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         // Set shader & texture
@@ -351,26 +353,35 @@ public class BubbleRenderer {
         // Get camera position
         Vec3d interpolatedCameraPos = new Vec3d(camera.getPos().x, camera.getPos().y, camera.getPos().z);
 
-        // Get all entities
-        List<Entity> nearbyEntities = world.getOtherEntities(null, area);
+        // Increment query counter
+        queryEntityDataCount++;
 
-        // Filter to include only MobEntity & PlayerEntity but exclude any camera 1st person entity and any entities with passengers
-        List<Entity> relevantEntities = nearbyEntities.stream()
-                .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
-                .filter(entity -> !entity.hasPassengers())
-                .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
-                .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
-                .filter(entity -> {
-                    Identifier entityId = Registries.ENTITY_TYPE.getId(entity.getType());
-                    String entityIdString = entityId.toString();
-                    // Check blacklist first
-                    if (blacklist.contains(entityIdString)) {
-                        return false;
-                    }
-                    // If whitelist is not empty, only include entities in the whitelist
-                    return whitelist.isEmpty() || whitelist.contains(entityIdString);
-                })
-                .collect(Collectors.toList());
+        // This query count helps us cache the list of relevant entities. We can refresh
+        // the list every 3rd call to this render function
+        if (queryEntityDataCount % 3 == 0 || relevantEntities == null) {
+            // Get all entities
+            List<Entity> nearbyEntities = world.getOtherEntities(null, area);
+
+            // Filter to include only MobEntity & PlayerEntity but exclude any camera 1st person entity and any entities with passengers
+            relevantEntities = nearbyEntities.stream()
+                    .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
+                    .filter(entity -> !entity.hasPassengers())
+                    .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
+                    .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
+                    .filter(entity -> {
+                        Identifier entityId = Registries.ENTITY_TYPE.getId(entity.getType());
+                        String entityIdString = entityId.toString();
+                        // Check blacklist first
+                        if (blacklist.contains(entityIdString)) {
+                            return false;
+                        }
+                        // If whitelist is not empty, only include entities in the whitelist
+                        return whitelist.isEmpty() || whitelist.contains(entityIdString);
+                    })
+                    .collect(Collectors.toList());
+
+            queryEntityDataCount = 0;
+        }
 
         for (Entity entity : relevantEntities) {
 
