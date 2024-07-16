@@ -1,6 +1,7 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
 import net.minecraft.entity.Entity;
@@ -10,14 +11,18 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.List;
 
 
 @Mixin(LivingEntity.class)

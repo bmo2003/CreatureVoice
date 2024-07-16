@@ -2,6 +2,7 @@ package com.owlmaddie.network;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.ChatDataSaverScheduler;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +51,7 @@ public class ServerPackets {
     public static final Identifier PACKET_C2S_SEND_CHAT = new Identifier("creaturechat", "packet_c2s_send_chat");
     public static final Identifier PACKET_S2C_MESSAGE = new Identifier("creaturechat", "packet_s2c_message");
     public static final Identifier PACKET_S2C_LOGIN = new Identifier("creaturechat", "packet_s2c_login");
+    public static final Identifier PACKET_S2C_WHITELIST = new Identifier("creaturechat", "packet_s2c_whitelist");
     public static final Identifier PACKET_S2C_PLAYER_STATUS = new Identifier("creaturechat", "packet_s2c_player_status");
 
     public static void register() {
@@ -160,8 +163,11 @@ public class ServerPackets {
         // Data is sent in chunks, to prevent exceeding the 32767 limit per String.
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity player = handler.player;
-            LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
 
+            // Send entire whitelist / blacklist to logged in player
+            send_whitelist_blacklist(player);
+
+            LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
             // Get lite JSON data & compress to byte array
             String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData();
             byte[] compressedData = Compression.compressString(chatDataJSON);
@@ -230,6 +236,37 @@ public class ServerPackets {
             }
         });
 
+    }
+
+    public static void send_whitelist_blacklist(ServerPlayerEntity player) {
+        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+
+        // Write the whitelist data to the buffer
+        List<String> whitelist = config.getWhitelist();
+        buffer.writeInt(whitelist.size());
+        for (String entry : whitelist) {
+            buffer.writeString(entry);
+        }
+
+        // Write the blacklist data to the buffer
+        List<String> blacklist = config.getBlacklist();
+        buffer.writeInt(blacklist.size());
+        for (String entry : blacklist) {
+            buffer.writeString(entry);
+        }
+
+        if (player != null) {
+            // Send packet to specific player
+            LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getName().getString());
+            ServerPlayNetworking.send(player, PACKET_S2C_WHITELIST, buffer);
+        } else {
+            // Iterate over all players and send the packet
+            for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
+                LOGGER.info("Broadcast whitelist / blacklist packet to player: " + serverPlayer.getName().getString());
+                ServerPlayNetworking.send(serverPlayer, PACKET_S2C_WHITELIST, buffer);
+            }
+        }
     }
 
     public static void generate_character(String userLanguage, ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity) {

@@ -3,6 +3,7 @@ package com.owlmaddie.network;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
@@ -19,7 +20,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -166,6 +169,28 @@ public class ClientPackets {
             });
         });
 
+        // Client-side packet handler, receive entire whitelist / blacklist, and update BubbleRenderer
+        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_WHITELIST, (client, handler, buffer, responseSender) -> {
+            // Read the whitelist data from the buffer
+            int whitelistSize = buffer.readInt();
+            List<String> whitelist = new ArrayList<>(whitelistSize);
+            for (int i = 0; i < whitelistSize; i++) {
+                whitelist.add(buffer.readString(32767));
+            }
+
+            // Read the blacklist data from the buffer
+            int blacklistSize = buffer.readInt();
+            List<String> blacklist = new ArrayList<>(blacklistSize);
+            for (int i = 0; i < blacklistSize; i++) {
+                blacklist.add(buffer.readString(32767));
+            }
+
+            client.execute(() -> {
+                BubbleRenderer.whitelist = whitelist;
+                BubbleRenderer.blacklist = blacklist;
+            });
+        });
+
         // Client-side packet handler, player status sync
         ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_PLAYER_STATUS, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
@@ -189,7 +214,7 @@ public class ClientPackets {
 
     private static void playNearbyUISound(MinecraftClient client, Entity player, float maxVolume) {
         // Play sound with volume based on distance
-        int distance_squared = 64;
+        int distance_squared = 144;
         if (client.player != null) {
             double distance = client.player.squaredDistanceTo(player.getX(), player.getY(), player.getZ());
             if (distance <= distance_squared) {

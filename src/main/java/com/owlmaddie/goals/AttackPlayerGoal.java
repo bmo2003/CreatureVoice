@@ -23,7 +23,7 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     protected enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
     protected EntityState currentState = EntityState.IDLE;
     protected int cooldownTimer = 0;
-    protected final int CHARGE_TIME = 15; // Time before leaping / attacking
+    protected final int CHARGE_TIME = 12; // Time before leaping / attacking
     protected final double MOVE_DISTANCE = 200D; // 20 blocks away
     protected final double CHARGE_DISTANCE = 25D; // 5 blocks away
     protected final double ATTACK_DISTANCE = 4D; // 2 blocks away
