@@ -31,22 +31,6 @@ public class MixinMobEntity {
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
 
-        // Get config (whitelist / blacklist)
-        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
-        List<String> whitelist = config.getWhitelist();
-        List<String> blacklist = config.getBlacklist();
-
-        Identifier entityId = Registries.ENTITY_TYPE.getId(thisEntity.getType());
-        String entityIdString = entityId.toString();
-        if (blacklist.contains(entityIdString)) {
-            // entity is black listed (no interacting)
-            return;
-        }
-        if (!whitelist.isEmpty() && !whitelist.contains(entityIdString)) {
-            // entity is not white listed (no interacting)
-            return;
-        }
-
         // Determine if the item is a bucket
         // We don't want to interact on buckets
         Item item = itemStack.getItem();

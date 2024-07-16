@@ -49,23 +49,6 @@ public class MixinLivingEntity implements LivingEntityInterface {
 
         // If PLAYER attacks MOB then
         if (attacker instanceof PlayerEntity && thisEntity instanceof MobEntity && !thisEntity.isDead()) {
-
-            // Get config (whitelist / blacklist)
-            ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
-            List<String> whitelist = config.getWhitelist();
-            List<String> blacklist = config.getBlacklist();
-
-            Identifier entityId = Registries.ENTITY_TYPE.getId(thisEntity.getType());
-            String entityIdString = entityId.toString();
-            if (blacklist.contains(entityIdString)) {
-                // entity is black listed (no interacting)
-                return;
-            }
-            if (!whitelist.isEmpty() && !whitelist.contains(entityIdString)) {
-                // entity is not white listed (no interacting)
-                return;
-            }
-
             // Generate attacked message (only if the previous user message was not an attacked message)
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
