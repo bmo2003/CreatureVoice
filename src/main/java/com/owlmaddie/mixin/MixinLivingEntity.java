@@ -1,6 +1,7 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.LivingEntityInterface;
 import net.minecraft.entity.Entity;
@@ -10,14 +11,18 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.List;
 
 
 @Mixin(LivingEntity.class)
@@ -44,6 +49,23 @@ public class MixinLivingEntity implements LivingEntityInterface {
 
         // If PLAYER attacks MOB then
         if (attacker instanceof PlayerEntity && thisEntity instanceof MobEntity && !thisEntity.isDead()) {
+
+            // Get config (whitelist / blacklist)
+            ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+            List<String> whitelist = config.getWhitelist();
+            List<String> blacklist = config.getBlacklist();
+
+            Identifier entityId = Registries.ENTITY_TYPE.getId(thisEntity.getType());
+            String entityIdString = entityId.toString();
+            if (blacklist.contains(entityIdString)) {
+                // entity is black listed (no interacting)
+                return;
+            }
+            if (!whitelist.isEmpty() && !whitelist.contains(entityIdString)) {
+                // entity is not white listed (no interacting)
+                return;
+            }
+
             // Generate attacked message (only if the previous user message was not an attacked message)
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ChatDataManager chatDataManager = ChatDataManager.getServerInstance();

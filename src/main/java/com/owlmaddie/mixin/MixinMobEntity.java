@@ -1,19 +1,24 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.List;
 
 /**
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
@@ -25,6 +30,22 @@ public class MixinMobEntity {
     private void onItemGiven(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
+
+        // Get config (whitelist / blacklist)
+        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        List<String> whitelist = config.getWhitelist();
+        List<String> blacklist = config.getBlacklist();
+
+        Identifier entityId = Registries.ENTITY_TYPE.getId(thisEntity.getType());
+        String entityIdString = entityId.toString();
+        if (blacklist.contains(entityIdString)) {
+            // entity is black listed (no interacting)
+            return;
+        }
+        if (!whitelist.isEmpty() && !whitelist.contains(entityIdString)) {
+            // entity is not white listed (no interacting)
+            return;
+        }
 
         // Determine if the item is a bucket
         // We don't want to interact on buckets
