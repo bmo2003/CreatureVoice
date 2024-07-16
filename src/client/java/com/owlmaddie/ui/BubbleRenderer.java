@@ -369,6 +369,10 @@ public class BubbleRenderer {
                     .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
                     .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
                     .filter(entity -> {
+                        // Always include PlayerEntity
+                        if (entity instanceof PlayerEntity) {
+                            return true;
+                        }
                         Identifier entityId = Registries.ENTITY_TYPE.getId(entity.getType());
                         String entityIdString = entityId.toString();
                         // Check blacklist first
