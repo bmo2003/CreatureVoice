@@ -12,7 +12,7 @@ SLEEP_DURATION=5
 
 # Function to fetch version types and return the base game type ID
 fetch_base_version_id() {
-  local base_version="$1"
+  local base_version=$(echo "$1" | grep -oE '^[0-9]+\.[0-9]+')
   local version_types_cache="/tmp/version_types.json"
 
   if [ ! -f "$version_types_cache" ]; then
@@ -33,10 +33,9 @@ fetch_base_version_id() {
 # Main function to fetch game version IDs
 fetch_game_version_ids() {
   local minecraft_version="$1"
-  local base_version=$(echo "$minecraft_version" | grep -oE '^[0-9]+\.[0-9]+')
 
   # Fetch the base version ID
-  local base_version_id=$(fetch_base_version_id "$base_version")
+  local base_version_id=$(fetch_base_version_id "$minecraft_version")
 
   # Cache the game versions JSON data
   local game_versions_cache="/tmp/game_versions.json"
