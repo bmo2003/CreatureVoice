@@ -1,6 +1,6 @@
 # CreatureChat
 
-## Chat with any mob in Minecraft! All creatures can talk using AI!
+## Chat with any mob in Minecraft! All creatures can talk & react using AI!
 
 ### Features
 - **AI-Driven Chats:** Using ChatGPT or open-source AI models, each conversation is unique and engaging!
@@ -17,50 +17,76 @@
 ### Installation Instructions
 <details>
   <summary>Fabric (Recommended)</summary>
-
-## Fabric Instructions
-1. **Install Fabric Loader & API**: Follow the instructions [here](https://fabricmc.net/use/).
-1. **Install CreatureChat Mod**: Download and copy `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods` folder.
-1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the **+ Create new secret key** button.
-   Copy/Paste your key into the `/creaturechat key set <YOUR-SECRET-KEY-HERE>` command.
-1. **Launch Minecraft** with the Fabric profile
+  <h3>Fabric Instructions</h3>
+  <ol>
+    <li><strong>Install Fabric Loader & API:</strong> Follow the instructions <a href="https://fabricmc.net/use/">here</a>.</li>
+    <li><strong>Install CreatureChat Mod:</strong> Download and copy <code>creaturechat-*.jar</code> and <code>fabric-api-*.jar</code> into your <code>.minecraft/mods</code> folder.</li>
+    <li><strong>Create an OpenAI API key:</strong> Visit <a href="https://platform.openai.com/api-keys">https://platform.openai.com/api-keys</a>, and use the <strong>+ Create new secret key</strong> button.
+      Copy/Paste your key into the <code>/creaturechat key set &lt;YOUR-SECRET-KEY-HERE&gt;</code> command.</li>
+    <li><strong>Launch Minecraft</strong> with the Fabric profile.</li>
+  </ol>
 </details>
 <details>
   <summary>Forge (with Sinytra Connector)</summary>
-
-## Forge Instructions
-### NOTE: Sintra Connector only supports Minecraft 1.20.1
-
-1. **Install Forge:** Download [Forge Installer](https://files.minecraftforge.net/), run it, select "Install client".
-1. **Install Forgified Fabric API:** Download [Forgified Fabric API](https://curseforge.com/minecraft/mc-mods/forgified-fabric-api) and copy the `*.jar` into your `.minecraft/mods` folder.
-1. **Install Sinytra Connector:** Download [Sinytra Connector](https://www.curseforge.com/minecraft/mc-mods/sinytra-connector) and copy the `*.jar` into your `.minecraft/mods` folder.
-1. **Install CreatureChat Mod**: Download and copy `creaturechat-*.jar` into your `.minecraft/mods` folder.
-1. **Create an OpenAI API key**: Visit https://platform.openai.com/api-keys, and use the **+ Create new secret key** button.
-   Copy/Paste your key into the `/creaturechat key set <YOUR-SECRET-KEY-HERE>` command.
-1. **Launch Minecraft** with the Forge profile
+  <h3>Forge Instructions</h3>
+  <h4>NOTE: Sintra Connector only supports Minecraft 1.20.1</h4>
+  <ol>
+    <li><strong>Install Forge:</strong> Download <a href="https://files.minecraftforge.net/">Forge Installer</a>, run it, select "Install client".</li>
+    <li><strong>Install Forgified Fabric API:</strong> Download <a href="https://curseforge.com/minecraft/mc-mods/forgified-fabric-api">Forgified Fabric API</a> and copy the <code>*.jar</code> into your <code>.minecraft/mods</code> folder.</li>
+    <li><strong>Install Sinytra Connector:</strong> Download <a href="https://www.curseforge.com/minecraft/mc-mods/sinytra-connector">Sinytra Connector</a> and copy the <code>*.jar</code> into your <code>.minecraft/mods</code> folder.</li>
+    <li><strong>Install CreatureChat Mod:</strong> Download and copy <code>creaturechat-*.jar</code> into your <code>.minecraft/mods</code> folder.</li>
+    <li><strong>Create an OpenAI API key:</strong> Visit <a href="https://platform.openai.com/api-keys">https://platform.openai.com/api-keys</a>, and use the <strong>+ Create new secret key</strong> button.
+      Copy/Paste your key into the <code>/creaturechat key set &lt;YOUR-SECRET-KEY-HERE&gt;</code> command.</li>
+    <li><strong>Launch Minecraft</strong> with the Forge profile.</li>
+  </ol>
 </details>
 
 ### In-game Commands
 <details>
   <summary>Configure CreatureChat</summary>
+  <ul>
+    <li><strong>REQUIRED:</strong> <code>/creaturechat key set &lt;key&gt;</code>
+      <ul>
+        <li>Sets the <em>OpenAI API key</em>. This is required for making requests to the LLM.</li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat url set "&lt;url&gt;"</code>
+      <ul>
+        <li>Sets the URL of the API used to make LLM requests. Defaults to <code>"https://api.openai.com/v1/chat/completions"</code></li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat model set &lt;model&gt;</code>
+      <ul>
+        <li>Sets the model used for generating responses in chats. Defaults to <code>gpt-3.5-turbo</code>.</li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat timeout set &lt;seconds&gt;</code>
+      <ul>
+        <li>Sets the timeout (in seconds) for API HTTP requests. Defaults to <code>10</code> seconds.</li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat whitelist &lt;entityType | all | clear&gt;</code> - Show chat bubbles
+      <ul>
+        <li>Shows chat bubbles for the specified entity type or all entities, or clears the whitelist.</li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat blacklist &lt;entityType | all | clear&gt;</code> - Hide chat bubbles
+      <ul>
+        <li>Hides chat bubbles for the specified entity type or all entities, or clears the blacklist.</li>
+      </ul>
+    </li>
+  </ul>
 
-- **REQUIRED:** `/creaturechat key set <key>`
-  - Sets the _OpenAI API key_. This is required for making requests to the LLM.
-- **OPTIONAL:** `/creaturechat url set "<url>"`
-  - Sets the URL of the API used to make LLM requests. Defaults to `"<https://api.openai.com/v1/chat/completions>"`
-- **OPTIONAL:** `/creaturechat model set <model>`
-  - Sets the model used for generating responses in chats. Defaults to `gpt-3.5-turbo`.
-- **OPTIONAL:** `/creaturechat timeout set <seconds>`
-    - Sets the timeout (in seconds) for API HTTP requests. Defaults to `10` seconds.
-
-  ### Configuration Scope:
-  **OPTIONAL:** You can specify the configuration scope at the end of each command to determine where settings should be applied:
-
-  - **Default** Configuration (`--config default`):
-    Applies the configuration universally, unless overridden by a server-specific configuration.
-  - **Server**-Specific Configuration (`--config server`):
-    Applies the configuration only to the server where the command is executed.
-  - If the `--config` option is not specified, the `default` configuration scope is assumed.
+<h4>Configuration Scope:</h4>
+  <ul>
+    <li><strong>OPTIONAL:</strong> You can specify the configuration scope at the end of each command to determine where settings should be applied:
+      <ul>
+        <li><strong>Default</strong> Configuration (<code>--config default</code>): Applies the configuration universally, unless overridden by a server-specific configuration.</li>
+        <li><strong>Server</strong>-Specific Configuration (<code>--config server</code>): Applies the configuration only to the server where the command is executed.</li>
+        <li>If the <code>--config</code> option is not specified, the <code>default</code> configuration scope is assumed.</li>
+      </ul>
+    </li>
+  </ul>
 </details>
 
 ### Does OpenAI offer a **FREE** model?
