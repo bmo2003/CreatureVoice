@@ -1,6 +1,6 @@
 # CreatureChat
 
-## Chat with any mob in Minecraft! All creatures can talk using AI!
+## Chat with any mob in Minecraft! All creatures can talk & react using AI!
 
 ### Features
 - **AI-Driven Chats:** Using ChatGPT or open-source AI models, each conversation is unique and engaging!
@@ -63,6 +63,16 @@
     <li><strong>OPTIONAL:</strong> <code>/creaturechat timeout set &lt;seconds&gt;</code>
       <ul>
         <li>Sets the timeout (in seconds) for API HTTP requests. Defaults to <code>10</code> seconds.</li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat whitelist &lt;entityType | all | clear&gt;</code> - Show chat bubbles
+      <ul>
+        <li>Shows chat bubbles for the specified entity type or all entities, or clears the whitelist.</li>
+      </ul>
+    </li>
+    <li><strong>OPTIONAL:</strong> <code>/creaturechat blacklist &lt;entityType | all | clear&gt;</code> - Hide chat bubbles
+      <ul>
+        <li>Hides chat bubbles for the specified entity type or all entities, or clears the blacklist.</li>
       </ul>
     </li>
   </ul>
