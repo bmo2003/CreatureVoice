@@ -4,6 +4,11 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Updated README.md to include HTML inside spoiler instructions, and whitelist/blacklist commands
+
 ## [1.0.8] - 2024-07-16
 
 ### Added
