@@ -270,7 +270,7 @@ public class ChatDataManager {
 
                             // Apply behaviors to entity
                             if (behavior.getName().equals("FOLLOW")) {
-                                FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeed);
+                                FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeedMedium);
                                 EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
@@ -287,6 +287,7 @@ public class ChatDataManager {
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
 
                             } else if (behavior.getName().equals("UNFLEE")) {
@@ -298,6 +299,7 @@ public class ChatDataManager {
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
 
                             } else if (behavior.getName().equals("PROTECT")) {
