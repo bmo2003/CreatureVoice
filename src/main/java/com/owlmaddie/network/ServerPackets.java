@@ -295,8 +295,10 @@ public class ServerPackets {
 
     public static void generate_chat(String userLanguage, ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message, boolean is_auto_message) {
         // Set talk to player goal (prevent entity from walking off)
-        TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
-        EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+        if (!is_auto_message) {
+            TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+            EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+        }
 
         // Add new message
         LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());

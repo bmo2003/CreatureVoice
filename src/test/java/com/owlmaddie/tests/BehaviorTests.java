@@ -45,6 +45,10 @@ public class BehaviorTests {
             "Please follow me",
             "Come with me please",
             "Quickly, please come this way");
+    List<String> leadMessages = Arrays.asList(
+            "Take me to a secret forrest",
+            "Where is the strong hold?",
+            "Can you help me find the location of the secret artifact?");
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
@@ -113,6 +117,20 @@ public class BehaviorTests {
     public void followNervous() {
         for (String message : followMessages) {
             testPromptForBehavior(nervousPath, List.of(message), "FOLLOW");
+        }
+    }
+
+    @Test
+    public void leadBrave() {
+        for (String message : leadMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "LEAD");
+        }
+    }
+
+    @Test
+    public void leadNervous() {
+        for (String message : leadMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "LEAD");
         }
     }
 

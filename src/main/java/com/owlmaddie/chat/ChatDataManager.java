@@ -254,81 +254,96 @@ public class ChatDataManager {
                 } else if (output_message != null && systemPrompt == "system-chat") {
                     // Chat Message: Parse message for behaviors
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
+                    MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+
+                    // Determine entity's default speed
+                    // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class
+                    float entitySpeed = SpeedControls.getMaxSpeed(entity);
+                    float entitySpeedMedium = MathHelper.clamp(entitySpeed * 1.15F, 0.5f, 1.15f);
+                    float entitySpeedFast = MathHelper.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
 
                     // Apply behaviors (if any)
-                    MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
-                    for (Behavior behavior : result.getBehaviors()) {
-                        LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
+                    if (!is_auto_message) {
+                        for (Behavior behavior : result.getBehaviors()) {
+                            LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
                                     ", Argument: " + behavior.getArgument() : ""));
 
-                        // Determine entity's default speed
-                        // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class
-                        float entitySpeed = SpeedControls.getMaxSpeed(entity);
-                        float entitySpeedFast = MathHelper.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
-
-                        // Apply behaviors to entity
-                        if (behavior.getName().equals("FOLLOW")) {
-                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeed);
-                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
-                            EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
-
-                        } else if (behavior.getName().equals("UNFOLLOW")) {
-                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
-
-                        } else if (behavior.getName().equals("FLEE")) {
-                            float fleeDistance = 40F;
-                            FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, entitySpeedFast, fleeDistance);
-                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
-                            EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
-
-                        } else if (behavior.getName().equals("UNFLEE")) {
-                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
-
-                        } else if (behavior.getName().equals("ATTACK")) {
-                            AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
-                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
-                            EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
-
-                        } else if (behavior.getName().equals("PROTECT")) {
-                            ProtectPlayerGoal protectGoal = new ProtectPlayerGoal(player, entity, 1.0);
-                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
-                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
-                            EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
-
-                        } else if (behavior.getName().equals("UNPROTECT")) {
-                            EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
-
-                        } else if (behavior.getName().equals("FRIENDSHIP")) {
-                            int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
-                            if (new_friendship > 0) {
-                                // positive friendship (apply friend goal)
-                                ((LivingEntityInterface)entity).setCanTargetPlayers(false);
-                            } else if (new_friendship <= 0) {
-                                // negative friendship (remove friend goal)
-                                ((LivingEntityInterface)entity).setCanTargetPlayers(true);
-                            }
-                            // Does friendship improve?
-                            if (new_friendship > this.friendship) {
-                                // Stop any attack/flee if friendship improves
+                            // Apply behaviors to entity
+                            if (behavior.getName().equals("FOLLOW")) {
+                                FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeed);
+                                EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
 
-                                if (entity instanceof EnderDragonEntity && new_friendship == 3) {
-                                    // Trigger end of game (friendship always wins!)
-                                    EnderDragonEntity dragon = (EnderDragonEntity) entity;
-                                    dragon.getFight().dragonKilled(dragon);
+                            } else if (behavior.getName().equals("UNFOLLOW")) {
+                                EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+
+                            } else if (behavior.getName().equals("FLEE")) {
+                                float fleeDistance = 40F;
+                                FleePlayerGoal fleeGoal = new FleePlayerGoal(player, entity, entitySpeedFast, fleeDistance);
+                                EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
+
+                            } else if (behavior.getName().equals("UNFLEE")) {
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+
+                            } else if (behavior.getName().equals("ATTACK")) {
+                                AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
+                                EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
+
+                            } else if (behavior.getName().equals("PROTECT")) {
+                                ProtectPlayerGoal protectGoal = new ProtectPlayerGoal(player, entity, 1.0);
+                                EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
+
+                            } else if (behavior.getName().equals("UNPROTECT")) {
+                                EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+
+                            } else if (behavior.getName().equals("LEAD")) {
+                                LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
+                                EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
+
+                            } else if (behavior.getName().equals("UNLEAD")) {
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+
+                            } else if (behavior.getName().equals("FRIENDSHIP")) {
+                                int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                                if (new_friendship > 0) {
+                                    // positive friendship (apply friend goal)
+                                    ((LivingEntityInterface) entity).setCanTargetPlayers(false);
+                                } else if (new_friendship <= 0) {
+                                    // negative friendship (remove friend goal)
+                                    ((LivingEntityInterface) entity).setCanTargetPlayers(true);
                                 }
+                                // Does friendship improve?
+                                if (new_friendship > this.friendship) {
+                                    // Stop any attack/flee if friendship improves
+                                    EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                    EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+
+                                    if (entity instanceof EnderDragonEntity && new_friendship == 3) {
+                                        // Trigger end of game (friendship always wins!)
+                                        EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                                        dragon.getFight().dragonKilled(dragon);
+                                    }
+                                }
+                                this.friendship = new_friendship;
                             }
-                            this.friendship = new_friendship;
                         }
                     }
 
