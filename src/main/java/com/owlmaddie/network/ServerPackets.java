@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class ServerPackets {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     public static MinecraftServer serverInstance;
-    private static ChatDataSaverScheduler scheduler = null;
+    public static ChatDataSaverScheduler scheduler = null;
     public static final Identifier PACKET_C2S_GREETING = new Identifier("creaturechat", "packet_c2s_greeting");
     public static final Identifier PACKET_C2S_READ_NEXT = new Identifier("creaturechat", "packet_c2s_read_next");
     public static final Identifier PACKET_C2S_SET_STATUS = new Identifier("creaturechat", "packet_c2s_set_status");
@@ -295,10 +295,8 @@ public class ServerPackets {
 
     public static void generate_chat(String userLanguage, ChatDataManager.EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message, boolean is_auto_message) {
         // Set talk to player goal (prevent entity from walking off)
-        if (!is_auto_message) {
-            TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
-            EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
-        }
+        TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
+        EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
         // Add new message
         LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());

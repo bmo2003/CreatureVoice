@@ -61,14 +61,16 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             foundWaypoint = true;
             LOGGER.info("destination reached");
 
-            // Prepare a message about the interaction
-            String arrivedMessage = "<You have arrived at your destination>";
+            ServerPackets.scheduler.scheduleTask(() -> {
+                // Prepare a message about the interaction
+                String arrivedMessage = "<You have arrived at your destination>";
 
-            ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-            ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString());
-            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                ServerPackets.generate_chat("N/A", chatData, (ServerPlayerEntity) this.targetEntity, this.entity, arrivedMessage, true);
-            }
+                ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
+                ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString());
+                if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                    ServerPackets.generate_chat("N/A", chatData, (ServerPlayerEntity) this.targetEntity, this.entity, arrivedMessage, true);
+                }
+            });
 
             // Stop navigation
             this.entity.getNavigation().stop();
