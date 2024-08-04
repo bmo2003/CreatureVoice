@@ -1,12 +1,16 @@
 package com.owlmaddie.goals;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.controls.LookControls;
 import com.owlmaddie.network.ServerPackets;
-import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +63,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         // Are we there yet?
         if (currentWaypoint >= totalWaypoints && !foundWaypoint) {
             foundWaypoint = true;
-            LOGGER.info("destination reached");
+            LOGGER.info("Tick: You have ARRIVED at your destination");
 
             ServerPackets.scheduler.scheduleTask(() -> {
                 // Prepare a message about the interaction
@@ -80,65 +84,86 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             setNewTarget();
             moveToTarget();
             ticksSinceLastWaypoint = 0;
-        }
-    }
 
-    private void setNewTarget() {
-        boolean targetFound = false;
-
-        if (this.entity instanceof PathAwareEntity) {
-            int attempts = 0;
-            while (attempts < 3 && !targetFound) {
-                Vec3d target = FuzzyTargeting.findFrom((PathAwareEntity) this.entity, 16, 6, this.entity.getPos());
-                if (target != null) {
-                    currentWaypoint++;
-                    this.currentTarget = target;
-                    LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
-                    targetFound = true;
-                }
-                attempts++;
-            }
-        }
-
-        if (!targetFound) {
-            // Fallback if no target found after 3 attempts
-            currentWaypoint++;
-            LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
-
-            double distance = 20 + random.nextDouble() * 80;
-            double angle = random.nextDouble() * 2 * Math.PI;
-            double x = this.targetEntity.getX() + distance * Math.cos(angle);
-            double y = this.targetEntity.getY() + (random.nextDouble() * 10 - 5); // Similar y-coordinate depth
-            double z = this.targetEntity.getZ() + distance * Math.sin(angle);
-            this.currentTarget = new Vec3d(x, y, z);
+        } else if (!(this.entity instanceof PathAwareEntity)) {
+            moveToTarget();
         }
     }
 
     private void moveToTarget() {
         if (this.currentTarget != null) {
-            if (this.entity instanceof PathAwareEntity) {
-                int attempts = 0;
+            // Make the entity look at the player without moving towards them
+            LookControls.lookAtPosition(this.currentTarget, this.entity);
 
-                while (attempts < 3) {
-                    Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
-                    if (path != null) {
-                        this.entity.getNavigation().startMovingAlong(path, this.speed);
-                        return;
-                    }
-                     attempts++;
-                }
+            Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 2);
+            if (path != null) {
+                LOGGER.info("Start moving towards waypoint PATH");
+                this.entity.getNavigation().startMovingAlong(path, this.speed);
+
             } else {
-                // Move directly towards the target for non-path aware entities
+                // Move towards the target for non-path aware entities
                 Vec3d entityPos = this.entity.getPos();
                 Vec3d moveDirection = this.currentTarget.subtract(entityPos).normalize();
-                this.entity.setVelocity(moveDirection.x * this.speed, this.entity.getVelocity().y, moveDirection.z * this.speed);
+
+                // Calculate current speed from the entity's current velocity
+                double currentSpeed = this.entity.getVelocity().horizontalLength();
+
+                // Gradually adjust speed towards the target speed
+                currentSpeed = MathHelper.stepTowards((float)currentSpeed, (float)this.speed, (float) (0.005 * (this.speed / Math.max(currentSpeed, 0.1))));
+
+                // Apply movement with the adjusted speed towards the target
+                Vec3d newVelocity = new Vec3d(moveDirection.x * currentSpeed, this.entity.getVelocity().y, moveDirection.z * currentSpeed);
+
+                this.entity.setVelocity(newVelocity);
                 this.entity.velocityModified = true;
             }
         }
     }
 
-    @Override
-    public void start() {
-        moveToTarget();
+    private void setNewTarget() {
+        // Increment waypoint
+        currentWaypoint++;
+        LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
+        this.currentTarget = findNextWaypoint();
+        emitParticleAt(this.currentTarget, ParticleTypes.FLAME);
+    }
+
+    private Vec3d findNextWaypoint() {
+        LOGGER.info("Create waypoint position");
+
+        Vec3d entityPos = this.entity.getPos();
+        Vec3d currentDirection;
+
+        // Check if currentTarget is null
+        if (this.currentTarget == null) {
+            // If currentTarget is null, use the entity's facing direction
+            double yaw = this.entity.getYaw() * (Math.PI / 180); // Convert to radians
+            currentDirection = new Vec3d(Math.cos(yaw), 0, Math.sin(yaw));
+        } else {
+            // Calculate the current direction vector
+            currentDirection = this.currentTarget.subtract(entityPos).normalize();
+        }
+
+        // Calculate the angle of the current direction
+        double currentAngle = Math.atan2(currentDirection.z, currentDirection.x);
+
+        // Generate a random angle within ±45 degrees of the current direction
+        double randomAngleOffset = (random.nextDouble() * (Math.PI / 4)) - (Math.PI / 8); // ±45 degrees
+        double angle = currentAngle + randomAngleOffset;
+
+        // Calculate the random distance
+        double distance = 16 + random.nextDouble() * 2;
+
+        // Calculate new coordinates based on the limited angle
+        double x = entityPos.x + distance * Math.cos(angle);
+        double y = entityPos.y + (random.nextDouble() * 10 - 5); // Similar y-coordinate depth
+        double z = entityPos.z + distance * Math.sin(angle);
+
+        return new Vec3d(x, y, z);
+    }
+
+    private void emitParticleAt(Vec3d position, ParticleEffect particleType) {
+        ServerWorld serverWorld = (ServerWorld) this.entity.getWorld();
+        serverWorld.spawnParticles(particleType, position.x, position.y, position.z, 3, 0, 0, 0, 0);
     }
 }

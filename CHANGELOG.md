@@ -10,8 +10,10 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New LEAD behavior, to guide a player to a random location (and show message when destination is reached)
 
 ### Changed
-- Updated README.md to include HTML inside spoiler instructions, and whitelist/blacklist commands
+- Updated LookControls to support PhantomEntity and made it more generalized (look in any direction)
+- Updated FLEE behavior Y movement speed
 - Updated unit tests to add new LEAD tests
+- Updated README.md to include HTML inside spoiler instructions, and whitelist/blacklist commands
 
 ## [1.0.8] - 2024-07-16
 

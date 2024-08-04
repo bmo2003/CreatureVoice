@@ -64,7 +64,7 @@ public class FleePlayerGoal extends PlayerBaseGoal {
             Vec3d fleeDirection = entityPos.subtract(playerPos).normalize();
 
             // Apply movement with the entity's speed in the opposite direction
-            this.entity.setVelocity(fleeDirection.x * this.speed, this.entity.getVelocity().y, fleeDirection.z * this.speed);
+            this.entity.setVelocity(fleeDirection.x * this.speed, fleeDirection.y * this.speed, fleeDirection.z * this.speed);
             this.entity.velocityModified = true;
         }
     }
