@@ -315,6 +315,7 @@ public class ServerPackets {
                     LOGGER.debug("Setting entity name to " + characterName + " for " + chatData.entityId);
                     entity.setCustomName(Text.literal(characterName));
                     entity.setCustomNameVisible(true);
+                    entity.setPersistent();
                 }
 
                 PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());

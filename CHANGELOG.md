@@ -15,6 +15,9 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Updated unit tests to add new LEAD tests
 - Updated README.md to include HTML inside spoiler instructions, and whitelist/blacklist commands
 
+### Fixed
+- Entity persistence is now fixed (after creating a character sheet). No more despawning mobs.
+
 ## [1.0.8] - 2024-07-16
 
 ### Added
