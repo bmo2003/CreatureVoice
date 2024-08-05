@@ -52,15 +52,21 @@ public class RandomTargetFinder {
     }
 
     private static Vec3d getConstrainedDirection(Vec3d initialDirection, double maxAngleOffset) {
-        double currentAngle = Math.atan2(initialDirection.z, initialDirection.x);
+        double randomYawAngleOffset = (random.nextDouble() * Math.toRadians(maxAngleOffset)) - Math.toRadians(maxAngleOffset / 2);
+        double randomPitchAngleOffset = (random.nextDouble() * Math.toRadians(maxAngleOffset)) - Math.toRadians(maxAngleOffset / 2);
 
-        double randomHorizontalAngleOffset = (random.nextDouble() * Math.toRadians(maxAngleOffset)) - Math.toRadians(maxAngleOffset / 2);
-        double constrainedAngle = currentAngle + randomHorizontalAngleOffset;
+        // Apply the yaw rotation (around the Y axis)
+        double cosYaw = Math.cos(randomYawAngleOffset);
+        double sinYaw = Math.sin(randomYawAngleOffset);
+        double xYaw = initialDirection.x * cosYaw - initialDirection.z * sinYaw;
+        double zYaw = initialDirection.x * sinYaw + initialDirection.z * cosYaw;
 
-        double x = Math.cos(constrainedAngle);
-        double z = Math.sin(constrainedAngle);
-
-        return new Vec3d(x, initialDirection.y, z).normalize();
+        // Apply the pitch rotation (around the X axis)
+        double cosPitch = Math.cos(randomPitchAngleOffset);
+        double sinPitch = Math.sin(randomPitchAngleOffset);
+        double yPitch = initialDirection.y * cosPitch - zYaw * sinPitch;
+        double zPitch = zYaw * cosPitch + initialDirection.y * sinPitch;
+        return new Vec3d(xYaw, yPitch, zPitch).normalize();
     }
 
     private static Vec3d getTargetInDirection(MobEntity entity, Vec3d direction, double minDistance, double maxDistance) {

@@ -111,7 +111,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                 currentSpeed = MathHelper.stepTowards((float)currentSpeed, (float)this.speed, (float) (0.005 * (this.speed / Math.max(currentSpeed, 0.1))));
 
                 // Apply movement with the adjusted speed towards the target
-                Vec3d newVelocity = new Vec3d(moveDirection.x * currentSpeed, this.entity.getVelocity().y, moveDirection.z * currentSpeed);
+                Vec3d newVelocity = new Vec3d(moveDirection.x * currentSpeed, moveDirection.y * currentSpeed, moveDirection.z * currentSpeed);
 
                 this.entity.setVelocity(newVelocity);
                 this.entity.velocityModified = true;
@@ -123,7 +123,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         // Increment waypoint
         currentWaypoint++;
         LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
-        this.currentTarget = RandomTargetFinder.findRandomTarget(this.entity, 0, 24, 36);
+        this.currentTarget = RandomTargetFinder.findRandomTarget(this.entity, 30, 24, 36);
         if (this.currentTarget != null) {
             emitParticleAt(this.currentTarget, ParticleTypes.FLAME);
             emitParticlesAlongRaycast(this.entity.getPos(), this.currentTarget, ParticleTypes.CLOUD, 0.5);
