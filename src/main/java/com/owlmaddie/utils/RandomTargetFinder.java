@@ -24,10 +24,10 @@ public class RandomTargetFinder {
             Vec3d target = getTargetInDirection(entity, constrainedDirection, minDistance, maxDistance);
 
             if (entity instanceof PathAwareEntity) {
-                Vec3d validTarget = FuzzyTargeting.findFrom((PathAwareEntity) entity, (int) maxDistance, (int) maxDistance / 2, target);
+                Vec3d validTarget = FuzzyTargeting.findTo((PathAwareEntity) entity, (int) maxDistance, (int) maxDistance, target);
 
                 if (validTarget != null && isWithinDistance(entityPos, validTarget, minDistance, maxDistance)) {
-                    Path path = entity.getNavigation().findPathTo(validTarget.x, validTarget.y, validTarget.z, 1);
+                    Path path = entity.getNavigation().findPathTo(validTarget.x, validTarget.y, validTarget.z, 4);
                     if (path != null) {
                         return validTarget;
                     }

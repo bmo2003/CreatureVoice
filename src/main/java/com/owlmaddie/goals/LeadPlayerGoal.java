@@ -97,7 +97,6 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
 
             Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
             if (path != null) {
-                LOGGER.info("Start moving towards waypoint PATH");
                 this.entity.getNavigation().startMovingAlong(path, this.speed);
 
             } else {
