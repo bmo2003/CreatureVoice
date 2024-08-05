@@ -3,9 +3,9 @@ package com.owlmaddie.goals;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.controls.LookControls;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.utils.RandomTargetFinder;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -38,7 +38,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         this.entity = entity;
         this.speed = speed;
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
-        this.totalWaypoints = random.nextInt(51) + 10;
+        this.totalWaypoints = random.nextInt(14) + 6;
     }
 
     @Override
@@ -79,13 +79,13 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             // Stop navigation
             this.entity.getNavigation().stop();
 
-        } else if (this.currentTarget == null || this.entity.squaredDistanceTo(this.currentTarget) < 2 * 2 || ticksSinceLastWaypoint >= 75) {
+        } else if (this.currentTarget == null || this.entity.squaredDistanceTo(this.currentTarget) < 2 * 2 || ticksSinceLastWaypoint >= 20 * 10) {
             // Set next waypoint
             setNewTarget();
             moveToTarget();
             ticksSinceLastWaypoint = 0;
 
-        } else if (!(this.entity instanceof PathAwareEntity)) {
+        } else {
             moveToTarget();
         }
     }
@@ -95,7 +95,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             // Make the entity look at the player without moving towards them
             LookControls.lookAtPosition(this.currentTarget, this.entity);
 
-            Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 2);
+            Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
             if (path != null) {
                 LOGGER.info("Start moving towards waypoint PATH");
                 this.entity.getNavigation().startMovingAlong(path, this.speed);
@@ -124,46 +124,26 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         // Increment waypoint
         currentWaypoint++;
         LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
-        this.currentTarget = findNextWaypoint();
-        emitParticleAt(this.currentTarget, ParticleTypes.FLAME);
-    }
-
-    private Vec3d findNextWaypoint() {
-        LOGGER.info("Create waypoint position");
-
-        Vec3d entityPos = this.entity.getPos();
-        Vec3d currentDirection;
-
-        // Check if currentTarget is null
-        if (this.currentTarget == null) {
-            // If currentTarget is null, use the entity's facing direction
-            double yaw = this.entity.getYaw() * (Math.PI / 180); // Convert to radians
-            currentDirection = new Vec3d(Math.cos(yaw), 0, Math.sin(yaw));
-        } else {
-            // Calculate the current direction vector
-            currentDirection = this.currentTarget.subtract(entityPos).normalize();
+        this.currentTarget = RandomTargetFinder.findRandomTarget(this.entity, 0, 24, 36);
+        if (this.currentTarget != null) {
+            emitParticleAt(this.currentTarget, ParticleTypes.FLAME);
+            emitParticlesAlongRaycast(this.entity.getPos(), this.currentTarget, ParticleTypes.CLOUD, 0.5);
         }
-
-        // Calculate the angle of the current direction
-        double currentAngle = Math.atan2(currentDirection.z, currentDirection.x);
-
-        // Generate a random angle within ±45 degrees of the current direction
-        double randomAngleOffset = (random.nextDouble() * (Math.PI / 4)) - (Math.PI / 8); // ±45 degrees
-        double angle = currentAngle + randomAngleOffset;
-
-        // Calculate the random distance
-        double distance = 16 + random.nextDouble() * 2;
-
-        // Calculate new coordinates based on the limited angle
-        double x = entityPos.x + distance * Math.cos(angle);
-        double y = entityPos.y + (random.nextDouble() * 10 - 5); // Similar y-coordinate depth
-        double z = entityPos.z + distance * Math.sin(angle);
-
-        return new Vec3d(x, y, z);
     }
 
     private void emitParticleAt(Vec3d position, ParticleEffect particleType) {
-        ServerWorld serverWorld = (ServerWorld) this.entity.getWorld();
-        serverWorld.spawnParticles(particleType, position.x, position.y, position.z, 3, 0, 0, 0, 0);
+        if (this.entity.getWorld() instanceof ServerWorld) {
+            ServerWorld serverWorld = (ServerWorld) this.entity.getWorld();
+            serverWorld.spawnParticles(particleType, position.x, position.y, position.z, 5, 0, 0, 0, 0);
+        }
+    }
+
+    private void emitParticlesAlongRaycast(Vec3d start, Vec3d end, ParticleEffect particleType, double step) {
+        Vec3d direction = end.subtract(start).normalize();
+        double distance = start.distanceTo(end);
+        for (double d = 0; d <= distance; d += step) {
+            Vec3d pos = start.add(direction.multiply(d));
+            emitParticleAt(pos, particleType);
+        }
     }
 }
