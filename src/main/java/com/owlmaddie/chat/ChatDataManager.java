@@ -375,6 +375,7 @@ public class ChatDataManager {
                                     tamableEntity.setOwner(player);
                                 } else if (new_friendship == -3 && tamableEntity.isTamed()) {
                                     tamableEntity.setTamed(false);
+                                    tamableEntity.setOwnerUuid(null);
                                 }
                             }
 
