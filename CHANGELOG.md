@@ -8,8 +8,10 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Added
 - New LEAD behavior, to guide a player to a random location (and show message when destination is reached)
+- Best friends are now rideable! Right click with an empty hand.
 
 ### Changed
+- Large refactor of how MobEntity avoids targeting players when friendship > 0
 - Updated LookControls to support PhantomEntity and made it more generalized (look in any direction)
 - Updated FLEE behavior Y movement speed
 - Updated unit tests to add new LEAD tests

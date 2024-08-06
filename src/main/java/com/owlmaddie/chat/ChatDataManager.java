@@ -11,7 +11,6 @@ import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
-import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
@@ -324,13 +323,7 @@ public class ChatDataManager {
 
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
-                            if (new_friendship > 0) {
-                                // positive friendship (apply friend goal)
-                                ((LivingEntityInterface) entity).setCanTargetPlayers(false);
-                            } else if (new_friendship <= 0) {
-                                // negative friendship (remove friend goal)
-                                ((LivingEntityInterface) entity).setCanTargetPlayers(true);
-                            }
+
                             // Does friendship improve?
                             if (new_friendship > this.friendship) {
                                 // Stop any attack/flee if friendship improves

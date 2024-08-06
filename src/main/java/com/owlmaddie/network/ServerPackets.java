@@ -7,7 +7,6 @@ import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
 import com.owlmaddie.utils.Compression;
-import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
 import io.netty.buffer.Unpooled;
@@ -215,17 +214,6 @@ public class ServerPackets {
 
                 // Shutdown auto scheduler
                 scheduler.stopAutoSaveTask();
-            }
-        });
-
-        ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {
-            String entityUUID = entity.getUuidAsString();
-            if (ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
-                int friendship = ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).friendship;
-                if (friendship > 0) {
-                    LOGGER.info("Entity loaded (" + entityUUID + "), setting friendship to " + friendship);
-                    ((LivingEntityInterface)entity).setCanTargetPlayers(false);
-                }
             }
         });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {

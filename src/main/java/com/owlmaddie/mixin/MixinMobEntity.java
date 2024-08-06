@@ -48,26 +48,38 @@ public class MixinMobEntity {
             return;
         }
 
+        // Get chat data for entity
+        ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
+        ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+
         // Check if the player successfully interacts with an item
-        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity) {
-            ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
-            String itemName = itemStack.getItem().getName().getString();
-            int itemCount = itemStack.getCount();
+        if (player instanceof ServerPlayerEntity) {
+            // Player has item in hand
+            if (!itemStack.isEmpty()) {
+                ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+                String itemName = itemStack.getItem().getName().getString();
+                int itemCount = itemStack.getCount();
 
-            // Decide verb
-            String action_verb = " shows ";
-            if (cir.getReturnValue().isAccepted()) {
-                action_verb = " gives ";
-            }
+                // Decide verb
+                String action_verb = " shows ";
+                if (cir.getReturnValue().isAccepted()) {
+                    action_verb = " gives ";
+                }
 
-            // Prepare a message about the interaction
-            String giveItemMessage = "<" + serverPlayer.getName().getString() +
-                    action_verb + "you " + itemCount + " " + itemName + ">";
+                // Prepare a message about the interaction
+                String giveItemMessage = "<" + serverPlayer.getName().getString() +
+                        action_verb + "you " + itemCount + " " + itemName + ">";
 
-            ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-            ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
-            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                ServerPackets.generate_chat("N/A", chatData, serverPlayer, thisEntity, giveItemMessage, true);
+                if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                    ServerPackets.generate_chat("N/A", chatData, serverPlayer, thisEntity, giveItemMessage, true);
+                }
+
+            } else if (itemStack.isEmpty()) {
+                // Player's hand is empty
+                if (chatData.friendship == 3) {
+                    // Ride your best friend!
+                    player.startRiding(thisEntity, true);
+                }
             }
         }
     }
