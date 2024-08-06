@@ -6,6 +6,7 @@ import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.RandomTargetFinder;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -95,10 +96,14 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             // Make the entity look at the player without moving towards them
             LookControls.lookAtPosition(this.currentTarget, this.entity);
 
-            Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
-            if (path != null) {
-                this.entity.getNavigation().startMovingAlong(path, this.speed);
-
+            if (this.entity instanceof PathAwareEntity) {
+                 if (!this.entity.getNavigation().isFollowingPath()) {
+                     Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
+                     if (path != null) {
+                         LOGGER.info("Start moving along path");
+                         this.entity.getNavigation().startMovingAlong(path, this.speed);
+                     }
+                 }
             } else {
                 // Move towards the target for non-path aware entities
                 Vec3d entityPos = this.entity.getPos();
@@ -108,7 +113,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                 double currentSpeed = this.entity.getVelocity().horizontalLength();
 
                 // Gradually adjust speed towards the target speed
-                currentSpeed = MathHelper.stepTowards((float)currentSpeed, (float)this.speed, (float) (0.005 * (this.speed / Math.max(currentSpeed, 0.1))));
+                currentSpeed = MathHelper.stepTowards((float) currentSpeed, (float) this.speed, (float) (0.005 * (this.speed / Math.max(currentSpeed, 0.1))));
 
                 // Apply movement with the adjusted speed towards the target
                 Vec3d newVelocity = new Vec3d(moveDirection.x * currentSpeed, moveDirection.y * currentSpeed, moveDirection.z * currentSpeed);
@@ -128,6 +133,9 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             emitParticleAt(this.currentTarget, ParticleTypes.FLAME);
             emitParticlesAlongRaycast(this.entity.getPos(), this.currentTarget, ParticleTypes.CLOUD, 0.5);
         }
+
+        // Stop following current path (if any)
+        this.entity.getNavigation().stop();
     }
 
     private void emitParticleAt(Vec3d position, ParticleEffect particleType) {
