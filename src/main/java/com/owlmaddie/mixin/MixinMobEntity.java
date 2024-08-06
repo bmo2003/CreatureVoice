@@ -3,6 +3,7 @@ package com.owlmaddie.mixin;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -27,8 +28,8 @@ public class MixinMobEntity {
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
 
-        // Don't interact with Villagers (avoid issues with trade system)
-        if (thisEntity instanceof VillagerEntity) {
+        // Don't interact with Villagers (avoid issues with trade UI) OR Tameable (i.e. sit / no-sit)
+        if (thisEntity instanceof VillagerEntity || thisEntity instanceof TameableEntity) {
             return;
         }
 
@@ -75,12 +76,9 @@ public class MixinMobEntity {
                     ServerPackets.generate_chat("N/A", chatData, serverPlayer, thisEntity, giveItemMessage, true);
                 }
 
-            } else if (itemStack.isEmpty()) {
-                // Player's hand is empty
-                if (chatData.friendship == 3) {
-                    // Ride your best friend!
-                    player.startRiding(thisEntity, true);
-                }
+            } else if (itemStack.isEmpty() && chatData.friendship == 3) {
+                // Player's hand is empty, Ride your best friend!
+                player.startRiding(thisEntity, true);
             }
         }
     }
