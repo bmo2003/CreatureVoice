@@ -19,7 +19,7 @@ public class ProtectPlayerGoal extends AttackPlayerGoal {
 
     @Override
     public boolean canStart() {
-        MobEntity lastAttackedByEntity = (MobEntity)this.protectedEntity.getLastAttacker();
+        LivingEntity lastAttackedByEntity = this.protectedEntity.getLastAttacker();
         int i = this.protectedEntity.getLastAttackedTime();
         if (i != this.lastAttackedTime && lastAttackedByEntity != null && !this.attackerEntity.equals(lastAttackedByEntity)) {
             // Set target to attack
