@@ -13,14 +13,17 @@ import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
+import com.owlmaddie.utils.VillagerEntityAccessor;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Rarity;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.village.VillageGossipType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -336,6 +339,34 @@ public class ChatDataManager {
                                     dragon.getFight().dragonKilled(dragon);
                                 }
                             }
+
+                            // Merchant deals (if friendship changes with a Villager
+                            if (entity instanceof VillagerEntity && this.friendship != new_friendship) {
+                                VillagerEntityAccessor villager = (VillagerEntityAccessor) entity;
+                                switch (new_friendship) {
+                                    case 3:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_POSITIVE, 20);
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
+                                        break;
+                                    case 2:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
+                                        break;
+                                    case 1:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 10);
+                                        break;
+                                    case -1:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 10);
+                                        break;
+                                    case -2:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
+                                        break;
+                                    case -3:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_NEGATIVE, 20);
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
+                                        break;
+                                }
+                            }
+
                             this.friendship = new_friendship;
                         }
                     }

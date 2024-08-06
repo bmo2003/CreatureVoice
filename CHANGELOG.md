@@ -9,6 +9,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - New LEAD behavior, to guide a player to a random location (and show message when destination is reached)
 - Best friends are now rideable! Right click with an empty hand.
+- Villager trades are now affected by friendship! Be nice!
 
 ### Changed
 - Large refactor of how MobEntity avoids targeting players when friendship > 0
