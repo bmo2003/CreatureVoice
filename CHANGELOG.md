@@ -22,6 +22,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Fixed
 - Entity persistence is now fixed (after creating a character sheet). No more despawning mobs.
 - Fixed crash when PROTECT behavior targets another player
+- Fixed error when saving chat data while generating a new chat message
 
 ## [1.0.8] - 2024-07-16
 

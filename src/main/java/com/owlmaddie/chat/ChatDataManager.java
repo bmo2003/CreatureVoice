@@ -32,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class ChatDataManager {
     }
 
     // HashMap to associate unique entity IDs with their chat data
-    public HashMap<String, EntityChatData> entityChatDataMap;
+    public ConcurrentHashMap<String, EntityChatData> entityChatDataMap;
 
     public static class ChatMessage {
         public String message;
@@ -484,7 +485,7 @@ public class ChatDataManager {
 
     private ChatDataManager(Boolean server_only) {
         // Constructor
-        entityChatDataMap = new HashMap<>();
+        entityChatDataMap = new ConcurrentHashMap<>();
 
         if (server_only) {
             // Generate initial quest
@@ -596,15 +597,15 @@ public class ChatDataManager {
 
         if (loadFile.exists()) {
             try (InputStreamReader reader = new InputStreamReader(new FileInputStream(loadFile), StandardCharsets.UTF_8)) {
-                Type type = new TypeToken<HashMap<String, EntityChatData>>(){}.getType();
+                Type type = new TypeToken<ConcurrentHashMap<String, EntityChatData>>(){}.getType();
                 this.entityChatDataMap = GSON.fromJson(reader, type);
             } catch (Exception e) {
                 LOGGER.error("Error loading chat data", e);
-                this.entityChatDataMap = new HashMap<>();
+                this.entityChatDataMap = new ConcurrentHashMap<>();
             }
         } else {
             // Init empty chat data
-            this.entityChatDataMap = new HashMap<>();
+            this.entityChatDataMap = new ConcurrentHashMap<>();
         }
     }
 }
