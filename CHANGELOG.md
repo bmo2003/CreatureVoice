@@ -10,6 +10,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New LEAD behavior, to guide a player to a random location (and show message when destination is reached)
 - Best friends are now rideable! Right click with an empty hand. Excludes tameable entities (dogs, cats, etc...)
 - Villager trades are now affected by friendship! Be nice!
+- Automatically tame best friends (who are tameable) and un-tame worst enemies! 
 
 ### Changed
 - Large refactor of how MobEntity avoids targeting players when friendship > 0

@@ -16,6 +16,7 @@ import com.owlmaddie.utils.ServerEntityFinder;
 import com.owlmaddie.utils.VillagerEntityAccessor;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -364,6 +365,16 @@ public class ChatDataManager {
                                         villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_NEGATIVE, 20);
                                         villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
                                         break;
+                                }
+                            }
+
+                            // Tame best friends and un-tame worst enemies
+                            if (entity instanceof TameableEntity && this.friendship != new_friendship) {
+                                TameableEntity tamableEntity = (TameableEntity) entity;
+                                if (new_friendship == 3 && !tamableEntity.isTamed()) {
+                                    tamableEntity.setOwner(player);
+                                } else if (new_friendship == -3 && tamableEntity.isTamed()) {
+                                    tamableEntity.setTamed(false);
                                 }
                             }
 
