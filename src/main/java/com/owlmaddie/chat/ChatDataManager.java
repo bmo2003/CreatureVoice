@@ -317,7 +317,6 @@ public class ChatDataManager {
 
                         } else if (behavior.getName().equals("LEAD")) {
                             LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
-                            EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
