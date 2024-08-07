@@ -93,9 +93,6 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
 
     private void moveToTarget() {
         if (this.currentTarget != null) {
-            // Make the entity look at the player without moving towards them
-            LookControls.lookAtPosition(this.currentTarget, this.entity);
-
             if (this.entity instanceof PathAwareEntity) {
                  if (!this.entity.getNavigation().isFollowingPath()) {
                      Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
@@ -105,6 +102,9 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                      }
                  }
             } else {
+                // Make the entity look at the player without moving towards them
+                LookControls.lookAtPosition(this.currentTarget, this.entity);
+
                 // Move towards the target for non-path aware entities
                 Vec3d entityPos = this.entity.getPos();
                 Vec3d moveDirection = this.currentTarget.subtract(entityPos).normalize();
