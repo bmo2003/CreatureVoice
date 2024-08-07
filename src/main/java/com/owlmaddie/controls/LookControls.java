@@ -12,7 +12,12 @@ import net.minecraft.util.math.Vec3d;
  */
 public class LookControls {
     public static void lookAtPlayer(ServerPlayerEntity player, MobEntity entity) {
-        lookAtPosition(player.getPos(), entity);
+        // Get the player's eye line position
+        Vec3d playerPos = player.getPos();
+        float eyeHeight = player.getEyeHeight(player.getPose());
+        Vec3d eyePos = new Vec3d(playerPos.x, playerPos.y + eyeHeight, playerPos.z);
+
+        lookAtPosition(eyePos, entity);
     }
 
     public static void lookAtPosition(Vec3d targetPos, MobEntity entity) {
