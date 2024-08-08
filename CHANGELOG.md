@@ -4,7 +4,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2024-08-07
 
 ### Added
 - New LEAD behavior, to guide a player to a random location (and show message when destination is reached)
