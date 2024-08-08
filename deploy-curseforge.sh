@@ -6,7 +6,6 @@ CURSEFORGE_API_KEY=${CURSEFORGE_API_KEY}
 CHANGELOG_FILE="./CHANGELOG.md"
 API_URL="https://minecraft.curseforge.com/api"
 PROJECT_ID=1012118
-DEPENDENCY_SLUG="fabric-api"
 USER_AGENT="CreatureChat-Minecraft-Mod:curseforge@owlmaddie.com"
 SLEEP_DURATION=5
 
@@ -57,13 +56,14 @@ fetch_game_version_ids() {
   local client_id=$(echo "$response" | jq -r '.[] | select(.name == "Client") | .id')
   local server_id=$(echo "$response" | jq -r '.[] | select(.name == "Server") | .id')
   local fabric_id=$(echo "$response" | jq -r '.[] | select(.name == "Fabric") | .id')
+  local forge_id=$(echo "$response" | jq -r '.[] | select(.name == "Forge") | .id')
 
-  if [ -z "$client_id" ] || [ -z "$server_id" ] || [ -z "$fabric_id" ]; then
+  if [ -z "$client_id" ] || [ -z "$server_id" ] || ([ -z "$fabric_id" ] && [ -z "$forge_id" ]); then
     echo "ERROR: One or more game version IDs not found."
     exit 1
   fi
 
-  echo "$client_id $server_id $fabric_id $minecraft_id"
+  echo "$client_id $server_id $fabric_id $forge_id $minecraft_id"
 }
 
 # Read the first changelog block
@@ -107,7 +107,19 @@ for FILE in creaturechat*.jar; do
 
     # DEBUG
     echo "Minecraft Type ID: $GAME_TYPE_ID"
-    echo "Minecraft Versions IDs (client_id: ${GAME_VERSION_IDS[0]}, server_id: ${GAME_VERSION_IDS[1]}, fabric_id: ${GAME_VERSION_IDS[2]}, minecraft_id: ${GAME_VERSION_IDS[3]})"
+    echo "Minecraft Versions IDs (client_id: ${GAME_VERSION_IDS[0]}, server_id: ${GAME_VERSION_IDS[1]}, fabric_id: ${GAME_VERSION_IDS[2]}, forge_id: ${GAME_VERSION_IDS[3]}, minecraft_id: ${GAME_VERSION_IDS[4]})"
+
+    # Determine the dependency slugs and loader ID based on the file name
+    if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
+      DEPENDENCY_SLUGS=("sinytra-connector" "forgified-fabric-api")
+      LOADER_ID="${GAME_VERSION_IDS[3]}"
+    else
+      DEPENDENCY_SLUGS=("fabric-api")
+      LOADER_ID="${GAME_VERSION_IDS[2]}"
+    fi
+
+    # Create dependencies array for payload
+    RELATIONS=$(for slug in "${DEPENDENCY_SLUGS[@]}"; do jq -n --arg slug "$slug" '{"slug": $slug, "type": "requiredDependency"}'; done | jq -s .)
 
     # Create a new version payload
     PAYLOAD=$(jq -n --arg changelog "$CHANGELOG" \
@@ -116,7 +128,7 @@ for FILE in creaturechat*.jar; do
       --argjson gameVersions "$(printf '%s\n' "${GAME_VERSION_IDS[@]}" | jq -R . | jq -s .)" \
       --argjson gameVersionTypeIds "[$GAME_TYPE_ID]" \
       --arg releaseType "release" \
-      --argjson relations '[{"slug": "'"$DEPENDENCY_SLUG"'", "type": "requiredDependency"}]' \
+      --argjson relations "$RELATIONS" \
       '{
         "changelog": $changelog,
         "changelogType": $changelogType,

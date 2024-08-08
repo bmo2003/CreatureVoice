@@ -43,6 +43,15 @@ for FILE in creaturechat*.jar; do
       exit 1
     fi
 
+    # Determine the loaders and dependencies based on the file name
+    if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
+      LOADERS='["forge"]'
+      DEPENDENCIES='[{"project_id": "u58R1TMW", "dependency_type": "required"}, {"project_id": "Aqlf1Shp", "dependency_type": "required"}]'
+    else
+      LOADERS='["fabric"]'
+      DEPENDENCIES='[{"project_id": "P7dR8mSH", "dependency_type": "required"}]'
+    fi
+
     # Check if the version already exists
     echo "Checking if version $VERSION_NUMBER already exists on Modrinth..."
     if curl --retry 3 --retry-delay 5 --silent --fail -X GET "$API_URL/project/creaturechat/version/$VERSION_NUMBER" > /dev/null 2>&1; then
@@ -59,9 +68,9 @@ for FILE in creaturechat*.jar; do
     # Create a new version payload
     PAYLOAD=$(jq -n --arg version_number "$VERSION_NUMBER" \
       --arg changelog "$CHANGELOG" \
-      --argjson dependencies '[{"project_id": "P7dR8mSH", "dependency_type": "required"}]' \
+      --argjson dependencies "$DEPENDENCIES" \
       --argjson game_versions '["'"$MINECRAFT_VERSION"'"]' \
-      --argjson loaders '["fabric"]' \
+      --argjson loaders "$LOADERS" \
       --arg project_id "$PROJECT_ID" \
       --arg name "CreatureChat $VERSION_NUMBER" \
       --argjson file_parts '["file"]' \
