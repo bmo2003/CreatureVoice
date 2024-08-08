@@ -52,6 +52,12 @@ build_mod:
         find build/libs -type f -name '*sources*.jar' -exec rm {} \;
         mv build/libs/creaturechat-*.jar .
 
+        if [ "$minecraft_version" == "1.20.1" ]; then
+          cp creaturechat-1.20.1.jar creaturechat-1.20.1-forge.jar
+          touch FORGE
+          zip -r creaturechat-1.20.1-forge.jar FORGE
+        fi
+
         FABRIC_API_JAR="fabric-api-${fabric_version}.jar"
         DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${fabric_version//+/%2B}/${FABRIC_API_JAR}"
         wget -q -O "${FABRIC_API_JAR}" $DOWNLOAD_URL
@@ -91,7 +97,7 @@ gpt-4o:
   tags:
     - minecraft
 
-# Optional test (gpt 4o)
+# Optional test (llama3-8b)
 llama3-8b:
   stage: test
   script:
