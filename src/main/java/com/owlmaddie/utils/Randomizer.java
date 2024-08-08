@@ -9,7 +9,7 @@ import java.util.Random;
  * and phrases used by this mod.
  */
 public class Randomizer {
-    public enum RandomType { NO_RESPONSE, ERROR, ADJECTIVE, FREQUENCY }
+    public enum RandomType { NO_RESPONSE, ERROR, ADJECTIVE, SPEAKING_STYLE, CLASS, ALIGNMENT }
     private static List<String> noResponseMessages = Arrays.asList(
             "<no response>",
             "<silence>",
@@ -79,11 +79,35 @@ public class Randomizer {
             "unpredictable", "wildcard", "stuttering", "hypochondriac", "hypocritical",
             "optimistic", "overconfident", "jumpy", "brief", "flighty", "visionary", "adorable",
             "sparkly", "bubbly", "unstable", "sad", "angry", "bossy", "altruistic", "quirky",
-            "nostalgic", "essentially", "emotional", "enthusiastic", "unusual", "conspirator"
+            "nostalgic", "emotional", "enthusiastic", "unusual", "conspirator"
     );
-    private static List<String> frequencyTerms = Arrays.asList(
-            "always", "frequently", "usually", "often", "sometimes",
-            "occasionally", "rarely", "seldom", "almost never", "never"
+    private static List<String> speakingStyles = Arrays.asList(
+            "formal", "casual", "eloquent", "blunt", "humorous", "sarcastic", "mysterious",
+            "cheerful", "melancholic", "authoritative", "nervous", "whimsical", "grumpy",
+            "wise", "aggressive", "soft-spoken", "patriotic", "romantic", "pedantic", "dramatic",
+            "inquisitive", "cynical", "empathetic", "boisterous", "monotone", "laconic", "poetic",
+            "archaic", "childlike", "erudite", "streetwise", "flirtatious", "stoic", "rhetorical",
+            "inspirational", "goofy", "overly dramatic", "deadpan", "sing-song", "pompous",
+            "hyperactive", "valley girl", "robot", "pirate", "baby talk", "lolcat"
+    );
+    private static List<String> classes = Arrays.asList(
+            "warrior", "mage", "archer", "rogue", "paladin", "necromancer", "bard", "lorekeeper",
+            "sorcerer", "ranger", "cleric", "berserker", "alchemist", "summoner", "shaman",
+            "illusionist", "assassin", "knight", "valkyrie", "hoarder", "organizer", "lurker",
+            "elementalist", "gladiator", "templar", "reaver", "spellblade", "enchanter", "samurai",
+            "runemaster", "witch", "miner", "redstone engineer", "ender knight", "decorator",
+            "wither hunter", "nethermancer", "slime alchemist", "trader", "noob", "griefer",
+            "potion master", "builder", "explorer", "herbalist", "fletcher", "enchantress",
+            "smith", "geomancer", "hunter", "lumberjack", "farmer", "fisherman", "cartographer",
+            "librarian", "blacksmith", "architect", "trapper", "baker", "mineralogist",
+            "beekeeper", "hermit", "farlander", "void searcher", "end explorer", "archeologist",
+            "hero", "villain", "mercenary", "guardian", "rebel", "paragon",
+            "antagonist", "avenger", "seeker", "mystic", "outlaw"
+    );
+    private static List<String> alignments = Arrays.asList(
+            "lawful good", "neutral good", "chaotic good",
+            "lawful neutral", "true neutral", "chaotic neutral",
+            "lawful evil", "neutral evil", "chaotic evil"
     );
 
     // Get random no response message
@@ -96,8 +120,12 @@ public class Randomizer {
             messages = noResponseMessages;
         } else if (messageType.equals(RandomType.ADJECTIVE)) {
             messages = characterAdjectives;
-        } else if (messageType.equals(RandomType.FREQUENCY)) {
-            messages = frequencyTerms;
+        } else if (messageType.equals(RandomType.CLASS)) {
+            messages = classes;
+        } else if (messageType.equals(RandomType.ALIGNMENT)) {
+            messages = alignments;
+        } else if (messageType.equals(RandomType.SPEAKING_STYLE)) {
+            messages = speakingStyles;
         }
 
         int index = random.nextInt(messages.size());

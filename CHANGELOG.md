@@ -13,6 +13,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Automatically tame best friends (who are tameable) and un-tame worst enemies! 
 
 ### Changed
+- Improved character creation with more random classes, speaking styles, and alignments.
 - Large refactor of how MobEntity avoids targeting players when friendship > 0
 - Updated LookControls to support PhantomEntity and made it more generalized (look in any direction)
 - Updated FLEE behavior Y movement speed
