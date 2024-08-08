@@ -34,7 +34,7 @@ for FILE in creaturechat*.jar; do
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
-    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\(.*\)\.jar/\1/p')
+    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION+$MINECRAFT_VERSION"
 
     # Verify that OUR_VERSION and MINECRAFT_VERSION are not empty and OUR_VERSION matches VERSION
@@ -51,14 +51,6 @@ for FILE in creaturechat*.jar; do
       LOADERS='["fabric"]'
       DEPENDENCIES='[{"project_id": "P7dR8mSH", "dependency_type": "required"}]'
     fi
-
-    # Check if the version already exists
-    echo "Checking if version $VERSION_NUMBER already exists on Modrinth..."
-    if curl --retry 3 --retry-delay 5 --silent --fail -X GET "$API_URL/project/creaturechat/version/$VERSION_NUMBER" > /dev/null 2>&1; then
-      echo "Version $VERSION_NUMBER already exists, skipping."
-      continue
-    fi
-    echo "Version $VERSION_NUMBER does not exist. Preparing to upload..."
 
     # Calculate file hashes
     SHA512_HASH=$(sha512sum "$FILE" | awk '{ print $1 }')
