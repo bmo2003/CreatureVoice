@@ -34,6 +34,8 @@ public class SpeedControls {
             speed = 2F;
         } else if (entity instanceof RabbitEntity) {
             speed = 1.5F;
+        } else if (entity instanceof PhantomEntity) {
+            speed = 0.2F;
         }
 
         return speed;

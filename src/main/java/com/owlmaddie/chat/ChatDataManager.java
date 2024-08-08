@@ -11,17 +11,20 @@ import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
-import com.owlmaddie.utils.LivingEntityInterface;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
+import com.owlmaddie.utils.VillagerEntityAccessor;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Rarity;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.village.VillageGossipType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,7 +67,7 @@ public class ChatDataManager {
     }
 
     // HashMap to associate unique entity IDs with their chat data
-    public HashMap<String, EntityChatData> entityChatDataMap;
+    public ConcurrentHashMap<String, EntityChatData> entityChatDataMap;
 
     public static class ChatMessage {
         public String message;
@@ -254,24 +258,26 @@ public class ChatDataManager {
                 } else if (output_message != null && systemPrompt == "system-chat") {
                     // Chat Message: Parse message for behaviors
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
+                    MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+
+                    // Determine entity's default speed
+                    // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class
+                    float entitySpeed = SpeedControls.getMaxSpeed(entity);
+                    float entitySpeedMedium = MathHelper.clamp(entitySpeed * 1.15F, 0.5f, 1.15f);
+                    float entitySpeedFast = MathHelper.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
 
                     // Apply behaviors (if any)
-                    MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
                     for (Behavior behavior : result.getBehaviors()) {
                         LOGGER.info("Behavior: " + behavior.getName() + (behavior.getArgument() != null ?
-                                    ", Argument: " + behavior.getArgument() : ""));
-
-                        // Determine entity's default speed
-                        // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class
-                        float entitySpeed = SpeedControls.getMaxSpeed(entity);
-                        float entitySpeedFast = MathHelper.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
+                                ", Argument: " + behavior.getArgument() : ""));
 
                         // Apply behaviors to entity
                         if (behavior.getName().equals("FOLLOW")) {
-                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeed);
+                            FollowPlayerGoal followGoal = new FollowPlayerGoal(player, entity, entitySpeedMedium);
                             EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
 
                         } else if (behavior.getName().equals("UNFOLLOW")) {
@@ -284,6 +290,7 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
 
                         } else if (behavior.getName().equals("UNFLEE")) {
@@ -295,6 +302,7 @@ public class ChatDataManager {
                             EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
 
                         } else if (behavior.getName().equals("PROTECT")) {
@@ -307,15 +315,19 @@ public class ChatDataManager {
                         } else if (behavior.getName().equals("UNPROTECT")) {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
+                        } else if (behavior.getName().equals("LEAD")) {
+                            LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
+                            EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                            EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                            EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
+
+                        } else if (behavior.getName().equals("UNLEAD")) {
+                            EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+
                         } else if (behavior.getName().equals("FRIENDSHIP")) {
                             int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
-                            if (new_friendship > 0) {
-                                // positive friendship (apply friend goal)
-                                ((LivingEntityInterface)entity).setCanTargetPlayers(false);
-                            } else if (new_friendship <= 0) {
-                                // negative friendship (remove friend goal)
-                                ((LivingEntityInterface)entity).setCanTargetPlayers(true);
-                            }
+
                             // Does friendship improve?
                             if (new_friendship > this.friendship) {
                                 // Stop any attack/flee if friendship improves
@@ -328,6 +340,45 @@ public class ChatDataManager {
                                     dragon.getFight().dragonKilled(dragon);
                                 }
                             }
+
+                            // Merchant deals (if friendship changes with a Villager
+                            if (entity instanceof VillagerEntity && this.friendship != new_friendship) {
+                                VillagerEntityAccessor villager = (VillagerEntityAccessor) entity;
+                                switch (new_friendship) {
+                                    case 3:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_POSITIVE, 20);
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
+                                        break;
+                                    case 2:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
+                                        break;
+                                    case 1:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 10);
+                                        break;
+                                    case -1:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 10);
+                                        break;
+                                    case -2:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
+                                        break;
+                                    case -3:
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_NEGATIVE, 20);
+                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
+                                        break;
+                                }
+                            }
+
+                            // Tame best friends and un-tame worst enemies
+                            if (entity instanceof TameableEntity && this.friendship != new_friendship) {
+                                TameableEntity tamableEntity = (TameableEntity) entity;
+                                if (new_friendship == 3 && !tamableEntity.isTamed()) {
+                                    tamableEntity.setOwner(player);
+                                } else if (new_friendship == -3 && tamableEntity.isTamed()) {
+                                    tamableEntity.setTamed(false);
+                                    tamableEntity.setOwnerUuid(null);
+                                }
+                            }
+
                             this.friendship = new_friendship;
                         }
                     }
@@ -433,7 +484,7 @@ public class ChatDataManager {
 
     private ChatDataManager(Boolean server_only) {
         // Constructor
-        entityChatDataMap = new HashMap<>();
+        entityChatDataMap = new ConcurrentHashMap<>();
 
         if (server_only) {
             // Generate initial quest
@@ -545,15 +596,15 @@ public class ChatDataManager {
 
         if (loadFile.exists()) {
             try (InputStreamReader reader = new InputStreamReader(new FileInputStream(loadFile), StandardCharsets.UTF_8)) {
-                Type type = new TypeToken<HashMap<String, EntityChatData>>(){}.getType();
+                Type type = new TypeToken<ConcurrentHashMap<String, EntityChatData>>(){}.getType();
                 this.entityChatDataMap = GSON.fromJson(reader, type);
             } catch (Exception e) {
                 LOGGER.error("Error loading chat data", e);
-                this.entityChatDataMap = new HashMap<>();
+                this.entityChatDataMap = new ConcurrentHashMap<>();
             }
         } else {
             // Init empty chat data
-            this.entityChatDataMap = new HashMap<>();
+            this.entityChatDataMap = new ConcurrentHashMap<>();
         }
     }
 }

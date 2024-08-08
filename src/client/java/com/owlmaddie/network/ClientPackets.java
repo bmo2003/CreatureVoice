@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The {@code ClientPackets} class provides methods to send packets to/from the server for generating greetings,
@@ -160,7 +161,7 @@ public class ClientPackets {
 
                     // Parse JSON and update client chat data
                     Gson GSON = new Gson();
-                    Type type = new TypeToken<HashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
+                    Type type = new TypeToken<ConcurrentHashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
                     ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
 
                     // Clear receivedChunks for future use

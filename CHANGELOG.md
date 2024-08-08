@@ -4,10 +4,28 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2024-08-07
+
+### Added
+- New LEAD behavior, to guide a player to a random location (and show message when destination is reached)
+- Best friends are now rideable! Right click with an empty hand. Excludes tameable entities (dogs, cats, etc...)
+- Villager trades are now affected by friendship! Be nice!
+- Automatically tame best friends (who are tameable) and un-tame worst enemies!
+- Added FORGE deployment into automated deploy script
 
 ### Changed
+- Improved character creation with more random classes, speaking styles, and alignments.
+- Large refactor of how MobEntity avoids targeting players when friendship > 0
+- Updated LookControls to support PhantomEntity and made it more generalized (look in any direction)
+- Updated FLEE behavior Y movement speed
+- Updated unit tests to add new LEAD tests
 - Updated README.md to include HTML inside spoiler instructions, and whitelist/blacklist commands
+
+### Fixed
+- Entity persistence is now fixed (after creating a character sheet). No more despawning mobs.
+- Fixed consuming items when right-clicking on chat bubbles (with something in your hand)
+- Fixed crash when PROTECT behavior targets another player
+- Fixed error when saving chat data while generating a new chat message
 
 ## [1.0.8] - 2024-07-16
 

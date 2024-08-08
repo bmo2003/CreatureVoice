@@ -4,12 +4,17 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.utils.ClientEntityFinder;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
@@ -30,24 +35,44 @@ public class ClickHandler {
     private static boolean wasClicked = false;
 
     public static void register() {
+        UseItemCallback.EVENT.register(ClickHandler::handleUseItemAction);
+
+        // Handle empty hand right-click
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.options.useKey.isPressed()) {
-                if (!wasClicked) {
-                    // The key has just been pressed down, so handle the 'click'
-                    handleUseKeyClick(client);
-                    wasClicked = true;
+                if (!wasClicked && client.player != null && client.player.getMainHandStack().isEmpty()) {
+                    if (handleUseKeyClick(client)) {
+                        wasClicked = true;
+                    }
                 }
             } else {
-                // The key has been released, so reset the wasClicked flag
                 wasClicked = false;
             }
         });
     }
 
-    public static void handleUseKeyClick(MinecraftClient client) {
+    // Handle use-item right-click (non-empty hand)
+    private static TypedActionResult<ItemStack> handleUseItemAction(PlayerEntity player, World world, Hand hand) {
+        if (shouldCancelAction(world)) {
+            return TypedActionResult.fail(player.getStackInHand(hand));
+        }
+        return TypedActionResult.pass(player.getStackInHand(hand));
+    }
+
+    private static boolean shouldCancelAction(World world) {
+        if (world.isClient) {
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client != null && client.options.useKey.isPressed()) {
+                return handleUseKeyClick(client);
+            }
+        }
+        return false;
+    }
+
+    public static boolean handleUseKeyClick(MinecraftClient client) {
         Camera camera = client.gameRenderer.getCamera();
         Entity cameraEntity = camera.getFocusedEntity();
-        if (cameraEntity == null) return;
+        if (cameraEntity == null) return false;
 
         // Get the player from the client
         ClientPlayerEntity player = client.player;
@@ -122,9 +147,10 @@ public class ClickHandler {
                     // Show chat
                     ClientPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.DISPLAY);
                 }
-
+                return true;
             }
         }
+        return false;
     }
 
     public static Vec3d[] getBillboardCorners(Vec3d center, Vec3d cameraPos, double height, double width, double yaw, double pitch) {

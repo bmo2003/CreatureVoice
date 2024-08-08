@@ -1,9 +1,7 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
-import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.network.ServerPackets;
-import com.owlmaddie.utils.LivingEntityInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -11,10 +9,8 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,17 +18,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
-
-
 @Mixin(LivingEntity.class)
-public class MixinLivingEntity implements LivingEntityInterface {
-    private boolean canTargetPlayers = true;  // Default to true to maintain original behavior
+public class MixinLivingEntity {
+
+    private ChatDataManager.EntityChatData getChatData(LivingEntity entity) {
+        ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
+        return chatDataManager.getOrCreateChatData(entity.getUuidAsString());
+    }
 
     @Inject(method = "canTarget(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)
     private void modifyCanTarget(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
-        if (!this.canTargetPlayers && target instanceof PlayerEntity) {
-            cir.setReturnValue(false);
+        if (target instanceof PlayerEntity) {
+            LivingEntity thisEntity = (LivingEntity) (Object) this;
+            ChatDataManager.EntityChatData chatData = getChatData(thisEntity);
+            if (chatData.friendship > 0) {
+                // Friendly creatures can't target a player
+                cir.setReturnValue(false);
+            }
         }
     }
 
@@ -51,12 +53,11 @@ public class MixinLivingEntity implements LivingEntityInterface {
         if (attacker instanceof PlayerEntity && thisEntity instanceof MobEntity && !thisEntity.isDead()) {
             // Generate attacked message (only if the previous user message was not an attacked message)
             // We don't want to constantly generate messages during a prolonged, multi-damage event
-            ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-            ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
-            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+            ChatDataManager.EntityChatData chatData = getChatData(thisEntity);
+            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
                 // Only auto-generate a response to being attacked if chat data already exists
                 // and this is the first attack event.
-                ServerPlayerEntity player = (ServerPlayerEntity)attacker;
+                ServerPlayerEntity player = (ServerPlayerEntity) attacker;
                 ItemStack weapon = player.getMainHandStack();
                 String weaponName = weapon.isEmpty() ? "with fists" : "with " + weapon.getItem().toString();
 
@@ -65,7 +66,7 @@ public class MixinLivingEntity implements LivingEntityInterface {
                 String directness = isIndirect ? "indirectly" : "directly";
 
                 String attackedMessage = "<" + player.getName().getString() + " attacked you " + directness + " with " + weaponName + ">";
-                ServerPackets.generate_chat("N/A", chatData, player, (MobEntity)thisEntity, attackedMessage, true);
+                ServerPackets.generate_chat("N/A", chatData, player, (MobEntity) thisEntity, attackedMessage, true);
             }
         }
     }
@@ -90,10 +91,5 @@ public class MixinLivingEntity implements LivingEntityInterface {
             // Broadcast the death message to all players in the world
             ServerPackets.BroadcastMessage(deathMessage);
         }
-    }
-
-    @Override
-    public void setCanTargetPlayers(boolean canTarget) {
-        this.canTargetPlayers = canTarget;
     }
 }
