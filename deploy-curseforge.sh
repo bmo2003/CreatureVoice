@@ -90,7 +90,7 @@ for FILE in creaturechat*.jar; do
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
-    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\(.*\)\.jar/\1/p')
+    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION-$MINECRAFT_VERSION"
 
     # Verify that OUR_VERSION and MINECRAFT_VERSION are not empty and OUR_VERSION matches VERSION
@@ -112,10 +112,10 @@ for FILE in creaturechat*.jar; do
     # Determine the dependency slugs and loader ID based on the file name
     if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
       DEPENDENCY_SLUGS=("sinytra-connector" "forgified-fabric-api")
-      LOADER_ID="${GAME_VERSION_IDS[3]}"
+      GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[3]}, ${GAME_VERSION_IDS[4]}]"
     else
       DEPENDENCY_SLUGS=("fabric-api")
-      LOADER_ID="${GAME_VERSION_IDS[2]}"
+      GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[2]}, ${GAME_VERSION_IDS[4]}]"
     fi
 
     # Create dependencies array for payload
@@ -125,7 +125,7 @@ for FILE in creaturechat*.jar; do
     PAYLOAD=$(jq -n --arg changelog "$CHANGELOG" \
       --arg changelogType "markdown" \
       --arg displayName "$FILE_BASENAME" \
-      --argjson gameVersions "$(printf '%s\n' "${GAME_VERSION_IDS[@]}" | jq -R . | jq -s .)" \
+      --argjson gameVersions "$GAME_VERSIONS" \
       --argjson gameVersionTypeIds "[$GAME_TYPE_ID]" \
       --arg releaseType "release" \
       --argjson relations "$RELATIONS" \
