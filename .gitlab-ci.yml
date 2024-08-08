@@ -53,9 +53,10 @@ build_mod:
         mv build/libs/creaturechat-*.jar .
 
         if [ "$minecraft_version" == "1.20.1" ]; then
-          cp creaturechat-1.20.1.jar creaturechat-1.20.1-forge.jar
-          touch FORGE
-          zip -r creaturechat-1.20.1-forge.jar FORGE
+            jar_name=$(ls creaturechat-*+1.20.1.jar)
+            cp "$jar_name" "${jar_name%.jar}-forge.jar"
+            touch FORGE
+            zip -r "${jar_name%.jar}-forge.jar" FORGE
         fi
 
         FABRIC_API_JAR="fabric-api-${fabric_version}.jar"
