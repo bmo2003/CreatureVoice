@@ -1,6 +1,7 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -52,7 +53,7 @@ public class MixinMobEntity {
 
         // Get chat data for entity
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+        EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
 
         // Check if the player successfully interacts with an item
         if (player instanceof ServerPlayerEntity) {

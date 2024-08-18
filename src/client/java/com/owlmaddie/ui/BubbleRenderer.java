@@ -2,6 +2,7 @@ package com.owlmaddie.ui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.utils.EntityHeights;
 import com.owlmaddie.utils.EntityRendererAccessor;
 import com.owlmaddie.utils.TextureLoader;
@@ -470,7 +471,7 @@ public class BubbleRenderer {
             Matrix4f matrix = matrices.peek().getPositionMatrix();
 
             // Look-up greeting (if any)
-            ChatDataManager.EntityChatData chatData = null;
+            EntityChatData chatData = null;
             if (entity instanceof MobEntity) {
                 chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
             } else if (entity instanceof PlayerEntity) {

@@ -1,6 +1,7 @@
 package com.owlmaddie.goals;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.controls.LookControls;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.utils.RandomTargetFinder;
@@ -71,7 +72,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                 String arrivedMessage = "<You have arrived at your destination>";
 
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-                ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString());
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString());
                 if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
                     ServerPackets.generate_chat("N/A", chatData, (ServerPlayerEntity) this.targetEntity, this.entity, arrivedMessage, true);
                 }

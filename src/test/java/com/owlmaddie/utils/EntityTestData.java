@@ -3,6 +3,7 @@ package com.owlmaddie.utils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.ChatMessage;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -26,7 +27,7 @@ public class EntityTestData {
     public String currentMessage;
     public int currentLineNumber;
     public ChatDataManager.ChatStatus status;
-    public List<ChatDataManager.ChatMessage> previousMessages;
+    public List<ChatMessage> previousMessages;
     public String characterSheet;
     public ChatDataManager.ChatSender sender;
     public int friendship; // -3 to 3 (0 = neutral)
@@ -64,7 +65,7 @@ public class EntityTestData {
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
         // Add message to history
-        previousMessages.add(new ChatDataManager.ChatMessage(truncatedMessage, messageSender));
+        previousMessages.add(new ChatMessage(truncatedMessage, messageSender));
 
         // Set new message and reset line number of displayed text
         currentMessage = truncatedMessage;

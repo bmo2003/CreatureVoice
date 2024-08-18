@@ -3,6 +3,7 @@ package com.owlmaddie.network;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
@@ -111,7 +112,7 @@ public class ClientPackets {
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                    ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
+                    EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
                     chatData.playerId = playerIdStr;
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
@@ -161,7 +162,7 @@ public class ClientPackets {
 
                     // Parse JSON and update client chat data
                     Gson GSON = new Gson();
-                    Type type = new TypeToken<ConcurrentHashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
+                    Type type = new TypeToken<ConcurrentHashMap<String, EntityChatData>>(){}.getType();
                     ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
 
                     // Clear receivedChunks for future use
