@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
@@ -100,7 +101,7 @@ public class ClientPackets {
         ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
-            String playerIdStr = buffer.readString();
+            UUID playerId = UUID.fromString(buffer.readString());
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -113,18 +114,18 @@ public class ClientPackets {
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                     EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
-                    chatData.playerId = playerIdStr;
+                    PlayerData playerData = chatData.getPlayerData(playerId);
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }
                     chatData.currentLineNumber = line;
                     chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
                     chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
-                    chatData.friendship = friendship;
+                    playerData.friendship = friendship;
 
-                    if (chatData.sender == ChatDataManager.ChatSender.USER && !playerIdStr.isEmpty()) {
+                    if (chatData.sender == ChatDataManager.ChatSender.USER) {
                         // Add player message to queue for rendering
-                        PlayerMessageManager.addMessage(UUID.fromString(chatData.playerId), chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                        PlayerMessageManager.addMessage(playerId, chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
                     }
 
                     // Play sound with volume based on distance (from player or entity)

@@ -2,6 +2,7 @@ package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -53,7 +54,8 @@ public class MixinMobEntity {
 
         // Get chat data for entity
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+        EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+        PlayerData playerData = entityData.getPlayerData(player.getUuid());
 
         // Check if the player successfully interacts with an item
         if (player instanceof ServerPlayerEntity) {
@@ -73,11 +75,11 @@ public class MixinMobEntity {
                 String giveItemMessage = "<" + serverPlayer.getName().getString() +
                         action_verb + "you " + itemCount + " " + itemName + ">";
 
-                if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                    ServerPackets.generate_chat("N/A", chatData, serverPlayer, thisEntity, giveItemMessage, true);
+                if (!entityData.characterSheet.isEmpty() && entityData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                    ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, giveItemMessage, true);
                 }
 
-            } else if (itemStack.isEmpty() && chatData.friendship == 3) {
+            } else if (itemStack.isEmpty() && playerData.friendship == 3) {
                 // Player's hand is empty, Ride your best friend!
                 player.startRiding(thisEntity, true);
             }

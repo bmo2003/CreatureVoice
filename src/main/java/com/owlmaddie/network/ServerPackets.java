@@ -3,6 +3,7 @@ package com.owlmaddie.network;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.ChatDataSaverScheduler;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
@@ -169,7 +170,7 @@ public class ServerPackets {
 
             LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
             // Get lite JSON data & compress to byte array
-            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData();
+            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getUuid());
             byte[] compressedData = Compression.compressString(chatDataJSON);
             if (compressedData == null) {
                 LOGGER.error("Failed to compress chat data.");
@@ -314,19 +315,21 @@ public class ServerPackets {
                     entity.setPersistent();
                 }
 
-                PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
-
-                // Write the entity's chat updated data
-                buffer.writeString(chatData.entityId);
-                buffer.writeString(chatData.playerId);
-                buffer.writeString(chatData.currentMessage);
-                buffer.writeInt(chatData.currentLineNumber);
-                buffer.writeString(chatData.status.toString());
-                buffer.writeString(chatData.sender.toString());
-                buffer.writeInt(chatData.friendship);
-
                 // Iterate over all players and send the packet
                 for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
+
+                    PlayerData playerData = chatData.getPlayerData(player.getUuid());
+                    PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+
+                    // Write the entity's chat updated data
+                    buffer.writeString(chatData.entityId);
+                    buffer.writeString(player.getUuidAsString());
+                    buffer.writeString(chatData.currentMessage);
+                    buffer.writeInt(chatData.currentLineNumber);
+                    buffer.writeString(chatData.status.toString());
+                    buffer.writeString(chatData.sender.toString());
+                    buffer.writeInt(playerData.friendship);
+
                     LOGGER.debug("Server broadcast message to client: " + player.getName().getString() + " | Message: " + chatData.currentMessage);
                     ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
                 }

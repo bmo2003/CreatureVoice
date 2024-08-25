@@ -2,6 +2,7 @@ package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -31,8 +32,9 @@ public class MixinLivingEntity {
     private void modifyCanTarget(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
         if (target instanceof PlayerEntity) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
-            EntityChatData chatData = getChatData(thisEntity);
-            if (chatData.friendship > 0) {
+            EntityChatData entityData = getChatData(thisEntity);
+            PlayerData playerData = entityData.getPlayerData(target.getUuid());
+            if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
                 cir.setReturnValue(false);
             }

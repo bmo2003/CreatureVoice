@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -137,11 +134,11 @@ public class ChatDataManager {
     }
 
     // Save chat data to file
-    public String GetLightChatData() {
+    public String GetLightChatData(UUID playerId) {
         try {
             // Create "light" version of entire chat data HashMap
             HashMap<String, EntityChatDataLight> lightVersionMap = new HashMap<>();
-            this.entityChatDataMap.forEach((id, entityChatData) -> lightVersionMap.put(id, entityChatData.toLightVersion()));
+            this.entityChatDataMap.forEach((id, entityChatData) -> lightVersionMap.put(id, entityChatData.toLightVersion(playerId)));
 
             // Convert light chat data to JSON string
             return GSON.toJson(lightVersionMap).toString();
@@ -174,6 +171,11 @@ public class ChatDataManager {
             try (InputStreamReader reader = new InputStreamReader(new FileInputStream(loadFile), StandardCharsets.UTF_8)) {
                 Type type = new TypeToken<ConcurrentHashMap<String, EntityChatData>>(){}.getType();
                 this.entityChatDataMap = GSON.fromJson(reader, type);
+
+                // Post-process each EntityChatData object
+                for (EntityChatData entityChatData : entityChatDataMap.values()) {
+                    entityChatData.postDeserializeInitialization();
+                }
             } catch (Exception e) {
                 LOGGER.error("Error loading chat data", e);
                 this.entityChatDataMap = new ConcurrentHashMap<>();
