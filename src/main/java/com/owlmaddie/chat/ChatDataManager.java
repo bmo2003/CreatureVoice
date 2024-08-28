@@ -139,9 +139,7 @@ public class ChatDataManager {
             // Create "light" version of entire chat data HashMap
             HashMap<String, EntityChatDataLight> lightVersionMap = new HashMap<>();
             this.entityChatDataMap.forEach((id, entityChatData) -> lightVersionMap.put(id, entityChatData.toLightVersion(playerId)));
-
-            // Convert light chat data to JSON string
-            return GSON.toJson(lightVersionMap).toString();
+            return GSON.toJson(lightVersionMap);
         } catch (Exception e) {
             // Handle exceptions
             return "";
@@ -152,6 +150,9 @@ public class ChatDataManager {
     public void saveChatData(MinecraftServer server) {
         File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
         LOGGER.info("Saving chat data to " + saveFile.getAbsolutePath());
+
+        // Clean up blank, temp entities in data
+        entityChatDataMap.values().removeIf(entityChatData -> entityChatData.status == ChatStatus.NONE);
 
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(saveFile), StandardCharsets.UTF_8)) {
             GSON.toJson(this.entityChatDataMap, writer);
@@ -171,6 +172,9 @@ public class ChatDataManager {
             try (InputStreamReader reader = new InputStreamReader(new FileInputStream(loadFile), StandardCharsets.UTF_8)) {
                 Type type = new TypeToken<ConcurrentHashMap<String, EntityChatData>>(){}.getType();
                 this.entityChatDataMap = GSON.fromJson(reader, type);
+
+                // Clean up blank, temp entities in data
+                entityChatDataMap.values().removeIf(entityChatData -> entityChatData.status == ChatStatus.NONE);
 
                 // Post-process each EntityChatData object
                 for (EntityChatData entityChatData : entityChatDataMap.values()) {

@@ -107,6 +107,10 @@ public class EntityChatData {
 
     // Get the player data (or fallback to the blank player)
     public PlayerData getPlayerData(UUID playerId) {
+        if (this.players == null) {
+            return new PlayerData();
+        }
+
         // Check if the playerId exists in the players map
         String playerIdStr = playerId.toString();
         if (this.players.containsKey(playerIdStr)) {
@@ -115,25 +119,12 @@ public class EntityChatData {
             // If the specific player ID is not found, fall back to the "" blank player
             return this.players.get("");
         }
-        return null;
+        return new PlayerData();
     }
 
     // Generate light version of chat data (no previous messages)
     public EntityChatDataLight toLightVersion(UUID playerId) {
-        EntityChatDataLight light = new EntityChatDataLight();
-        light.entityId = this.entityId;
-        light.currentMessage = this.currentMessage;
-        light.currentLineNumber = this.currentLineNumber;
-        light.status = this.status;
-        light.sender = this.sender;
-        PlayerData playerData = this.getPlayerData(playerId);
-        if (playerData != null) {
-            light.friendship = playerData.friendship;
-        } else {
-            light.friendship = 0;
-        }
-
-        return light;
+        return new EntityChatDataLight(this, playerId);
     }
 
     public String getCharacterProp(String propertyName) {
