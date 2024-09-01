@@ -96,43 +96,6 @@ public class ChatDataManager {
         }
     }
 
-    // Generate quest data for this server session
-    public void generateQuest() {
-        // Get items needed for Quest prompt
-        List<String> commonItems = RarityItemCollector.getItemsByRarity(Rarity.COMMON, 5);
-        List<String> uncommonItems = RarityItemCollector.getItemsByRarity(Rarity.UNCOMMON, 5);
-        List<String> rareItems = RarityItemCollector.getItemsByRarity(Rarity.RARE, 5);
-
-        // Get entities needed for Quest prompt
-        List<String> commonEntities = RarityItemCollector.getEntitiesByRarity(Rarity.COMMON, 5);
-        List<String> uncommonEntities = RarityItemCollector.getEntitiesByRarity(Rarity.UNCOMMON, 5);
-        List<String> rareEntities = RarityItemCollector.getEntitiesByRarity(Rarity.RARE, 5);
-
-        // Add context information for prompt
-        Map<String, String> contextData = new HashMap<>();
-        contextData.put("items_common", String.join("\n", commonItems));
-        contextData.put("items_uncommon", String.join("\n", uncommonItems));
-        contextData.put("items_rare", String.join("\n", rareItems));
-        contextData.put("entities_common", String.join("\n", commonEntities));
-        contextData.put("entities_uncommon", String.join("\n", uncommonEntities));
-        contextData.put("entities_rare", String.join("\n", rareEntities));
-
-        // Add message
-        List<ChatMessage> messages = new ArrayList<>();
-        messages.add(new ChatMessage("Generate me a new fantasy story with ONLY the 1st character in the story", ChatSender.USER));
-
-        // Get config (api key, url, settings)
-        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
-        String questPrompt = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), "system-quest");
-
-        // Generate Quest: fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT(config, questPrompt, contextData, messages, true).thenAccept(output_message -> {
-            // New Quest
-            Gson gson = new Gson();
-            quest = gson.fromJson(output_message, QuestJson.class);
-        });
-    }
-
     // Save chat data to file
     public String GetLightChatData(UUID playerId) {
         try {

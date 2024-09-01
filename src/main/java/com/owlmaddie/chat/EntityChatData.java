@@ -9,6 +9,7 @@ import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
 import com.owlmaddie.utils.VillagerEntityAccessor;
@@ -18,6 +19,7 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.village.VillageGossipType;
 import org.slf4j.Logger;
@@ -30,6 +32,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.owlmaddie.network.ServerPackets.*;
 
 /**
  * The {@code EntityChatData} class represents a conversation between an
@@ -390,6 +394,16 @@ public class EntityChatData {
                             } else if (new_friendship == -3 && tamableEntity.isTamed()) {
                                 tamableEntity.setTamed(false);
                                 tamableEntity.setOwnerUuid(null);
+                            }
+                        }
+
+                        // Show particles
+                        if (playerData.friendship != new_friendship) {
+                            int friendDiff = new_friendship - playerData.friendship;
+                            if (friendDiff > 0) {
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_SMALL_PARTICLE);
+                            } else if (friendDiff < 0) {
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FIRE_SMALL_PARTICLE);
                             }
                         }
 

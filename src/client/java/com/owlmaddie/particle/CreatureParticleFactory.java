@@ -1,0 +1,21 @@
+package com.owlmaddie.particle;
+
+import net.minecraft.client.particle.ParticleFactory;
+import net.minecraft.client.particle.SpriteProvider;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.particle.DefaultParticleType;
+
+public class CreatureParticleFactory implements ParticleFactory<DefaultParticleType> {
+    private final SpriteProvider spriteProvider;
+
+    public CreatureParticleFactory(SpriteProvider spriteProvider) {
+        this.spriteProvider = spriteProvider;
+    }
+
+    @Override
+    public CreatureParticle createParticle(DefaultParticleType type, ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
+        CreatureParticle particle = new CreatureParticle(world, x, y, z, velocityX, velocityY, velocityZ);
+        particle.setSprite(this.spriteProvider);
+        return particle;
+    }
+}

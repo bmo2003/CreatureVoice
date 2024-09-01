@@ -6,6 +6,12 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+- New friendship particles (hearts + fire) to indicate when friendship changes
+
+### Changed
+- Entity chat data now separates messages and friendship by player
+
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds
 
