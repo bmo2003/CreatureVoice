@@ -65,7 +65,7 @@ public class ServerPackets {
             server.execute(() -> {
                 MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
                     if (chatData.characterSheet.isEmpty()) {
                         generate_character(userLanguage, chatData, player, entity);
                     }
@@ -86,7 +86,7 @@ public class ServerPackets {
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
                     LOGGER.debug("Update read lines to " + lineNumber + " for: " + entity.getType().toString());
                     chatData.setLineNumber(lineNumber);
                 }
@@ -106,7 +106,7 @@ public class ServerPackets {
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
                     LOGGER.debug("Hiding chat bubble for: " + entity.getType().toString());
                     chatData.setStatus(ChatDataManager.ChatStatus.valueOf(status_name));
                 }
@@ -150,7 +150,7 @@ public class ServerPackets {
             server.execute(() -> {
                 MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
                     if (chatData.characterSheet.isEmpty()) {
                         generate_character(userLanguage, chatData, player, entity);
                     } else {
@@ -318,7 +318,7 @@ public class ServerPackets {
                 // Iterate over all players and send the packet
                 for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
 
-                    PlayerData playerData = chatData.getPlayerData(player.getUuid());
+                    PlayerData playerData = chatData.getPlayerData(player.getUuidAsString());
                     PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 
                     // Write the entity's chat updated data

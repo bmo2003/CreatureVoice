@@ -1,5 +1,7 @@
 package com.owlmaddie.chat;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
@@ -21,16 +23,13 @@ import net.minecraft.village.VillageGossipType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import com.google.gson.annotations.SerializedName;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * The {@code EntityChatData} class represents a conversation between an
@@ -48,16 +47,16 @@ public class EntityChatData {
     public int auto_generated;
 
     @SerializedName("playerId")
+    @Expose(serialize = false)
     private String legacyPlayerId;
 
     @SerializedName("previousMessages")
+    @Expose(serialize = false)
     public List<ChatMessage> legacyMessages;
 
     @SerializedName("friendship")
-    public int legacyFriendship;
-
-    public String birthDate;
-    public String deathDate;
+    @Expose(serialize = false)
+    public Integer legacyFriendship;
 
     // The map to store data for each player interacting with this entity
     public Map<String, PlayerData> players;
@@ -65,7 +64,9 @@ public class EntityChatData {
     public EntityChatData(String entityId, String playerId) {
         this.entityId = entityId;
         this.players = new HashMap<>();
-        this.players.put("", new PlayerData()); // Add default blank player
+        if (!playerId.isEmpty()) {
+            this.players.put(playerId, new PlayerData());
+        }
         this.currentMessage = "";
         this.currentLineNumber = 0;
         this.characterSheet = "";
@@ -73,8 +74,9 @@ public class EntityChatData {
         this.sender = ChatDataManager.ChatSender.USER;
         this.auto_generated = 0;
 
-        this.legacyFriendship = 0;
-        this.legacyMessages = new ArrayList<>();
+        this.legacyPlayerId = null;
+        this.legacyMessages = null;
+        this.legacyFriendship = null;
     }
 
     // Post-deserialization initialization
@@ -82,14 +84,13 @@ public class EntityChatData {
         if (this.players == null) {
             this.players = new HashMap<>(); // Ensure players map is initialized
         }
-        this.players.computeIfAbsent("", k -> new PlayerData());
         if (this.legacyPlayerId != null && !this.legacyPlayerId.isEmpty()) {
-            this.migrateData(this.legacyPlayerId);
+            this.migrateData();
         }
     }
 
     // Migrate old data into the new structure
-    private void migrateData(String oldPlayerId) {
+    private void migrateData() {
         // Ensure the blank player data entry exists
         PlayerData blankPlayerData = this.players.computeIfAbsent("", k -> new PlayerData());
 
@@ -102,24 +103,28 @@ public class EntityChatData {
         // Clean up old player data
         this.legacyPlayerId = null;
         this.legacyMessages = null;
-        this.legacyFriendship = 0;
+        this.legacyFriendship = null;
     }
 
     // Get the player data (or fallback to the blank player)
-    public PlayerData getPlayerData(UUID playerId) {
+    public PlayerData getPlayerData(String playerId) {
         if (this.players == null) {
             return new PlayerData();
         }
 
         // Check if the playerId exists in the players map
-        String playerIdStr = playerId.toString();
-        if (this.players.containsKey(playerIdStr)) {
-            return this.players.get(playerIdStr);
-        } else if (this.players.containsKey("")) {
-            // If the specific player ID is not found, fall back to the "" blank player
+        if (this.players.containsKey("")) {
+            // If a blank migrated legacy entity is found, always return this
             return this.players.get("");
+
+        } else if (this.players.containsKey(playerId)) {
+            // Return a specific player's data
+            return this.players.get(playerId);
+
+        } else {
+            // Return a blank player data
+            return new PlayerData();
         }
-        return new PlayerData();
     }
 
     // Generate light version of chat data (no previous messages)
@@ -211,7 +216,7 @@ public class EntityChatData {
         contextData.put("entity_skills", getCharacterProp("Skills"));
         contextData.put("entity_background", getCharacterProp("Background"));
 
-        PlayerData playerData = this.getPlayerData(player.getUuid());
+        PlayerData playerData = this.getPlayerData(player.getUuidAsString());
         if (playerData != null) {
             contextData.put("entity_friendship", String.valueOf(playerData.friendship));
         } else {
@@ -248,7 +253,7 @@ public class EntityChatData {
         String promptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), systemPrompt);
 
         // Get messages for player
-        PlayerData playerData = this.getPlayerData(player.getUuid());
+        PlayerData playerData = this.getPlayerData(player.getUuidAsString());
 
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, playerData.messages, false).thenAccept(output_message -> {
@@ -439,7 +444,7 @@ public class EntityChatData {
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
         // Get or create player data
-        PlayerData playerData = getPlayerData(playerId);
+        PlayerData playerData = getPlayerData(playerId.toString());
 
         // Add message to history
         playerData.messages.add(new ChatMessage(truncatedMessage, messageSender));

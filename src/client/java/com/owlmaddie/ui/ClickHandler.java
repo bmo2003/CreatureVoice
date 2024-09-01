@@ -120,7 +120,7 @@ public class ClickHandler {
             MobEntity closestEntity = ClientEntityFinder.getEntityByUUID(client.world, closestEntityUUID);
             if (closestEntity != null) {
                 // Look-up conversation
-                EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntityUUID.toString());
+                EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntityUUID.toString(), player.getUuidAsString());
 
                 // Determine area clicked inside chat bubble (top, left, right)
                 String hitRegion = determineHitRegion(closestHitResult.get(), closestBubbleData.position, camera, closestBubbleData.height);

@@ -113,8 +113,8 @@ public class ClientPackets {
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                    EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
-                    PlayerData playerData = chatData.getPlayerData(playerId);
+                    EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), playerId.toString());
+                    PlayerData playerData = chatData.getPlayerData(playerId.toString());
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }

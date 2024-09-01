@@ -28,7 +28,7 @@ public class EntityChatDataLight {
         // Initialize the players map and add only the current player's data
         this.players = new HashMap<>();
         String playerIdStr = playerId.toString();
-        PlayerData playerData = fullData.getPlayerData(playerId);
+        PlayerData playerData = fullData.getPlayerData(playerId.toString());
         this.players.put(playerIdStr, playerData);
     }
 }
