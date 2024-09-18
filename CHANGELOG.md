@@ -11,6 +11,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Changed
 - Entity chat data now separates messages and friendship by player
+- Removed "pirate" speaking style and a few <non-response> outputs
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds

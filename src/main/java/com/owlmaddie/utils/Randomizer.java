@@ -33,12 +33,8 @@ public class Randomizer {
             "<clears throat>",
             "<peers over your shoulder>",
             "<fakes a smile>",
-            "<checks the time>",
-            "<doodles in the air>",
             "<mutters under breath>",
-            "<adjusts an imaginary tie>",
-            "<counts imaginary stars>",
-            "<plays with a nonexistent pet>"
+            "<counts imaginary stars>"
     );
     private static List<String> errorResponseMessages = Arrays.asList(
             "Seems like my words got lost in the End. Check out http://discord.creaturechat.com for clues!",
@@ -88,7 +84,7 @@ public class Randomizer {
             "inquisitive", "cynical", "empathetic", "boisterous", "monotone", "laconic", "poetic",
             "archaic", "childlike", "erudite", "streetwise", "flirtatious", "stoic", "rhetorical",
             "inspirational", "goofy", "overly dramatic", "deadpan", "sing-song", "pompous",
-            "hyperactive", "valley girl", "robot", "pirate", "baby talk", "lolcat"
+            "hyperactive", "valley girl", "robot", "baby talk", "lolcat"
     );
     private static List<String> classes = Arrays.asList(
             "warrior", "mage", "archer", "rogue", "paladin", "necromancer", "bard", "lorekeeper",
