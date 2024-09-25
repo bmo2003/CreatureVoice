@@ -9,10 +9,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - New friendship particles (hearts + fire) to indicate when friendship changes
 - Added sound effects for max friendship and max enemy
+- New follow, flee, attack, and protect particles & sound effects
 
 ### Changed
 - Entity chat data now separates messages and friendship by player
 - Removed "pirate" speaking style and a few <non-response> outputs
+- Passive entities no longer emit damage particles when attacking, they emit custom attack particles
+- Protect now auto sets friendship to 1 (if <= 0), to prevent entity from attacking and protecting at the same time
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds

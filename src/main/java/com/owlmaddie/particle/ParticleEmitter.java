@@ -7,8 +7,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
 
-import static com.owlmaddie.network.ServerPackets.FIRE_BIG_PARTICLE;
-import static com.owlmaddie.network.ServerPackets.HEART_BIG_PARTICLE;
+import static com.owlmaddie.network.ServerPackets.*;
 
 public class ParticleEmitter {
 
@@ -32,6 +31,10 @@ public class ParticleEmitter {
             world.playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.4F, 1.0F);
         } else if (particleType.equals(FIRE_BIG_PARTICLE) && count > 1) {
             world.playSound(entity, entity.getBlockPos(), SoundEvents.ITEM_AXE_STRIP, SoundCategory.PLAYERS, 0.8F, 1.0F);
+        } else if (particleType.equals(FOLLOW_FRIEND_PARTICLE) || particleType.equals(FOLLOW_ENEMY_PARTICLE)) {
+            world.playSound(entity, entity.getBlockPos(), SoundEvents.BLOCK_AMETHYST_BLOCK_PLACE, SoundCategory.PLAYERS, 0.8F, 1.0F);
+        } else if (particleType.equals(PROTECT_PARTICLE)) {
+            world.playSound(entity, entity.getBlockPos(), SoundEvents.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 0.8F, 1.0F);
         }
     }
 }

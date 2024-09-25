@@ -297,6 +297,11 @@ public class EntityChatData {
                         EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                         EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                         EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
+                        if (playerData.friendship >= 0) {
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FOLLOW_FRIEND_PARTICLE, 0.5, 1);
+                        } else {
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FOLLOW_ENEMY_PARTICLE, 0.5, 1);
+                        }
 
                     } else if (behavior.getName().equals("UNFOLLOW")) {
                         EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
@@ -310,6 +315,7 @@ public class EntityChatData {
                         EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                         EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                         EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
+                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FLEE_PARTICLE, 0.5, 1);
 
                     } else if (behavior.getName().equals("UNFLEE")) {
                         EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
@@ -322,13 +328,19 @@ public class EntityChatData {
                         EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                         EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                         EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
+                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FLEE_PARTICLE, 0.5, 1);
 
                     } else if (behavior.getName().equals("PROTECT")) {
+                        if (playerData.friendship <= 0) {
+                            // force friendship to prevent entity from attacking player when protecting
+                            playerData.friendship = 1;
+                        }
                         ProtectPlayerGoal protectGoal = new ProtectPlayerGoal(player, entity, 1.0);
                         EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                         EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                         EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                         EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
+                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, PROTECT_PARTICLE, 0.5, 1);
 
                     } else if (behavior.getName().equals("UNPROTECT")) {
                         EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);

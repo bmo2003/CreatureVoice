@@ -6,12 +6,13 @@ import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.GolemEntity;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.EnumSet;
+
+import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
 
 /**
  * The {@code AttackPlayerGoal} class instructs a Mob Entity to show aggression towards a target Entity.
@@ -94,11 +95,11 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
 
         // Spawn red particles to simulate 'injury'
-        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ParticleTypes.DAMAGE_INDICATOR,
+        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ATTACK_PARTICLE,
                 this.targetEntity.getX(),
                 this.targetEntity.getBodyY(0.5D),
                 this.targetEntity.getZ(),
-                10, // number of particles
+                4, // number of particles
                 0.1, 0.1, 0.1, 0.2); // speed and randomness
     }
 

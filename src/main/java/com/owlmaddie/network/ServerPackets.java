@@ -62,6 +62,11 @@ public class ServerPackets {
     public static final DefaultParticleType HEART_BIG_PARTICLE = FabricParticleTypes.simple();
     public static final DefaultParticleType FIRE_SMALL_PARTICLE = FabricParticleTypes.simple();
     public static final DefaultParticleType FIRE_BIG_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType ATTACK_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType FLEE_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType FOLLOW_FRIEND_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType FOLLOW_ENEMY_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType PROTECT_PARTICLE = FabricParticleTypes.simple();
 
     public static void register() {
         // Register custom particles
@@ -69,6 +74,11 @@ public class ServerPackets {
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "heart_big"), HEART_BIG_PARTICLE);
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "fire_small"), FIRE_SMALL_PARTICLE);
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "fire_big"), FIRE_BIG_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "attack"), ATTACK_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "flee"), FLEE_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "follow_enemy"), FOLLOW_ENEMY_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "follow_friend"), FOLLOW_FRIEND_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "protect"), PROTECT_PARTICLE);
 
         // Handle packet for Greeting
         ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_GREETING, (server, player, handler, buf, responseSender) -> {
