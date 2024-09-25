@@ -5,8 +5,8 @@ import net.minecraft.client.particle.SpriteBillboardParticle;
 import net.minecraft.client.world.ClientWorld;
 
 
-public class CreatureParticle extends SpriteBillboardParticle {
-    protected CreatureParticle(ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
+public class BehaviorParticle extends SpriteBillboardParticle {
+    protected BehaviorParticle(ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
         super(world, x, y, z, velocityX, velocityY, velocityZ);
         this.scale(2f);
         this.setMaxAge(35);
@@ -15,6 +15,7 @@ public class CreatureParticle extends SpriteBillboardParticle {
         this.velocityY = 0.1;
         this.velocityX *= 0.1;
         this.velocityZ *= 0.1;
+        this.collidesWithWorld = false;
     }
 
     @Override

@@ -8,6 +8,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Added
 - New friendship particles (hearts + fire) to indicate when friendship changes
+- Added sound effects for max friendship and max enemy
 
 ### Changed
 - Entity chat data now separates messages and friendship by player

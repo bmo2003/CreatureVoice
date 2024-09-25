@@ -13,8 +13,8 @@ public class CreatureParticleFactory implements ParticleFactory<DefaultParticleT
     }
 
     @Override
-    public CreatureParticle createParticle(DefaultParticleType type, ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
-        CreatureParticle particle = new CreatureParticle(world, x, y, z, velocityX, velocityY, velocityZ);
+    public BehaviorParticle createParticle(DefaultParticleType type, ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
+        BehaviorParticle particle = new BehaviorParticle(world, x, y, z, velocityX, velocityY, velocityZ);
         particle.setSprite(this.spriteProvider);
         return particle;
     }

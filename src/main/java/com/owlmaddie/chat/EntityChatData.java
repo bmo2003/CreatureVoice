@@ -397,13 +397,24 @@ public class EntityChatData {
                             }
                         }
 
-                        // Show particles
+                        // Emit friendship particles
                         if (playerData.friendship != new_friendship) {
                             int friendDiff = new_friendship - playerData.friendship;
                             if (friendDiff > 0) {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_SMALL_PARTICLE);
+                                // Heart particles
+                                if (new_friendship == 3) {
+                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_BIG_PARTICLE, 0.5, 10);
+                                } else {
+                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_SMALL_PARTICLE, 0.1, 1);
+                                }
+
                             } else if (friendDiff < 0) {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FIRE_SMALL_PARTICLE);
+                                // Fire particles
+                                if (new_friendship == -3) {
+                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FIRE_BIG_PARTICLE, 0.5, 10);
+                                } else {
+                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FIRE_SMALL_PARTICLE, 0.1, 1);
+                                }
                             }
                         }
 
