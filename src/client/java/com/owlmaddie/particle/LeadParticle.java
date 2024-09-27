@@ -18,7 +18,7 @@ public class LeadParticle extends SpriteBillboardParticle {
     private final SpriteProvider spriteProvider;
 
     public LeadParticle(ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ, SpriteProvider spriteProvider, double angle) {
-        super(world, x, y, z, velocityX, velocityY, velocityZ);
+        super(world, x, y, z, 0, 0, 0);
         this.velocityX = 0f;
         this.velocityY = 0f;
         this.velocityZ = 0f;
@@ -38,12 +38,6 @@ public class LeadParticle extends SpriteBillboardParticle {
     @Override
     public int getBrightness(float tint) {
         return 0xF000F0;
-    }
-
-    @Override
-    public Rotator getRotator() {
-        // Return null to avoid camera billboarding (fixed rotation based on angle)
-        return null;
     }
 
     @Override
