@@ -10,6 +10,8 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New friendship particles (hearts + fire) to indicate when friendship changes
 - Added sound effects for max friendship and max enemy
 - New follow, flee, attack, and protect particles & sound effects
+- New animated lead particle (arrows pointing where they are going)
+- New animated attack particles (with random # of particles)
 
 ### Changed
 - Entity chat data now separates messages and friendship by player

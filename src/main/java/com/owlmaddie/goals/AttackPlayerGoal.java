@@ -3,6 +3,7 @@ package com.owlmaddie.goals;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.RangedAttackMob;
 import net.minecraft.entity.mob.Angerable;
+import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.GolemEntity;
@@ -95,12 +96,10 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
 
         // Spawn red particles to simulate 'injury'
+        int numParticles = ThreadLocalRandom.current().nextInt(2, 7);  // Random number between 2 (inclusive) and 7 (exclusive)
         ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ATTACK_PARTICLE,
-                this.targetEntity.getX(),
-                this.targetEntity.getBodyY(0.5D),
-                this.targetEntity.getZ(),
-                4, // number of particles
-                0.1, 0.1, 0.1, 0.2); // speed and randomness
+                this.targetEntity.getX(), this.targetEntity.getBodyY(0.5D), this.targetEntity.getZ(),
+                numParticles, 0.5, 0.5, 0.1, 0.4);
     }
 
     @Override

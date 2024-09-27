@@ -3,6 +3,7 @@ package com.owlmaddie;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.particle.CreatureParticleFactory;
+import com.owlmaddie.particle.LeadParticleFactory;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.ClickHandler;
 import com.owlmaddie.ui.PlayerMessageManager;
@@ -33,6 +34,7 @@ public class ClientInit implements ClientModInitializer {
         ParticleFactoryRegistry.getInstance().register(FOLLOW_ENEMY_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(FOLLOW_FRIEND_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(PROTECT_PARTICLE, CreatureParticleFactory::new);
+        ParticleFactoryRegistry.getInstance().register(LEAD_PARTICLE, LeadParticleFactory::new);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             tickCounter++;
