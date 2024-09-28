@@ -143,7 +143,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
 
             // Pass the angle using the "speed" argument, with deltaX, deltaY, deltaZ set to 0
             LeadParticleEffect effect = new LeadParticleEffect(angle);
-            serverWorld.spawnParticles(effect, position.x, position.y + 0.3, position.z, 1, 0, 0, 0, 0);
+            serverWorld.spawnParticles(effect, position.x, position.y + 0.05, position.z, 1, 0, 0, 0, 0);
         }
     }
 
@@ -158,20 +158,17 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         double angleDegrees = Math.toDegrees(angleRadians);
 
         // Convert the calculated angle to Minecraft's yaw system:
-        // Shift by 90 degrees, and invert to match Minecraft's clockwise yaw system
         double minecraftYaw = (360 - (angleDegrees + 90)) % 360;
 
         // Correct the 180-degree flip
         minecraftYaw = (minecraftYaw + 180) % 360;
-
-        // Ensure the yaw is positive
         if (minecraftYaw < 0) {
             minecraftYaw += 360;
         }
 
         // Emit particles along the ray using the corrected angle in radians
         double distance = start.distanceTo(end);
-        for (double d = 0; d <= distance; d += 4) {
+        for (double d = 0; d <= distance; d += 5) {
             Vec3d pos = start.add(direction.normalize().multiply(d));
             emitParticleAt(pos, Math.toRadians(minecraftYaw));  // Convert back to radians for rendering
         }
