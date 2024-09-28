@@ -25,10 +25,7 @@ import net.minecraft.village.VillageGossipType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -127,7 +124,9 @@ public class EntityChatData {
 
         } else {
             // Return a blank player data
-            return new PlayerData();
+            PlayerData newPlayerData = new PlayerData();
+            this.players.put(playerId, newPlayerData);
+            return newPlayerData;
         }
     }
 
@@ -241,13 +240,8 @@ public class EntityChatData {
             this.auto_generated = 0;
         }
 
-        // Add USER Message
-        if (systemPrompt.equals("system-character")) {
-            // Add message without playerId (so it does not display)
-            this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getUuid());
-        } else if (systemPrompt.equals("system-chat")) {
-            this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getUuid());
-        }
+        // Add message
+        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getUuid());
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage);
@@ -258,6 +252,11 @@ public class EntityChatData {
 
         // Get messages for player
         PlayerData playerData = this.getPlayerData(player.getUuidAsString());
+        if (playerData.messages.size() == 1 && systemPrompt.equals("system-chat")) {
+            // No messages exist yet for this player (start with normal greeting)
+            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+            playerData.messages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT));
+        }
 
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, playerData.messages, false).thenAccept(output_message -> {
@@ -267,11 +266,8 @@ public class EntityChatData {
 
                 // Add NEW CHARACTER sheet & greeting
                 this.characterSheet = output_message;
-                String shortGreeting = getCharacterProp("short greeting");
-                if (shortGreeting.isEmpty()) {
-                    shortGreeting = Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE);
-                }
-                this.addMessage(shortGreeting.replace("\n", " "), ChatDataManager.ChatSender.ASSISTANT, player.getUuid());
+                String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getUuid());
 
             } else if (output_message != null && systemPrompt.equals("system-chat")) {
                 // Chat Message: Parse message for behaviors
