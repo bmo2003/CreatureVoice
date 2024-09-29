@@ -95,8 +95,10 @@ public class EntityChatData {
         // Ensure the blank player data entry exists
         PlayerData blankPlayerData = this.players.computeIfAbsent("", k -> new PlayerData());
 
-        // Migrate the old data to the blank player
+        // Migrate the old data to the blank player and assign timestamps if missing
         if (this.legacyMessages != null) {
+            this.legacyMessages.forEach(message -> message.timestamp =
+                    message.timestamp != null ? message.timestamp : System.currentTimeMillis());
             blankPlayerData.messages.addAll(this.legacyMessages);
         }
         blankPlayerData.friendship = this.legacyFriendship;

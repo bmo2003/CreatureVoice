@@ -14,7 +14,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New animated attack particles (with random # of particles)
 
 ### Changed
-- Entity chat data now separates messages and friendship by player
+- Entity chat data now separates messages and friendship by player and includes timestamps
 - Removed "pirate" speaking style and a few <non-response> outputs
 - Passive entities no longer emit damage particles when attacking, they emit custom attack particles
 - Protect now auto sets friendship to 1 (if <= 0), to prevent entity from attacking and protecting at the same time

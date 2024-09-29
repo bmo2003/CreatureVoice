@@ -2,12 +2,8 @@ package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.owlmaddie.commands.ConfigurationHandler;
-import com.owlmaddie.items.RarityItemCollector;
-import com.owlmaddie.json.QuestJson;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Rarity;
 import net.minecraft.util.WorldSavePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,7 +29,6 @@ public class ChatDataManager {
     public static int MAX_CHAR_IN_USER_MESSAGE = 512;
     public static int TICKS_TO_DISPLAY_USER_MESSAGE = 70;
     public static int MAX_AUTOGENERATE_RESPONSES = 3;
-    public QuestJson quest = null;
     private static final Gson GSON = new Gson();
 
     public enum ChatStatus {
