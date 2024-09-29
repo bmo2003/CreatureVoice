@@ -24,7 +24,7 @@ public class LeadParticle extends SpriteBillboardParticle {
         this.velocityZ = 0f;
         this.spriteProvider = spriteProvider;
         this.angle = (float) angle;
-        this.scale(6F);
+        this.scale(4.5F);
         this.setMaxAge(40);
         this.setSpriteForAge(spriteProvider);
     }

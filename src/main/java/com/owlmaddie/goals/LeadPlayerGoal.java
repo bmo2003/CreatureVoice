@@ -166,9 +166,11 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             minecraftYaw += 360;
         }
 
-        // Emit particles along the ray using the corrected angle in radians
+        // Emit particles along the ray from startRange to endRange
         double distance = start.distanceTo(end);
-        for (double d = 0; d <= distance; d += 5) {
+        double startRange = Math.min(5, distance);;
+        double endRange = Math.min(startRange + 10, distance);
+        for (double d = startRange; d <= endRange; d += 5) {
             Vec3d pos = start.add(direction.normalize().multiply(d));
             emitParticleAt(pos, Math.toRadians(minecraftYaw));  // Convert back to radians for rendering
         }
