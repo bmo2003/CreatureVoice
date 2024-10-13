@@ -12,6 +12,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New follow, flee, attack, and protect particles & sound effects
 - New animated lead particle (arrows pointing where they are going)
 - New animated attack particles (with random # of particles)
+- New sounds and particles when max friendship with EnderDragon (plus XP drop)
 
 ### Changed
 - Entity chat data now separates messages and friendship by player and includes timestamps

@@ -13,6 +13,7 @@ import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
 import com.owlmaddie.utils.VillagerEntityAccessor;
+import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -20,8 +21,11 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.village.VillageGossipType;
+import net.minecraft.world.GameRules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -365,6 +369,32 @@ public class EntityChatData {
                             if (entity instanceof EnderDragonEntity && new_friendship == 3) {
                                 // Trigger end of game (friendship always wins!)
                                 EnderDragonEntity dragon = (EnderDragonEntity) entity;
+
+                                // Emit particles & sound
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_BIG_PARTICLE, 3, 200);
+                                entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.PLAYERS, 0.3F, 1.0F);
+                                entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 0.5F, 1.0F);
+
+                                // Check if the game rule for mob loot is enabled
+                                boolean doMobLoot = entity.getWorld().getGameRules().getBoolean(GameRules.DO_MOB_LOOT);
+
+                                // If this is the first time the dragon is 'befriended', adjust the XP
+                                int baseXP = 500;
+                                if (dragon.getFight() != null && !dragon.getFight().hasPreviouslyKilled()) {
+                                    baseXP = 12000;
+                                }
+
+                                // If the world is a server world and mob loot is enabled, spawn XP orbs
+                                if (entity.getWorld() instanceof ServerWorld && doMobLoot) {
+                                    // Loop to spawn XP orbs
+                                    for (int j = 1; j <= 11; j++) {
+                                        float xpFraction = (j == 11) ? 0.2F : 0.08F;
+                                        int xpAmount = MathHelper.floor((float)baseXP * xpFraction);
+                                        ExperienceOrbEntity.spawn((ServerWorld)entity.getWorld(), entity.getPos(), xpAmount);
+                                    }
+                                }
+
+                                // Mark fight as over
                                 dragon.getFight().dragonKilled(dragon);
                             }
                         }
