@@ -25,7 +25,7 @@ public class MixinLivingEntity {
 
     private EntityChatData getChatData(LivingEntity entity, PlayerEntity player) {
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        return chatDataManager.getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
+        return chatDataManager.getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
     }
 
     @Inject(method = "canTarget(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)

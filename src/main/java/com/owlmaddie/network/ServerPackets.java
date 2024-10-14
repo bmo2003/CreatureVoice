@@ -93,7 +93,7 @@ public class ServerPackets {
             server.execute(() -> {
                 MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
                     if (chatData.characterSheet.isEmpty()) {
                         generate_character(userLanguage, chatData, player, entity);
                     }
@@ -114,7 +114,7 @@ public class ServerPackets {
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
                     LOGGER.debug("Update read lines to " + lineNumber + " for: " + entity.getType().toString());
                     chatData.setLineNumber(lineNumber);
                 }
@@ -134,7 +134,7 @@ public class ServerPackets {
                     TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
                     EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
                     LOGGER.debug("Hiding chat bubble for: " + entity.getType().toString());
                     chatData.setStatus(ChatDataManager.ChatStatus.valueOf(status_name));
                 }
@@ -178,7 +178,7 @@ public class ServerPackets {
             server.execute(() -> {
                 MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), entityId);
                 if (entity != null) {
-                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getUuidAsString());
+                    EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
                     if (chatData.characterSheet.isEmpty()) {
                         generate_character(userLanguage, chatData, player, entity);
                     } else {
@@ -249,8 +249,8 @@ public class ServerPackets {
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
             String entityUUID = entity.getUuidAsString();
             if (entity.getRemovalReason() == Entity.RemovalReason.KILLED && ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
-                LOGGER.info("Entity killed (" + entityUUID + "), removing chat data.");
-                ChatDataManager.getServerInstance().entityChatDataMap.remove(entityUUID);
+                LOGGER.info("Entity killed (" + entityUUID + "), updating death time stamp.");
+                ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
             }
         });
 

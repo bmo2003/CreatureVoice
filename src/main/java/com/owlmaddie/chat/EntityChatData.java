@@ -51,6 +51,8 @@ public class EntityChatData {
     public ChatDataManager.ChatSender sender;
     public int auto_generated;
     public List<ChatMessage> previousMessages;
+    public Long born;
+    public Long death;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
@@ -63,11 +65,11 @@ public class EntityChatData {
     // The map to store data for each player interacting with this entity
     public Map<String, PlayerData> players;
 
-    public EntityChatData(String entityId, String playerId) {
+    public EntityChatData(String entityId, String playerName) {
         this.entityId = entityId;
         this.players = new HashMap<>();
-        if (!playerId.isEmpty()) {
-            this.players.put(playerId, new PlayerData());
+        if (!playerName.isEmpty()) {
+            this.players.put(playerName, new PlayerData());
         }
         this.currentMessage = "";
         this.currentLineNumber = 0;
@@ -76,6 +78,7 @@ public class EntityChatData {
         this.sender = ChatDataManager.ChatSender.USER;
         this.auto_generated = 0;
         this.previousMessages = new ArrayList<>();
+        this.born = System.currentTimeMillis();;
 
         // Old, unused migrated properties
         this.legacyPlayerId = null;
@@ -106,6 +109,9 @@ public class EntityChatData {
             }
         }
         blankPlayerData.friendship = this.legacyFriendship;
+        if (this.born == null) {
+            this.born = System.currentTimeMillis();;
+        }
 
         // Clean up old player data
         this.legacyPlayerId = null;

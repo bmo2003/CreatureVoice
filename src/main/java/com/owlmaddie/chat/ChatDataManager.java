@@ -73,8 +73,8 @@ public class ChatDataManager {
     }
 
     // Retrieve chat data for a specific entity, or create it if it doesn't exist
-    public EntityChatData getOrCreateChatData(String entityId, String playerId) {
-        return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId, playerId));
+    public EntityChatData getOrCreateChatData(String entityId, String playerName) {
+        return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId, playerName));
     }
 
     // Update the UUID in the map (i.e. bucketed entity and then released, changes their UUID)
