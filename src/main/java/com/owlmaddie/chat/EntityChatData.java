@@ -50,14 +50,11 @@ public class EntityChatData {
     public String characterSheet;
     public ChatDataManager.ChatSender sender;
     public int auto_generated;
+    public List<ChatMessage> previousMessages;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
     private String legacyPlayerId;
-
-    @SerializedName("previousMessages")
-    @Expose(serialize = false)
-    public List<ChatMessage> legacyMessages;
 
     @SerializedName("friendship")
     @Expose(serialize = false)
@@ -78,9 +75,10 @@ public class EntityChatData {
         this.status = ChatDataManager.ChatStatus.NONE;
         this.sender = ChatDataManager.ChatSender.USER;
         this.auto_generated = 0;
+        this.previousMessages = new ArrayList<>();
 
+        // Old, unused migrated properties
         this.legacyPlayerId = null;
-        this.legacyMessages = null;
         this.legacyFriendship = null;
     }
 
@@ -99,22 +97,23 @@ public class EntityChatData {
         // Ensure the blank player data entry exists
         PlayerData blankPlayerData = this.players.computeIfAbsent("", k -> new PlayerData());
 
-        // Migrate the old data to the blank player and assign timestamps if missing
-        if (this.legacyMessages != null) {
-            this.legacyMessages.forEach(message -> message.timestamp =
-                    message.timestamp != null ? message.timestamp : System.currentTimeMillis());
-            blankPlayerData.messages.addAll(this.legacyMessages);
+        // Update the previousMessages arraylist and add timestamps if missing
+        if (this.previousMessages != null) {
+            for (ChatMessage message : this.previousMessages) {
+                if (message.timestamp == null) {
+                    message.timestamp = System.currentTimeMillis();
+                }
+            }
         }
         blankPlayerData.friendship = this.legacyFriendship;
 
         // Clean up old player data
         this.legacyPlayerId = null;
-        this.legacyMessages = null;
         this.legacyFriendship = null;
     }
 
     // Get the player data (or fallback to the blank player)
-    public PlayerData getPlayerData(String playerId) {
+    public PlayerData getPlayerData(String playerName) {
         if (this.players == null) {
             return new PlayerData();
         }
@@ -124,21 +123,29 @@ public class EntityChatData {
             // If a blank migrated legacy entity is found, always return this
             return this.players.get("");
 
-        } else if (this.players.containsKey(playerId)) {
+        } else if (this.players.containsKey(playerName)) {
             // Return a specific player's data
-            return this.players.get(playerId);
+            return this.players.get(playerName);
 
         } else {
             // Return a blank player data
             PlayerData newPlayerData = new PlayerData();
-            this.players.put(playerId, newPlayerData);
+            this.players.put(playerName, newPlayerData);
             return newPlayerData;
         }
     }
 
+    // Get a filtered list of ChatMessages by a particular name (plus any messages with null or empty names)
+    // For example, if chat data is migrated before 'name' was stored, we want those message to be visible by everyone.
+    public ArrayList<ChatMessage> getMessagesByName(String playerName) {
+        return this.previousMessages.stream()
+                .filter(message -> message.name == null || message.name.isEmpty() || message.name.equals(playerName))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
     // Generate light version of chat data (no previous messages)
-    public EntityChatDataLight toLightVersion(UUID playerId) {
-        return new EntityChatDataLight(this, playerId);
+    public EntityChatDataLight toLightVersion(String playerName) {
+        return new EntityChatDataLight(this, playerName);
     }
 
     public String getCharacterProp(String propertyName) {
@@ -225,7 +232,7 @@ public class EntityChatData {
         contextData.put("entity_skills", getCharacterProp("Skills"));
         contextData.put("entity_background", getCharacterProp("Background"));
 
-        PlayerData playerData = this.getPlayerData(player.getUuidAsString());
+        PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (playerData != null) {
             contextData.put("entity_friendship", String.valueOf(playerData.friendship));
         } else {
@@ -247,7 +254,7 @@ public class EntityChatData {
         }
 
         // Add message
-        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getUuid());
+        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getDisplayName().getString());
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage);
@@ -256,24 +263,27 @@ public class EntityChatData {
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
         String promptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), systemPrompt);
 
+        // Get all message (filtered by player)
+        List<ChatMessage> playerMessages = getMessagesByName(player.getDisplayName().getString());
+
         // Get messages for player
-        PlayerData playerData = this.getPlayerData(player.getUuidAsString());
-        if (playerData.messages.size() == 1 && systemPrompt.equals("system-chat")) {
+        PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
+        if (playerMessages.size() == 1 && systemPrompt.equals("system-chat")) {
             // No messages exist yet for this player (start with normal greeting)
             String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
-            playerData.messages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT));
+            previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
         }
 
         // fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, playerData.messages, false).thenAccept(output_message -> {
+        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, playerMessages, false).thenAccept(output_message -> {
             if (output_message != null && systemPrompt.equals("system-character")) {
                 // Character Sheet: Remove system-character message from previous messages
-                playerData.messages.clear();
+                previousMessages.clear();
 
                 // Add NEW CHARACTER sheet & greeting
                 this.characterSheet = output_message;
                 String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
-                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getUuid());
+                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString());
 
             } else if (output_message != null && systemPrompt.equals("system-chat")) {
                 // Chat Message: Parse message for behaviors
@@ -463,7 +473,7 @@ public class EntityChatData {
                 }
 
                 // Add ASSISTANT message to history
-                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player.getUuid());
+                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString());
 
                 // Get cleaned message (i.e. no <BEHAVIOR> strings)
                 String cleanedMessage = result.getCleanedMessage();
@@ -476,7 +486,7 @@ public class EntityChatData {
             } else {
                 // Error / No Chat Message (Failure)
                 String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player.getUuid());
+                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString());
 
                 // Determine error message to display
                 String errorMessage = "Help is available at discord.creaturechat.com";
@@ -490,7 +500,7 @@ public class EntityChatData {
 
                 // Clear history (if no character sheet was generated)
                 if (characterSheet.isEmpty()) {
-                    playerData.messages.clear();
+                    previousMessages.clear();
                 }
             }
 
@@ -504,15 +514,12 @@ public class EntityChatData {
     }
 
     // Add a message to the history and update the current message
-    public void addMessage(String message, ChatDataManager.ChatSender messageSender, UUID playerId) {
+    public void addMessage(String message, ChatDataManager.ChatSender messageSender, String playerName) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
-        // Get or create player data
-        PlayerData playerData = getPlayerData(playerId.toString());
-
         // Add message to history
-        playerData.messages.add(new ChatMessage(truncatedMessage, messageSender));
+        previousMessages.add(new ChatMessage(truncatedMessage, messageSender, playerName));
 
         // Set new message and reset line number of displayed text
         currentMessage = truncatedMessage;

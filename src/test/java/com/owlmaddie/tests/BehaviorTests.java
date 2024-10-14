@@ -203,7 +203,7 @@ public class BehaviorTests {
 
             // Add test message
             for (String message : messages) {
-                entityTestData.addMessage(message, ChatDataManager.ChatSender.USER);
+                entityTestData.addMessage(message, ChatDataManager.ChatSender.USER, "TestPlayer1");
             }
 
             // Get prompt

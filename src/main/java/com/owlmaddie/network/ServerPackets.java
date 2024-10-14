@@ -198,7 +198,7 @@ public class ServerPackets {
 
             LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
             // Get lite JSON data & compress to byte array
-            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getUuid());
+            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getDisplayName().getString());
             byte[] compressedData = Compression.compressString(chatDataJSON);
             if (compressedData == null) {
                 LOGGER.error("Failed to compress chat data.");
@@ -346,12 +346,13 @@ public class ServerPackets {
                 // Iterate over all players and send the packet
                 for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
 
-                    PlayerData playerData = chatData.getPlayerData(player.getUuidAsString());
+                    PlayerData playerData = chatData.getPlayerData(player.getDisplayName().getString());
                     PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 
                     // Write the entity's chat updated data
                     buffer.writeString(chatData.entityId);
                     buffer.writeString(player.getUuidAsString());
+                    buffer.writeString(player.getDisplayName().getString());
                     buffer.writeString(chatData.currentMessage);
                     buffer.writeInt(chatData.currentLineNumber);
                     buffer.writeString(chatData.status.toString());

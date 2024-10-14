@@ -18,7 +18,7 @@ public class EntityChatDataLight {
     public Map<String, PlayerData> players;
 
     // Constructor to initialize the light version from the full version
-    public EntityChatDataLight(EntityChatData fullData, UUID playerId) {
+    public EntityChatDataLight(EntityChatData fullData, String playerName) {
         this.entityId = fullData.entityId;
         this.currentMessage = fullData.currentMessage;
         this.currentLineNumber = fullData.currentLineNumber;
@@ -27,8 +27,7 @@ public class EntityChatDataLight {
 
         // Initialize the players map and add only the current player's data
         this.players = new HashMap<>();
-        String playerIdStr = playerId.toString();
-        PlayerData playerData = fullData.getPlayerData(playerId.toString());
-        this.players.put(playerIdStr, playerData);
+        PlayerData playerData = fullData.getPlayerData(playerName);
+        this.players.put(playerName, playerData);
     }
 }

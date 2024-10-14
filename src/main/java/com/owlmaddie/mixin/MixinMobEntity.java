@@ -55,7 +55,7 @@ public class MixinMobEntity {
         // Get chat data for entity
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
         EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString(), player.getUuidAsString());
-        PlayerData playerData = entityData.getPlayerData(player.getUuidAsString());
+        PlayerData playerData = entityData.getPlayerData(player.getDisplayName().getString());
 
         // Check if the player successfully interacts with an item
         if (player instanceof ServerPlayerEntity) {

@@ -60,12 +60,12 @@ public class EntityTestData {
     }
 
     // Add a message to the history and update the current message
-    public void addMessage(String message, ChatDataManager.ChatSender messageSender) {
+    public void addMessage(String message, ChatDataManager.ChatSender messageSender, String playerName) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
         // Add message to history
-        previousMessages.add(new ChatMessage(truncatedMessage, messageSender));
+        previousMessages.add(new ChatMessage(truncatedMessage, messageSender, playerName));
 
         // Set new message and reset line number of displayed text
         currentMessage = truncatedMessage;
