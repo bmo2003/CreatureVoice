@@ -15,7 +15,8 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New sounds and particles when max friendship with EnderDragon (plus XP drop)
 
 ### Changed
-- Entity chat data now separates messages and friendship by player and includes timestamps
+- Entity chat data now separates friendship by player and includes timestamps
+- When entity conversations switch players, a message is added for clarity (so the entity knows a new player entered the conversation)
 - Data is no longer deleted on entity death, and instead a "death" timestamp is recorded
 - Removed "pirate" speaking style and a few <non-response> outputs
 - Passive entities no longer emit damage particles when attacking, they emit custom attack particles

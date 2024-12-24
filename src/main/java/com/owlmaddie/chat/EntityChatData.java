@@ -141,14 +141,6 @@ public class EntityChatData {
         }
     }
 
-    // Get a filtered list of ChatMessages by a particular name (plus any messages with null or empty names)
-    // For example, if chat data is migrated before 'name' was stored, we want those message to be visible by everyone.
-    public ArrayList<ChatMessage> getMessagesByName(String playerName) {
-        return this.previousMessages.stream()
-                .filter(message -> message.name == null || message.name.isEmpty() || message.name.equals(playerName))
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
     // Generate light version of chat data (no previous messages)
     public EntityChatDataLight toLightVersion(String playerName) {
         return new EntityChatDataLight(this, playerName);
@@ -269,19 +261,16 @@ public class EntityChatData {
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
         String promptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), systemPrompt);
 
-        // Get all message (filtered by player)
-        List<ChatMessage> playerMessages = getMessagesByName(player.getDisplayName().getString());
-
         // Get messages for player
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
-        if (playerMessages.size() == 1 && systemPrompt.equals("system-chat")) {
+        if (previousMessages.size() == 1 && systemPrompt.equals("system-chat")) {
             // No messages exist yet for this player (start with normal greeting)
             String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
             previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
         }
 
         // fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, playerMessages, false).thenAccept(output_message -> {
+        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
             if (output_message != null && systemPrompt.equals("system-character")) {
                 // Character Sheet: Remove system-character message from previous messages
                 previousMessages.clear();
@@ -520,24 +509,36 @@ public class EntityChatData {
     }
 
     // Add a message to the history and update the current message
-    public void addMessage(String message, ChatDataManager.ChatSender messageSender, String playerName) {
+    public void addMessage(String message, ChatDataManager.ChatSender sender, String playerName) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
-        // Add message to history
-        previousMessages.add(new ChatMessage(truncatedMessage, messageSender, playerName));
+        // Add context-switching logic for USER messages only
+        if (sender == ChatDataManager.ChatSender.USER && previousMessages.size() > 1) {
+            ChatMessage lastMessage = previousMessages.get(previousMessages.size() - 1);
+            if (!lastMessage.name.equals(playerName)) {
+                boolean isReturningPlayer = previousMessages.stream().anyMatch(msg -> msg.name.equals(playerName));
+                String note = isReturningPlayer
+                        ? "<returning player: " + playerName + " resumes the conversation>"
+                        : "<a new player has joined the conversation: " + playerName + ">";
+                previousMessages.add(new ChatMessage(note, sender, playerName));
+            }
+        }
 
-        // Set new message and reset line number of displayed text
-        currentMessage = truncatedMessage;
-        currentLineNumber = 0;
-        if (messageSender == ChatDataManager.ChatSender.ASSISTANT) {
+        // Add message to history
+        previousMessages.add(new ChatMessage(truncatedMessage, sender, playerName));
+
+        // Update current message and reset line number of displayed text
+        this.currentMessage = truncatedMessage;
+        this.currentLineNumber = 0;
+        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
             // Show new generated message
             status = ChatDataManager.ChatStatus.DISPLAY;
-        } else if (messageSender == ChatDataManager.ChatSender.USER) {
+        } else if (sender == ChatDataManager.ChatSender.USER) {
             // Show pending icon
             status = ChatDataManager.ChatStatus.PENDING;
         }
-        sender = messageSender;
+        this.sender = sender;
 
         // Broadcast to all players
         ServerPackets.BroadcastPacketMessage(this);
