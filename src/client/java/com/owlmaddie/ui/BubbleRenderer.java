@@ -480,14 +480,19 @@ public class BubbleRenderer {
             PlayerData playerData = null;
             if (entity instanceof MobEntity) {
                 chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
+                if (chatData != null) {
+                    playerData = chatData.getPlayerData(player.getDisplayName().getString());
+                }
             } else if (entity instanceof PlayerEntity) {
+                PlayerEntity playerEntity = (PlayerEntity) entity;
                 chatData = PlayerMessageManager.getMessage(entity.getUuid());
+                if (chatData != null) {
+                    playerData = chatData.getPlayerData(playerEntity.getDisplayName().getString());
+                }
             }
 
-            // Get playerData: friendship (if any)
-            if (chatData != null) {
-                playerData = chatData.getPlayerData(player.getDisplayName().getString());
-            } else {
+            // Don't allow a null playerData
+            if (playerData == null) {
                 playerData = new PlayerData();
             }
 

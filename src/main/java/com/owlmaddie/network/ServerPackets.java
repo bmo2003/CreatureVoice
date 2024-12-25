@@ -359,7 +359,7 @@ public class ServerPackets {
                     buffer.writeString(chatData.sender.toString());
                     buffer.writeInt(playerData.friendship);
 
-                    LOGGER.debug("Server broadcast message to client: " + player.getName().getString() + " | Message: " + chatData.currentMessage);
+                    LOGGER.debug("Server broadcast message to client: " + player.getName().getString() + " | Status: " + chatData.status.toString() + " | Message: " + chatData.currentMessage);
                     ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
                 }
                 break;

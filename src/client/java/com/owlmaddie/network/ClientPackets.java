@@ -102,7 +102,7 @@ public class ClientPackets {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
             UUID playerId = UUID.fromString(buffer.readString());
-            String playerName =buffer.readString(32767);
+            String playerName = buffer.readString(32767);
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -124,7 +124,7 @@ public class ClientPackets {
                     PlayerData playerData = chatData.getPlayerData(playerName);
                     playerData.friendship = friendship;
 
-                    if (chatData.sender == ChatDataManager.ChatSender.USER) {
+                    if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
                         // Add player message to queue for rendering
                         PlayerMessageManager.addMessage(playerId, playerName, chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
                     }
