@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PlayerMessage extends EntityChatData {
     public AtomicInteger tickCountdown;
 
-    public PlayerMessage(String playerId, String messageText, int ticks) {
-        super("", playerId);
+    public PlayerMessage(String playerId, String playerName, String messageText, int ticks) {
+        super(playerId, playerName);
         this.currentMessage = messageText;
         this.currentLineNumber = 0;
         this.tickCountdown = new AtomicInteger(ticks);

@@ -475,14 +475,20 @@ public class BubbleRenderer {
             // Get the player
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
-            // Look-up greeting (if any)
+            // Get chat message (if any)
             EntityChatData chatData = null;
             PlayerData playerData = null;
             if (entity instanceof MobEntity) {
                 chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
-                playerData = chatData.getPlayerData(player.getDisplayName().getString());
             } else if (entity instanceof PlayerEntity) {
                 chatData = PlayerMessageManager.getMessage(entity.getUuid());
+            }
+
+            // Get playerData: friendship (if any)
+            if (chatData != null) {
+                playerData = chatData.getPlayerData(player.getDisplayName().getString());
+            } else {
+                playerData = new PlayerData();
             }
 
             float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);

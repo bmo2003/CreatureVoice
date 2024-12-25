@@ -126,7 +126,7 @@ public class ClientPackets {
 
                     if (chatData.sender == ChatDataManager.ChatSender.USER) {
                         // Add player message to queue for rendering
-                        PlayerMessageManager.addMessage(playerId, chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                        PlayerMessageManager.addMessage(playerId, playerName, chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
                     }
 
                     // Play sound with volume based on distance (from player or entity)
