@@ -106,6 +106,9 @@ public class EntityChatData {
                 if (message.timestamp == null) {
                     message.timestamp = System.currentTimeMillis();
                 }
+                if (message.name == null || message.name.isEmpty()) {
+                    message.name = "";
+                }
             }
         }
         blankPlayerData.friendship = this.legacyFriendship;
@@ -524,8 +527,8 @@ public class EntityChatData {
         // Add context-switching logic for USER messages only
         if (sender == ChatDataManager.ChatSender.USER && previousMessages.size() > 1) {
             ChatMessage lastMessage = previousMessages.get(previousMessages.size() - 1);
-            if (!lastMessage.name.equals(playerName)) {
-                boolean isReturningPlayer = previousMessages.stream().anyMatch(msg -> msg.name.equals(playerName));
+            if (lastMessage.name == null || !lastMessage.name.equals(playerName)) {  // Null-safe check
+                boolean isReturningPlayer = previousMessages.stream().anyMatch(msg -> playerName.equals(msg.name)); // Avoid NPE here too
                 String note = isReturningPlayer
                         ? "<returning player: " + playerName + " resumes the conversation>"
                         : "<a new player has joined the conversation: " + playerName + ">";
