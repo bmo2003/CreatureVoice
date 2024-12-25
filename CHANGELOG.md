@@ -13,6 +13,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - New animated lead particle (arrows pointing where they are going)
 - New animated attack particles (with random # of particles)
 - New sounds and particles when max friendship with EnderDragon (plus XP drop)
+- New `/creaturechat story` command to customize the character creation and chat prompts with custom text.
 
 ### Changed
 - Entity chat data now separates friendship by player and includes timestamps

@@ -160,7 +160,7 @@ public class EntityChatData {
     }
 
     // Generate context object
-    public Map<String, String> getPlayerContext(ServerPlayerEntity player, String userLanguage) {
+    public Map<String, String> getPlayerContext(ServerPlayerEntity player, String userLanguage, ConfigurationHandler.Config config) {
         // Add PLAYER context information
         Map<String, String> contextData = new HashMap<>();
         contextData.put("player_name", player.getDisplayName().getString());
@@ -187,6 +187,14 @@ public class EntityChatData {
                 .map(entry -> entry.getKey().getTranslationKey() + " x" + (entry.getValue().getAmplifier() + 1))
                 .collect(Collectors.joining(", "));
         contextData.put("player_active_effects", effectsString);
+
+        // Add custom story section (if any)
+        if (!config.getStory().isEmpty()) {
+            contextData.put("story", "Story: " + config.getStory());
+        } else {
+            contextData.put("story", "");
+        }
+
 
         // Get World time (as 24 hour value)
         int hours = (int) ((player.getWorld().getTimeOfDay() / 1000 + 6) % 24); // Minecraft day starts at 6 AM
@@ -254,12 +262,12 @@ public class EntityChatData {
         // Add message
         this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getDisplayName().getString());
 
-        // Add PLAYER context information
-        Map<String, String> contextData = getPlayerContext(player, userLanguage);
-
         // Get config (api key, url, settings)
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
         String promptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), systemPrompt);
+
+        // Add PLAYER context information
+        Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
 
         // Get messages for player
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());

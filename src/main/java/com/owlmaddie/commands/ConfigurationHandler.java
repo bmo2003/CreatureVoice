@@ -73,6 +73,7 @@ public class ConfigurationHandler {
         private int timeout = 10;
         private List<String> whitelist = new ArrayList<>();
         private List<String> blacklist = new ArrayList<>();
+        private String story = "";
 
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
@@ -110,5 +111,8 @@ public class ConfigurationHandler {
 
         public List<String> getBlacklist() { return blacklist; }
         public void setBlacklist(List<String> blacklist) { this.blacklist = blacklist; }
+
+        public String getStory() { return story; }
+        public void setStory(String story) { this.story = story; }
     }
 }
