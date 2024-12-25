@@ -9,8 +9,12 @@ import net.minecraft.util.math.MathHelper;
 
 import static com.owlmaddie.network.ServerPackets.*;
 
+/**
+ * The {@code ParticleEmitter} class provides utility methods for emitting custom particles and sounds
+ * around entities in the game. It calculates particle positions based on entity orientation
+ * and triggers sound effects based on particle type and count.
+ */
 public class ParticleEmitter {
-
     public static void emitCreatureParticle(ServerWorld world, Entity entity, DefaultParticleType particleType, double spawnSize, int count) {
         // Calculate the offset for the particle to appear above and in front of the entity
         float yaw = entity.getHeadYaw();

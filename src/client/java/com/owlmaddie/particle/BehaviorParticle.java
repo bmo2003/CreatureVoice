@@ -4,7 +4,10 @@ import net.minecraft.client.particle.ParticleTextureSheet;
 import net.minecraft.client.particle.SpriteBillboardParticle;
 import net.minecraft.client.world.ClientWorld;
 
-
+/**
+ * The {@code BehaviorParticle} class defines a custom CreatureChat behavior particle with an initial upward velocity
+ * that gradually decreases, ensuring it never moves downward.
+ */
 public class BehaviorParticle extends SpriteBillboardParticle {
     protected BehaviorParticle(ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
         super(world, x, y, z, velocityX, velocityY, velocityZ);

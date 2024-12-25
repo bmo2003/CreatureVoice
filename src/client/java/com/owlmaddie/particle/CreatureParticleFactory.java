@@ -5,6 +5,10 @@ import net.minecraft.client.particle.SpriteProvider;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.DefaultParticleType;
 
+/**
+ * The {@code CreatureParticleFactory} class is responsible for creating instances of
+ * {@link BehaviorParticle} with the specified parameters.
+ */
 public class CreatureParticleFactory implements ParticleFactory<DefaultParticleType> {
     private final SpriteProvider spriteProvider;
 

@@ -20,6 +20,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * The {@code MixinLivingEntity} class modifies the behavior of {@link LivingEntity} to integrate
+ * custom friendship, chat, and death message mechanics. It prevents friendly entities from targeting players,
+ * generates contextual chat messages on attacks, and broadcasts custom death messages for named entities.
+ */
 @Mixin(LivingEntity.class)
 public class MixinLivingEntity {
 
