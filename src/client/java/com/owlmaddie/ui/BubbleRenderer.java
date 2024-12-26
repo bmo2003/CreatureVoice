@@ -484,16 +484,8 @@ public class BubbleRenderer {
                     playerData = chatData.getPlayerData(player.getDisplayName().getString());
                 }
             } else if (entity instanceof PlayerEntity) {
-                PlayerEntity playerEntity = (PlayerEntity) entity;
                 chatData = PlayerMessageManager.getMessage(entity.getUuid());
-                if (chatData != null) {
-                    playerData = chatData.getPlayerData(playerEntity.getDisplayName().getString());
-                }
-            }
-
-            // Don't allow a null playerData
-            if (playerData == null) {
-                playerData = new PlayerData();
+                playerData = new PlayerData(); // no friendship needed for player messages
             }
 
             float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);

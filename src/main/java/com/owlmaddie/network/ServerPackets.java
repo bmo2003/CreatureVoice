@@ -353,7 +353,7 @@ public class ServerPackets {
                     buffer.writeString(chatData.entityId);
                     if (sender != null) {
                         buffer.writeString(sender.getUuidAsString());
-                        buffer.writeString(sender.getDisplayName().toString());
+                        buffer.writeString(sender.getDisplayName().getString());
                     } else {
                         buffer.writeString("");
                         buffer.writeString("Unknown");

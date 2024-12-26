@@ -112,33 +112,45 @@ public class ClientPackets {
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
+            ChatDataManager.ChatStatus status = ChatDataManager.ChatStatus.valueOf(status_name);
             String sender_name = buffer.readString(32767);
+            ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
             int friendship = buffer.readInt();
+            String currentPlayerName = client.player.getDisplayName().getString();
 
             // Update the chat data manager on the client-side
-            String currentPlayerName = client.player.getDisplayName().toString();
             client.execute(() -> { // Make sure to run on the client thread
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
-                if (entity != null) {
-                    ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                    EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), currentPlayerName);
+                if (entity == null) {
+                    return;
+                }
+
+                // Get entity chat data for current entity & player
+                ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), currentPlayerName);
+
+                if (senderPlayerId != null && sender == ChatDataManager.ChatSender.USER && status == ChatDataManager.ChatStatus.DISPLAY) {
+                    // Add player message to queue for rendering
+                    PlayerMessageManager.addMessage(senderPlayerId, message, senderPlayerName, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                    chatData.status = ChatDataManager.ChatStatus.PENDING;
+
+                } else {
+                    // Add entity message
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }
                     chatData.currentLineNumber = line;
-                    chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
-                    chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
-                    PlayerData playerData = chatData.getPlayerData(currentPlayerName);
-                    playerData.friendship = friendship;
+                    chatData.status = status;
+                    chatData.sender = sender;
 
-                    if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                        // Add player message to queue for rendering
-                        PlayerMessageManager.addMessage(senderPlayerId, chatData.currentMessage, senderPlayerName, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                    if (senderPlayerId != null) {
+                        PlayerData playerData = chatData.getPlayerData(senderPlayerName);
+                        playerData.friendship = friendship;
                     }
-
-                    // Play sound with volume based on distance (from player or entity)
-                    playNearbyUISound(client, entity, 0.2f);
                 }
+
+                // Play sound with volume based on distance (from player or entity)
+                playNearbyUISound(client, entity, 0.2f);
             });
         });
 
