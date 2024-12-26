@@ -263,7 +263,7 @@ public class EntityChatData {
         }
 
         // Add message
-        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getDisplayName().getString());
+        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getDisplayName().getString(), systemPrompt);
 
         // Get config (api key, url, settings)
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
@@ -289,7 +289,7 @@ public class EntityChatData {
                 // Add NEW CHARACTER sheet & greeting
                 this.characterSheet = output_message;
                 String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
-                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString());
+                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString(), systemPrompt);
 
             } else if (output_message != null && systemPrompt.equals("system-chat")) {
                 // Chat Message: Parse message for behaviors
@@ -479,7 +479,7 @@ public class EntityChatData {
                 }
 
                 // Add ASSISTANT message to history
-                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString());
+                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString(), systemPrompt);
 
                 // Get cleaned message (i.e. no <BEHAVIOR> strings)
                 String cleanedMessage = result.getCleanedMessage();
@@ -492,7 +492,7 @@ public class EntityChatData {
             } else {
                 // Error / No Chat Message (Failure)
                 String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString());
+                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString(), systemPrompt);
 
                 // Determine error message to display
                 String errorMessage = "Help is available at discord.creaturechat.com";
@@ -520,7 +520,7 @@ public class EntityChatData {
     }
 
     // Add a message to the history and update the current message
-    public void addMessage(String message, ChatDataManager.ChatSender sender, String playerName) {
+    public void addMessage(String message, ChatDataManager.ChatSender sender, String playerName, String systemPrompt) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
@@ -552,7 +552,9 @@ public class EntityChatData {
         this.sender = sender;
 
         // Broadcast to all players
-        ServerPackets.BroadcastPacketMessage(this);
+        if (systemPrompt.equals("system-chat")) {
+            ServerPackets.BroadcastPacketMessage(this);
+        }
     }
 
     // Get wrapped lines
