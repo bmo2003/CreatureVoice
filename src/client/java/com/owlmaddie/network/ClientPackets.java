@@ -101,8 +101,14 @@ public class ClientPackets {
         ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
-            UUID playerId = UUID.fromString(buffer.readString());
-            String playerName = buffer.readString(32767);
+            String sendingPlayerIdStr = buffer.readString(32767);
+            String senderPlayerName = buffer.readString(32767);
+            UUID senderPlayerId;
+            if (!sendingPlayerIdStr.isEmpty()) {
+                senderPlayerId = UUID.fromString(sendingPlayerIdStr);
+            } else {
+                senderPlayerId = null;
+            }
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -110,23 +116,24 @@ public class ClientPackets {
             int friendship = buffer.readInt();
 
             // Update the chat data manager on the client-side
+            String currentPlayerName = client.player.getDisplayName().toString();
             client.execute(() -> { // Make sure to run on the client thread
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity != null) {
                     ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                    EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), playerName);
+                    EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), currentPlayerName);
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }
                     chatData.currentLineNumber = line;
                     chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
                     chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
-                    PlayerData playerData = chatData.getPlayerData(playerName);
+                    PlayerData playerData = chatData.getPlayerData(currentPlayerName);
                     playerData.friendship = friendship;
 
                     if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
                         // Add player message to queue for rendering
-                        PlayerMessageManager.addMessage(playerId, playerName, chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                        PlayerMessageManager.addMessage(senderPlayerId, chatData.currentMessage, senderPlayerName, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
                     }
 
                     // Play sound with volume based on distance (from player or entity)

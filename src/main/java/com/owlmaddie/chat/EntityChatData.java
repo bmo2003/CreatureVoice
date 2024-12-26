@@ -251,9 +251,9 @@ public class EntityChatData {
         return contextData;
     }
 
-    // Generate greeting
-    public void generateMessage(String userLanguage, ServerPlayerEntity player, String systemPrompt, String userMessage, boolean is_auto_message) {
-        this.status = ChatDataManager.ChatStatus.PENDING;
+    // Generate a new character
+    public void generateCharacter(String userLanguage, ServerPlayerEntity player, String userMessage, boolean is_auto_message) {
+        String systemPrompt = "system-character";
         if (is_auto_message) {
             // Increment an auto-generated message
             this.auto_generated++;
@@ -262,8 +262,63 @@ public class EntityChatData {
             this.auto_generated = 0;
         }
 
-        // Add message
-        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player.getDisplayName().getString(), systemPrompt);
+        // Add USER Message
+        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player, systemPrompt);
+
+        // Get config (api key, url, settings)
+        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        String promptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), systemPrompt);
+
+        // Add PLAYER context information
+        Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+
+        // fetch HTTP response from ChatGPT
+        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
+            if (output_message != null) {
+                // Character Sheet: Remove system-character message from previous messages
+                previousMessages.clear();
+
+                // Add NEW CHARACTER sheet & greeting
+                this.characterSheet = output_message;
+                String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+
+            } else {
+                // Error / No Chat Message (Failure)
+                String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
+                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+
+                // Determine error message to display
+                String errorMessage = "Help is available at discord.creaturechat.com";
+                if (!ChatGPTRequest.lastErrorMessage.isEmpty()) {
+                    errorMessage = "Error: " + truncateString(ChatGPTRequest.lastErrorMessage, 55) + "\n" + errorMessage;
+                }
+
+                // Send clickable error message
+                ServerPackets.SendClickableError(player,
+                        errorMessage, "http://discord.creaturechat.com");
+
+                // Clear history (if no character sheet was generated)
+                if (characterSheet.isEmpty()) {
+                    previousMessages.clear();
+                }
+            }
+        });
+    }
+
+    // Generate greeting
+    public void generateMessage(String userLanguage, ServerPlayerEntity player, String userMessage, boolean is_auto_message) {
+        String systemPrompt = "system-chat";
+        if (is_auto_message) {
+            // Increment an auto-generated message
+            this.auto_generated++;
+        } else {
+            // Reset auto-generated counter
+            this.auto_generated = 0;
+        }
+
+        // Add USER Message
+        this.addMessage(userMessage, ChatDataManager.ChatSender.USER, player, systemPrompt);
 
         // Get config (api key, url, settings)
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
@@ -274,7 +329,7 @@ public class EntityChatData {
 
         // Get messages for player
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
-        if (previousMessages.size() == 1 && systemPrompt.equals("system-chat")) {
+        if (previousMessages.size() == 1) {
             // No messages exist yet for this player (start with normal greeting)
             String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
             previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
@@ -282,16 +337,7 @@ public class EntityChatData {
 
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
-            if (output_message != null && systemPrompt.equals("system-character")) {
-                // Character Sheet: Remove system-character message from previous messages
-                previousMessages.clear();
-
-                // Add NEW CHARACTER sheet & greeting
-                this.characterSheet = output_message;
-                String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
-                this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString(), systemPrompt);
-
-            } else if (output_message != null && systemPrompt.equals("system-chat")) {
+            if (output_message != null) {
                 // Chat Message: Parse message for behaviors
                 ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
                 MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
@@ -479,7 +525,7 @@ public class EntityChatData {
                 }
 
                 // Add ASSISTANT message to history
-                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString(), systemPrompt);
+                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 // Get cleaned message (i.e. no <BEHAVIOR> strings)
                 String cleanedMessage = result.getCleanedMessage();
@@ -492,7 +538,7 @@ public class EntityChatData {
             } else {
                 // Error / No Chat Message (Failure)
                 String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString(), systemPrompt);
+                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 // Determine error message to display
                 String errorMessage = "Help is available at discord.creaturechat.com";
@@ -511,7 +557,7 @@ public class EntityChatData {
             }
 
             // Broadcast to all players
-            ServerPackets.BroadcastPacketMessage(this);
+            ServerPackets.BroadcastPacketMessage(this, player);
         });
     }
 
@@ -520,11 +566,12 @@ public class EntityChatData {
     }
 
     // Add a message to the history and update the current message
-    public void addMessage(String message, ChatDataManager.ChatSender sender, String playerName, String systemPrompt) {
+    public void addMessage(String message, ChatDataManager.ChatSender sender, ServerPlayerEntity player, String systemPrompt) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
         // Add context-switching logic for USER messages only
+        String playerName = player.getDisplayName().getString();
         if (sender == ChatDataManager.ChatSender.USER && previousMessages.size() > 1) {
             ChatMessage lastMessage = previousMessages.get(previousMessages.size() - 1);
             if (lastMessage.name == null || !lastMessage.name.equals(playerName)) {  // Null-safe check
@@ -542,19 +589,20 @@ public class EntityChatData {
         // Update current message and reset line number of displayed text
         this.currentMessage = truncatedMessage;
         this.currentLineNumber = 0;
-        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
-            // Show new generated message
-            status = ChatDataManager.ChatStatus.DISPLAY;
-        } else if (sender == ChatDataManager.ChatSender.USER) {
-            // Show pending icon
-            status = ChatDataManager.ChatStatus.PENDING;
-        }
         this.sender = sender;
 
-        // Broadcast to all players
-        if (systemPrompt.equals("system-chat")) {
-            ServerPackets.BroadcastPacketMessage(this);
+        // Determine status for message
+        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
+            status = ChatDataManager.ChatStatus.DISPLAY;
+        } else if (sender == ChatDataManager.ChatSender.USER && systemPrompt.equals("system-chat")) {
+            // Only show system-chat messages above players (not system-character ones)
+            status = ChatDataManager.ChatStatus.DISPLAY;
+        } else {
+            status = ChatDataManager.ChatStatus.PENDING;
         }
+
+        // Broadcast to all players
+        ServerPackets.BroadcastPacketMessage(this, player);
     }
 
     // Get wrapped lines
@@ -574,13 +622,13 @@ public class EntityChatData {
         currentLineNumber = Math.min(Math.max(lineNumber, 0), totalLines);
 
         // Broadcast to all players
-        ServerPackets.BroadcastPacketMessage(this);
+        ServerPackets.BroadcastPacketMessage(this, null);
     }
 
     public void setStatus(ChatDataManager.ChatStatus new_status) {
         status = new_status;
 
         // Broadcast to all players
-        ServerPackets.BroadcastPacketMessage(this);
+        ServerPackets.BroadcastPacketMessage(this, null);
     }
 }

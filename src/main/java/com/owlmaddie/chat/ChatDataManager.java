@@ -85,7 +85,7 @@ public class ChatDataManager {
             LOGGER.info("Updated chat data from UUID (" + oldUUID + ") to UUID (" + newUUID + ")");
 
             // Broadcast to all players
-            ServerPackets.BroadcastPacketMessage(data);
+            ServerPackets.BroadcastPacketMessage(data, null);
         } else {
             LOGGER.info("Unable to update chat data, UUID not found: " + oldUUID);
         }

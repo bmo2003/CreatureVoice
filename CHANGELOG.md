@@ -22,6 +22,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Removed "pirate" speaking style and a few <non-response> outputs
 - Passive entities no longer emit damage particles when attacking, they emit custom attack particles
 - Protect now auto sets friendship to 1 (if <= 0), to prevent entity from attacking and protecting at the same time
+- Seperated `generateCharacter()` and `generateMessage()` functions for simplicity
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds

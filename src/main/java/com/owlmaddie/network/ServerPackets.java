@@ -315,7 +315,7 @@ public class ServerPackets {
         userMessageBuilder.append("They speak in '").append(userLanguage).append("' with a ").append(randomSpeakingStyle).append(" style.");
 
         LOGGER.info(userMessageBuilder.toString());
-        chatData.generateMessage(userLanguage, player, "system-character", userMessageBuilder.toString(), false);
+        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
     }
 
     public static void generate_chat(String userLanguage, EntityChatData chatData, ServerPlayerEntity player, MobEntity entity, String message, boolean is_auto_message) {
@@ -325,11 +325,11 @@ public class ServerPackets {
 
         // Add new message
         LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());
-        chatData.generateMessage(userLanguage, player, "system-chat", message, is_auto_message);
+        chatData.generateMessage(userLanguage, player, message, is_auto_message);
     }
 
     // Send new message to all connected players
-    public static void BroadcastPacketMessage(EntityChatData chatData) {
+    public static void BroadcastPacketMessage(EntityChatData chatData, ServerPlayerEntity sender) {
         for (ServerWorld world : serverInstance.getWorlds()) {
             UUID entityId = UUID.fromString(chatData.entityId);
             MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(world, entityId);
@@ -351,8 +351,13 @@ public class ServerPackets {
 
                     // Write the entity's chat updated data
                     buffer.writeString(chatData.entityId);
-                    buffer.writeString(player.getUuidAsString());
-                    buffer.writeString(player.getDisplayName().getString());
+                    if (sender != null) {
+                        buffer.writeString(sender.getUuidAsString());
+                        buffer.writeString(sender.getDisplayName().toString());
+                    } else {
+                        buffer.writeString("");
+                        buffer.writeString("Unknown");
+                    }
                     buffer.writeString(chatData.currentMessage);
                     buffer.writeInt(chatData.currentLineNumber);
                     buffer.writeString(chatData.status.toString());
