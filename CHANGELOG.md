@@ -23,6 +23,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Passive entities no longer emit damage particles when attacking, they emit custom attack particles
 - Protect now auto sets friendship to 1 (if <= 0), to prevent entity from attacking and protecting at the same time
 - Seperated `generateCharacter()` and `generateMessage()` functions for simplicity
+- Fixing PACKET_S2C_MESSAGE from crashing a newly logging on player, if they receive that message first.
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds

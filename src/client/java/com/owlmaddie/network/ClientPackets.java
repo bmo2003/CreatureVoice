@@ -116,16 +116,23 @@ public class ClientPackets {
             String sender_name = buffer.readString(32767);
             ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
             int friendship = buffer.readInt();
-            String currentPlayerName = client.player.getDisplayName().getString();
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
+                // Ensure client.player is initialized
+                if (client.player == null) {
+                    LOGGER.warn("Client player is not initialized. Dropping message for entity '{}'.", entityId);
+                    return;
+                }
+
+                // Update the chat data manager on the client-side
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity == null) {
                     return;
                 }
 
                 // Get entity chat data for current entity & player
+                String currentPlayerName = client.player.getDisplayName().getString();
                 ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), currentPlayerName);
 
