@@ -120,14 +120,15 @@ public class ClientPackets {
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
                 // Ensure client.player is initialized
-                if (client.player == null) {
-                    LOGGER.warn("Client player is not initialized. Dropping message for entity '{}'.", entityId);
+                if (client.player == null || client.world == null) {
+                    LOGGER.warn("Client not fully initialized. Dropping message for entity '{}'.", entityId);
                     return;
                 }
 
                 // Update the chat data manager on the client-side
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
                 if (entity == null) {
+                    LOGGER.warn("Entity with ID '{}' not found. Skipping message processing.", entityId);
                     return;
                 }
 
@@ -183,8 +184,8 @@ public class ClientPackets {
 
                     // Decompress the combined byte array to get the original JSON string
                     String chatDataJSON = Decompression.decompressString(combined.toByteArray());
-                    if (chatDataJSON == null) {
-                        LOGGER.info("Error decompressing lite JSON string from bytes");
+                    if (chatDataJSON == null || chatDataJSON.isEmpty()) {
+                        LOGGER.warn("Received invalid or empty chat data JSON. Skipping processing.");
                         return;
                     }
 
@@ -231,7 +232,12 @@ public class ClientPackets {
             PlayerEntity player = ClientEntityFinder.getPlayerEntityFromUUID(playerId);
 
             // Update the player status data manager on the client-side
-            client.execute(() -> { // Make sure to run on the client thread
+            client.execute(() -> {
+                if (player == null) {
+                    LOGGER.warn("Player entity is null. Skipping status update.");
+                    return;
+                }
+
                 if (isChatOpen) {
                     PlayerMessageManager.openChatUI(playerId);
                     playNearbyUISound(client, player, 0.2f);

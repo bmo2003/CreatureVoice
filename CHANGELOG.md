@@ -24,6 +24,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Protect now auto sets friendship to 1 (if <= 0), to prevent entity from attacking and protecting at the same time
 - Seperated `generateCharacter()` and `generateMessage()` functions for simplicity
 - Fixing PACKET_S2C_MESSAGE from crashing a newly logging on player, if they receive that message first.
+- Added NULL checks on client message listeners (to prevent crashes for invalid or uninitialized clients)
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds
