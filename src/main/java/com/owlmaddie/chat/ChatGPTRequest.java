@@ -213,7 +213,6 @@ public class ChatGPTRequest {
                     ChatGPTResponse chatGPTResponse = gsonOutput.fromJson(response.toString(), ChatGPTResponse.class);
                     if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
                         String content = chatGPTResponse.choices.get(0).message.content;
-                        LOGGER.info("Generated message: " + content);
                         return content;
                     }
                 }

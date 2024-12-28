@@ -580,11 +580,19 @@ public class EntityChatData {
                         ? "<returning player: " + playerName + " resumes the conversation>"
                         : "<a new player has joined the conversation: " + playerName + ">";
                 previousMessages.add(new ChatMessage(note, sender, playerName));
+
+                // Log context-switching message
+                LOGGER.info("Conversation-switching message: status=PENDING, sender={}, message={}, player={}, entity={}",
+                        ChatDataManager.ChatStatus.PENDING, note, playerName, entityId);
             }
         }
 
         // Add message to history
         previousMessages.add(new ChatMessage(truncatedMessage, sender, playerName));
+
+        // Log regular message addition
+        LOGGER.info("Message added: status={}, sender={}, message={}, player={}, entity={}",
+                status.toString(), sender.toString(), truncatedMessage, playerName, entityId);
 
         // Update current message and reset line number of displayed text
         this.currentMessage = truncatedMessage;

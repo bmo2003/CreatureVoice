@@ -22,10 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -96,6 +93,19 @@ public class ClientPackets {
         ClientPlayNetworking.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);
     }
 
+    // Reading a Map<String, PlayerData> from the buffer
+    public static Map<String, PlayerData> readPlayerDataMap(PacketByteBuf buffer) {
+        int size = buffer.readInt(); // Read the size of the map
+        Map<String, PlayerData> map = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            String key = buffer.readString(); // Read the key (playerName)
+            PlayerData data = new PlayerData();
+            data.friendship = buffer.readInt(); // Read PlayerData field(s)
+            map.put(key, data); // Add to the map
+        }
+        return map;
+    }
+
     public static void register() {
         // Client-side packet handler, message sync
         ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
@@ -115,7 +125,7 @@ public class ClientPackets {
             ChatDataManager.ChatStatus status = ChatDataManager.ChatStatus.valueOf(status_name);
             String sender_name = buffer.readString(32767);
             ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
-            int friendship = buffer.readInt();
+            Map<String, PlayerData> players = readPlayerDataMap(buffer);
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
@@ -150,11 +160,7 @@ public class ClientPackets {
                     chatData.currentLineNumber = line;
                     chatData.status = status;
                     chatData.sender = sender;
-
-                    if (senderPlayerId != null) {
-                        PlayerData playerData = chatData.getPlayerData(senderPlayerName);
-                        playerData.friendship = friendship;
-                    }
+                    chatData.players = players; // friendships
                 }
 
                 // Play sound with volume based on distance (from player or entity)

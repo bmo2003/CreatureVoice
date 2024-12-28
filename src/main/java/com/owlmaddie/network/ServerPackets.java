@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -281,7 +282,6 @@ public class ServerPackets {
         } else {
             // Iterate over all players and send the packet
             for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
-                LOGGER.info("Broadcast whitelist / blacklist packet to player: " + serverPlayer.getName().getString());
                 ServerPlayNetworking.send(serverPlayer, PACKET_S2C_WHITELIST, buffer);
             }
         }
@@ -314,7 +314,7 @@ public class ServerPackets {
         }
         userMessageBuilder.append("They speak in '").append(userLanguage).append("' with a ").append(randomSpeakingStyle).append(" style.");
 
-        LOGGER.info(userMessageBuilder.toString());
+        // Generate new character
         chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
     }
 
@@ -324,12 +324,30 @@ public class ServerPackets {
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
         // Add new message
-        LOGGER.info("Player message received: " + message + " | Entity: " + entity.getType().toString());
         chatData.generateMessage(userLanguage, player, message, is_auto_message);
+    }
+
+    // Writing a Map<String, PlayerData> to the buffer
+    public static void writePlayerDataMap(PacketByteBuf buffer, Map<String, PlayerData> map) {
+        buffer.writeInt(map.size()); // Write the size of the map
+        for (Map.Entry<String, PlayerData> entry : map.entrySet()) {
+            buffer.writeString(entry.getKey()); // Write the key (playerName)
+            PlayerData data = entry.getValue();
+            buffer.writeInt(data.friendship); // Write PlayerData field(s)
+        }
     }
 
     // Send new message to all connected players
     public static void BroadcastPacketMessage(EntityChatData chatData, ServerPlayerEntity sender) {
+        // Log useful information before looping through all players
+        LOGGER.info("Broadcasting message: sender={}, entityId={}, status={}, currentMessage={}, currentLineNumber={}, senderType={}",
+                sender != null ? sender.getDisplayName().getString() : "Unknown",
+                chatData.entityId,
+                chatData.status,
+                chatData.currentMessage.length() > 24 ? chatData.currentMessage.substring(0, 24) + "..." : chatData.currentMessage,
+                chatData.currentLineNumber,
+                chatData.sender);
+
         for (ServerWorld world : serverInstance.getWorlds()) {
             UUID entityId = UUID.fromString(chatData.entityId);
             MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(world, entityId);
@@ -337,7 +355,7 @@ public class ServerPackets {
                 // Set custom name (if null)
                 String characterName = chatData.getCharacterProp("name");
                 if (!characterName.isEmpty() && !characterName.equals("N/A") && entity.getCustomName() == null) {
-                    LOGGER.debug("Setting entity name to " + characterName + " for " + chatData.entityId);
+                    LOGGER.info("Setting entity name to " + characterName + " for " + chatData.entityId);
                     entity.setCustomName(Text.literal(characterName));
                     entity.setCustomNameVisible(true);
                     entity.setPersistent();
@@ -345,8 +363,6 @@ public class ServerPackets {
 
                 // Iterate over all players and send the packet
                 for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-
-                    PlayerData playerData = chatData.getPlayerData(player.getDisplayName().getString());
                     PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 
                     // Write the entity's chat updated data
@@ -362,9 +378,9 @@ public class ServerPackets {
                     buffer.writeInt(chatData.currentLineNumber);
                     buffer.writeString(chatData.status.toString());
                     buffer.writeString(chatData.sender.toString());
-                    buffer.writeInt(playerData.friendship);
+                    writePlayerDataMap(buffer, chatData.players);
 
-                    LOGGER.debug("Server broadcast message to client: " + player.getName().getString() + " | Status: " + chatData.status.toString() + " | Message: " + chatData.currentMessage);
+                    // Send message to player
                     ServerPlayNetworking.send(player, PACKET_S2C_MESSAGE, buffer);
                 }
                 break;

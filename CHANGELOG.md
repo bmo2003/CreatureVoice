@@ -25,6 +25,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Seperated `generateCharacter()` and `generateMessage()` functions for simplicity
 - Fixing PACKET_S2C_MESSAGE from crashing a newly logging on player, if they receive that message first.
 - Added NULL checks on client message listeners (to prevent crashes for invalid or uninitialized clients)
+- Broadcast ALL player friendships with each message update (to keep client in sync with server)
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds
