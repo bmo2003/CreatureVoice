@@ -31,9 +31,11 @@ public class ClientInit implements ClientModInitializer {
         ParticleFactoryRegistry.getInstance().register(FIRE_BIG_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(ATTACK_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(FLEE_PARTICLE, CreatureParticleFactory::new);
-        ParticleFactoryRegistry.getInstance().register(FOLLOW_ENEMY_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(FOLLOW_FRIEND_PARTICLE, CreatureParticleFactory::new);
+        ParticleFactoryRegistry.getInstance().register(FOLLOW_ENEMY_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(PROTECT_PARTICLE, CreatureParticleFactory::new);
+        ParticleFactoryRegistry.getInstance().register(LEAD_FRIEND_PARTICLE, CreatureParticleFactory::new);
+        ParticleFactoryRegistry.getInstance().register(LEAD_ENEMY_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(LEAD_PARTICLE, LeadParticleFactory::new);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

@@ -35,7 +35,8 @@ public class ParticleEmitter {
             world.playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.4F, 1.0F);
         } else if (particleType.equals(FIRE_BIG_PARTICLE) && count > 1) {
             world.playSound(entity, entity.getBlockPos(), SoundEvents.ITEM_AXE_STRIP, SoundCategory.PLAYERS, 0.8F, 1.0F);
-        } else if (particleType.equals(FOLLOW_FRIEND_PARTICLE) || particleType.equals(FOLLOW_ENEMY_PARTICLE)) {
+        } else if (particleType.equals(FOLLOW_FRIEND_PARTICLE) || particleType.equals(FOLLOW_ENEMY_PARTICLE) ||
+                particleType.equals(LEAD_FRIEND_PARTICLE) || particleType.equals(LEAD_ENEMY_PARTICLE)) {
             world.playSound(entity, entity.getBlockPos(), SoundEvents.BLOCK_AMETHYST_BLOCK_PLACE, SoundCategory.PLAYERS, 0.8F, 1.0F);
         } else if (particleType.equals(PROTECT_PARTICLE)) {
             world.playSound(entity, entity.getBlockPos(), SoundEvents.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 0.8F, 1.0F);

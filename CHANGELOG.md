@@ -9,7 +9,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - New friendship particles (hearts + fire) to indicate when friendship changes
 - Added sound effects for max friendship and max enemy
-- New follow, flee, attack, and protect particles & sound effects
+- New follow, flee, attack, lead, and protect particles & sound effects (for easy confirmation of behaviors)
 - New animated lead particle (arrows pointing where they are going)
 - New animated attack particles (with random # of particles)
 - New sounds and particles when max friendship with EnderDragon (plus XP drop)

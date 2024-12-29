@@ -415,7 +415,11 @@ public class EntityChatData {
                         EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                         EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                         EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
-
+                        if (playerData.friendship >= 0) {
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, LEAD_FRIEND_PARTICLE, 0.5, 1);
+                        } else {
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, LEAD_ENEMY_PARTICLE, 0.5, 1);
+                        }
                     } else if (behavior.getName().equals("UNLEAD")) {
                         EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
 

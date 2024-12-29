@@ -70,6 +70,8 @@ public class ServerPackets {
     public static final DefaultParticleType FOLLOW_FRIEND_PARTICLE = FabricParticleTypes.simple();
     public static final DefaultParticleType FOLLOW_ENEMY_PARTICLE = FabricParticleTypes.simple();
     public static final DefaultParticleType PROTECT_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType LEAD_FRIEND_PARTICLE = FabricParticleTypes.simple();
+    public static final DefaultParticleType LEAD_ENEMY_PARTICLE = FabricParticleTypes.simple();
     public static final ParticleType<LeadParticleEffect> LEAD_PARTICLE = FabricParticleTypes.complex(LeadParticleEffect.DESERIALIZER);
 
     public static void register() {
@@ -83,6 +85,8 @@ public class ServerPackets {
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "follow_enemy"), FOLLOW_ENEMY_PARTICLE);
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "follow_friend"), FOLLOW_FRIEND_PARTICLE);
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "protect"), PROTECT_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "lead_enemy"), LEAD_ENEMY_PARTICLE);
+        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "lead_friend"), LEAD_FRIEND_PARTICLE);
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "lead"), LEAD_PARTICLE);
 
         // Handle packet for Greeting
