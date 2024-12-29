@@ -156,7 +156,7 @@ public class CreatureChatCommands {
                                     ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
                                     config.setStory(story); // Assuming Config has a `setStory` method
                                     if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, true)) {
-                                        context.getSource().sendFeedback(() -> Text.literal("Story set successfully!").formatted(Formatting.GREEN), false);
+                                        context.getSource().sendFeedback(() -> Text.literal("Story set successfully: " + story).formatted(Formatting.GREEN), true);
                                         return 1;
                                     } else {
                                         context.getSource().sendFeedback(() -> Text.literal("Failed to set story!").formatted(Formatting.RED), false);
@@ -169,11 +169,23 @@ public class CreatureChatCommands {
                             ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
                             config.setStory(""); // Clear the story
                             if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, true)) {
-                                context.getSource().sendFeedback(() -> Text.literal("Story cleared successfully!").formatted(Formatting.GREEN), false);
+                                context.getSource().sendFeedback(() -> Text.literal("Story cleared successfully!").formatted(Formatting.GREEN), true);
                                 return 1;
                             } else {
                                 context.getSource().sendFeedback(() -> Text.literal("Failed to clear story!").formatted(Formatting.RED), false);
                                 return 0;
+                            }
+                        }))
+                .then(CommandManager.literal("display")
+                        .executes(context -> {
+                            ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
+                            String story = config.getStory(); // Assuming Config has a `getStory` method
+                            if (story == null || story.isEmpty()) {
+                                context.getSource().sendFeedback(() -> Text.literal("No story is currently set.").formatted(Formatting.RED), false);
+                                return 0;
+                            } else {
+                                context.getSource().sendFeedback(() -> Text.literal("Current story: " + story).formatted(Formatting.AQUA), false);
+                                return 1;
                             }
                         }));
     }
