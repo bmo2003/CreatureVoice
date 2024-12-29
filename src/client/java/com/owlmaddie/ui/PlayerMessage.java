@@ -1,6 +1,8 @@
 package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -8,11 +10,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * many ticks to remain visible, and the message to display. Similar to an EntityChatData, but
  * much simpler.
  */
-public class PlayerMessage extends ChatDataManager.EntityChatData {
+public class PlayerMessage extends EntityChatData {
     public AtomicInteger tickCountdown;
 
-    public PlayerMessage(String playerId, String messageText, int ticks) {
-        super("", playerId);
+    public PlayerMessage(String playerId, String playerName, String messageText, int ticks) {
+        super(playerId, playerName);
         this.currentMessage = messageText;
         this.currentLineNumber = 0;
         this.tickCountdown = new AtomicInteger(ticks);

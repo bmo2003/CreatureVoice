@@ -118,7 +118,7 @@ public class ChatGPTRequest {
         return (int) Math.round(text.length() / 3.5);
     }
 
-    public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatDataManager.ChatMessage> messageHistory, Boolean jsonMode) {
+    public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatMessage> messageHistory, Boolean jsonMode) {
         // Init API & LLM details
         String apiUrl = config.getUrl();
         String apiKey = config.getApiKey();
@@ -151,7 +151,7 @@ public class ChatGPTRequest {
 
                 // Iterate backwards through the message history
                 for (int i = messageHistory.size() - 1; i >= 0; i--) {
-                    ChatDataManager.ChatMessage chatMessage = messageHistory.get(i);
+                    ChatMessage chatMessage = messageHistory.get(i);
                     String senderName = chatMessage.sender.toString().toLowerCase(Locale.ENGLISH);
                     String messageText = replacePlaceholders(chatMessage.message, contextData);
                     int messageTokens = estimateTokenSize(senderName + ": " + messageText);
@@ -213,7 +213,6 @@ public class ChatGPTRequest {
                     ChatGPTResponse chatGPTResponse = gsonOutput.fromJson(response.toString(), ChatGPTResponse.class);
                     if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
                         String content = chatGPTResponse.choices.get(0).message.content;
-                        LOGGER.info("Generated message: " + content);
                         return content;
                     }
                 }

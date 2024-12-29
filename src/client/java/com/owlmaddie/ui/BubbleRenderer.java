@@ -2,6 +2,8 @@ package com.owlmaddie.ui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.utils.EntityHeights;
 import com.owlmaddie.utils.EntityRendererAccessor;
 import com.owlmaddie.utils.TextureLoader;
@@ -9,6 +11,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.font.TextRenderer.TextLayerType;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -469,12 +472,20 @@ public class BubbleRenderer {
             // Get position matrix
             Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-            // Look-up greeting (if any)
-            ChatDataManager.EntityChatData chatData = null;
+            // Get the player
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+
+            // Get chat message (if any)
+            EntityChatData chatData = null;
+            PlayerData playerData = null;
             if (entity instanceof MobEntity) {
-                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
+                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
+                if (chatData != null) {
+                    playerData = chatData.getPlayerData(player.getDisplayName().getString());
+                }
             } else if (entity instanceof PlayerEntity) {
                 chatData = PlayerMessageManager.getMessage(entity.getUuid());
+                playerData = new PlayerData(); // no friendship needed for player messages
             }
 
             float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
@@ -518,13 +529,13 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     // Draw text background (no smaller than 50F tall)
-                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, playerData.friendship);
 
                     // Draw face icon of entity
                     drawEntityIcon(matrices, entity, -82, 7, 32, 32);
 
                     // Draw Friendship status
-                    drawFriendshipStatus(matrices, 51, 18, 31, 21, chatData.friendship);
+                    drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
 
                     // Draw 'arrows' & 'keyboard' buttons
                     if (chatData.currentLineNumber > 0) {
@@ -544,10 +555,10 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, false);
 
                     // Draw 'resume chat' button
-                    if (chatData.friendship == 3) {
+                    if (playerData.friendship == 3) {
                         // Friend chat bubble
                         drawIcon("button-chat-friend", matrices, -16, textHeaderHeight, 32, 17);
-                    } else if (chatData.friendship == -3) {
+                    } else if (playerData.friendship == -3) {
                         // Enemy chat bubble
                         drawIcon("button-chat-enemy", matrices, -16, textHeaderHeight, 32, 17);
                     } else {
@@ -560,7 +571,7 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     // Draw text background
-                    drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+                    drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, playerData.friendship);
 
                     // Draw face icon of player
                     drawPlayerIcon(matrices, entity, -75, 14, 18, 18);

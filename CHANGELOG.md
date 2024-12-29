@@ -4,7 +4,28 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2024-12-28
+
+### Added
+- New friendship particles (hearts + fire) to indicate when friendship changes
+- Added sound effects for max friendship and max enemy
+- New follow, flee, attack, lead, and protect particles & sound effects (for easy confirmation of behaviors)
+- New animated lead particle (arrows pointing where they are going)
+- New animated attack particles (with random # of particles)
+- New sounds and particles when max friendship with EnderDragon (plus XP drop)
+- New `/creaturechat story` command to customize the character creation and chat prompts with custom text.
+
+### Changed
+- Entity chat data now separates friendship by player and includes timestamps
+- When entity conversations switch players, a message is added for clarity (so the entity knows a new player entered the conversation)
+- Data is no longer deleted on entity death, and instead a "death" timestamp is recorded
+- Removed "pirate" speaking style and a few <non-response> outputs
+- Passive entities no longer emit damage particles when attacking, they emit custom attack particles
+- Protect now auto sets friendship to 1 (if <= 0), to prevent entity from attacking and protecting at the same time
+- Seperated `generateCharacter()` and `generateMessage()` functions for simplicity
+- Fixing PACKET_S2C_MESSAGE from crashing a newly logging on player, if they receive that message first.
+- Added NULL checks on client message listeners (to prevent crashes for invalid or uninitialized clients)
+- Broadcast ALL player friendships with each message update (to keep client in sync with server)
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds

@@ -1,14 +1,14 @@
 package com.owlmaddie.goals;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.controls.LookControls;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.particle.LeadParticleEffect;
 import com.owlmaddie.utils.RandomTargetFinder;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
@@ -71,7 +71,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                 String arrivedMessage = "<You have arrived at your destination>";
 
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-                ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString());
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString(), this.targetEntity.getDisplayName().getString());
                 if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
                     ServerPackets.generate_chat("N/A", chatData, (ServerPlayerEntity) this.targetEntity, this.entity, arrivedMessage, true);
                 }
@@ -130,27 +130,49 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
         this.currentTarget = RandomTargetFinder.findRandomTarget(this.entity, 30, 24, 36);
         if (this.currentTarget != null) {
-            emitParticleAt(this.currentTarget, ParticleTypes.FLAME);
-            emitParticlesAlongRaycast(this.entity.getPos(), this.currentTarget, ParticleTypes.CLOUD, 0.5);
+            emitParticlesAlongRaycast(this.entity.getPos(), this.currentTarget);
         }
 
         // Stop following current path (if any)
         this.entity.getNavigation().stop();
     }
 
-    private void emitParticleAt(Vec3d position, ParticleEffect particleType) {
+    private void emitParticleAt(Vec3d position, double angle) {
         if (this.entity.getWorld() instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) this.entity.getWorld();
-            serverWorld.spawnParticles(particleType, position.x, position.y, position.z, 5, 0, 0, 0, 0);
+
+            // Pass the angle using the "speed" argument, with deltaX, deltaY, deltaZ set to 0
+            LeadParticleEffect effect = new LeadParticleEffect(angle);
+            serverWorld.spawnParticles(effect, position.x, position.y + 0.05, position.z, 1, 0, 0, 0, 0);
         }
     }
 
-    private void emitParticlesAlongRaycast(Vec3d start, Vec3d end, ParticleEffect particleType, double step) {
-        Vec3d direction = end.subtract(start).normalize();
+    private void emitParticlesAlongRaycast(Vec3d start, Vec3d end) {
+        // Calculate the direction vector from the entity (start) to the target (end)
+        Vec3d direction = end.subtract(start);
+
+        // Calculate the angle in the XZ-plane using atan2 (this is in radians)
+        double angleRadians = Math.atan2(direction.z, direction.x);
+
+        // Convert from radians to degrees
+        double angleDegrees = Math.toDegrees(angleRadians);
+
+        // Convert the calculated angle to Minecraft's yaw system:
+        double minecraftYaw = (360 - (angleDegrees + 90)) % 360;
+
+        // Correct the 180-degree flip
+        minecraftYaw = (minecraftYaw + 180) % 360;
+        if (minecraftYaw < 0) {
+            minecraftYaw += 360;
+        }
+
+        // Emit particles along the ray from startRange to endRange
         double distance = start.distanceTo(end);
-        for (double d = 0; d <= distance; d += step) {
-            Vec3d pos = start.add(direction.multiply(d));
-            emitParticleAt(pos, particleType);
+        double startRange = Math.min(5, distance);;
+        double endRange = Math.min(startRange + 10, distance);
+        for (double d = startRange; d <= endRange; d += 5) {
+            Vec3d pos = start.add(direction.normalize().multiply(d));
+            emitParticleAt(pos, Math.toRadians(minecraftYaw));  // Convert back to radians for rendering
         }
     }
 }

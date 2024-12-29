@@ -3,6 +3,8 @@ package com.owlmaddie.network;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
@@ -20,10 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -94,41 +93,78 @@ public class ClientPackets {
         ClientPlayNetworking.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);
     }
 
+    // Reading a Map<String, PlayerData> from the buffer
+    public static Map<String, PlayerData> readPlayerDataMap(PacketByteBuf buffer) {
+        int size = buffer.readInt(); // Read the size of the map
+        Map<String, PlayerData> map = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            String key = buffer.readString(); // Read the key (playerName)
+            PlayerData data = new PlayerData();
+            data.friendship = buffer.readInt(); // Read PlayerData field(s)
+            map.put(key, data); // Add to the map
+        }
+        return map;
+    }
+
     public static void register() {
         // Client-side packet handler, message sync
         ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
-            String playerIdStr = buffer.readString();
+            String sendingPlayerIdStr = buffer.readString(32767);
+            String senderPlayerName = buffer.readString(32767);
+            UUID senderPlayerId;
+            if (!sendingPlayerIdStr.isEmpty()) {
+                senderPlayerId = UUID.fromString(sendingPlayerIdStr);
+            } else {
+                senderPlayerId = null;
+            }
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
+            ChatDataManager.ChatStatus status = ChatDataManager.ChatStatus.valueOf(status_name);
             String sender_name = buffer.readString(32767);
-            int friendship = buffer.readInt();
+            ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
+            Map<String, PlayerData> players = readPlayerDataMap(buffer);
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
+                // Ensure client.player is initialized
+                if (client.player == null || client.world == null) {
+                    LOGGER.warn("Client not fully initialized. Dropping message for entity '{}'.", entityId);
+                    return;
+                }
+
+                // Update the chat data manager on the client-side
                 MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
-                if (entity != null) {
-                    ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                    ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
-                    chatData.playerId = playerIdStr;
+                if (entity == null) {
+                    LOGGER.warn("Entity with ID '{}' not found. Skipping message processing.", entityId);
+                    return;
+                }
+
+                // Get entity chat data for current entity & player
+                String currentPlayerName = client.player.getDisplayName().getString();
+                ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), currentPlayerName);
+
+                if (senderPlayerId != null && sender == ChatDataManager.ChatSender.USER && status == ChatDataManager.ChatStatus.DISPLAY) {
+                    // Add player message to queue for rendering
+                    PlayerMessageManager.addMessage(senderPlayerId, message, senderPlayerName, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
+                    chatData.status = ChatDataManager.ChatStatus.PENDING;
+
+                } else {
+                    // Add entity message
                     if (!message.isEmpty()) {
                         chatData.currentMessage = message;
                     }
                     chatData.currentLineNumber = line;
-                    chatData.status = ChatDataManager.ChatStatus.valueOf(status_name);
-                    chatData.sender = ChatDataManager.ChatSender.valueOf(sender_name);
-                    chatData.friendship = friendship;
-
-                    if (chatData.sender == ChatDataManager.ChatSender.USER && !playerIdStr.isEmpty()) {
-                        // Add player message to queue for rendering
-                        PlayerMessageManager.addMessage(UUID.fromString(chatData.playerId), chatData.currentMessage, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
-                    }
-
-                    // Play sound with volume based on distance (from player or entity)
-                    playNearbyUISound(client, entity, 0.2f);
+                    chatData.status = status;
+                    chatData.sender = sender;
+                    chatData.players = players; // friendships
                 }
+
+                // Play sound with volume based on distance (from player or entity)
+                playNearbyUISound(client, entity, 0.2f);
             });
         });
 
@@ -154,14 +190,14 @@ public class ClientPackets {
 
                     // Decompress the combined byte array to get the original JSON string
                     String chatDataJSON = Decompression.decompressString(combined.toByteArray());
-                    if (chatDataJSON == null) {
-                        LOGGER.info("Error decompressing lite JSON string from bytes");
+                    if (chatDataJSON == null || chatDataJSON.isEmpty()) {
+                        LOGGER.warn("Received invalid or empty chat data JSON. Skipping processing.");
                         return;
                     }
 
                     // Parse JSON and update client chat data
                     Gson GSON = new Gson();
-                    Type type = new TypeToken<ConcurrentHashMap<String, ChatDataManager.EntityChatData>>(){}.getType();
+                    Type type = new TypeToken<ConcurrentHashMap<String, EntityChatData>>(){}.getType();
                     ChatDataManager.getClientInstance().entityChatDataMap = GSON.fromJson(chatDataJSON, type);
 
                     // Clear receivedChunks for future use
@@ -202,7 +238,12 @@ public class ClientPackets {
             PlayerEntity player = ClientEntityFinder.getPlayerEntityFromUUID(playerId);
 
             // Update the player status data manager on the client-side
-            client.execute(() -> { // Make sure to run on the client thread
+            client.execute(() -> {
+                if (player == null) {
+                    LOGGER.warn("Player entity is null. Skipping status update.");
+                    return;
+                }
+
                 if (isChatOpen) {
                     PlayerMessageManager.openChatUI(playerId);
                     playNearbyUISound(client, player, 0.2f);

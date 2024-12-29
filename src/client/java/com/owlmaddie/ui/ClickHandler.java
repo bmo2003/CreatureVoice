@@ -1,6 +1,7 @@
 package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.utils.ClientEntityFinder;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -119,7 +120,7 @@ public class ClickHandler {
             MobEntity closestEntity = ClientEntityFinder.getEntityByUUID(client.world, closestEntityUUID);
             if (closestEntity != null) {
                 // Look-up conversation
-                ChatDataManager.EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntityUUID.toString());
+                EntityChatData chatData = ChatDataManager.getClientInstance().getOrCreateChatData(closestEntityUUID.toString(), player.getDisplayName().getString());
 
                 // Determine area clicked inside chat bubble (top, left, right)
                 String hitRegion = determineHitRegion(closestHitResult.get(), closestBubbleData.position, camera, closestBubbleData.height);

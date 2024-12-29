@@ -16,7 +16,7 @@ public class MessageParser {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
 
     public static ParsedMessage parseMessage(String input) {
-        LOGGER.info("Parsing message: {}", input);
+        LOGGER.debug("Parsing message: {}", input);
         StringBuilder cleanedMessage = new StringBuilder();
         List<Behavior> behaviors = new ArrayList<>();
         Pattern pattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
@@ -29,7 +29,7 @@ public class MessageParser {
                 argument = Integer.valueOf(matcher.group(2));
             }
             behaviors.add(new Behavior(behaviorName, argument));
-            LOGGER.info("Found behavior: {} with argument: {}", behaviorName, argument);
+            LOGGER.debug("Found behavior: {} with argument: {}", behaviorName, argument);
 
             matcher.appendReplacement(cleanedMessage, "");
         }
@@ -40,7 +40,7 @@ public class MessageParser {
 
         // Remove all occurrences of "<>" and "**" (if any)
         displayMessage = displayMessage.replaceAll("<>", "").replaceAll("\\*\\*", "").trim();
-        LOGGER.info("Cleaned message: {}", displayMessage);
+        LOGGER.debug("Cleaned message: {}", displayMessage);
 
         return new ParsedMessage(displayMessage, input.trim(), behaviors);
     }

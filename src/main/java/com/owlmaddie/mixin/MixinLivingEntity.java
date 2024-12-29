@@ -1,6 +1,8 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -18,20 +20,26 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * The {@code MixinLivingEntity} class modifies the behavior of {@link LivingEntity} to integrate
+ * custom friendship, chat, and death message mechanics. It prevents friendly entities from targeting players,
+ * generates contextual chat messages on attacks, and broadcasts custom death messages for named entities.
+ */
 @Mixin(LivingEntity.class)
 public class MixinLivingEntity {
 
-    private ChatDataManager.EntityChatData getChatData(LivingEntity entity) {
+    private EntityChatData getChatData(LivingEntity entity, PlayerEntity player) {
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        return chatDataManager.getOrCreateChatData(entity.getUuidAsString());
+        return chatDataManager.getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
     }
 
     @Inject(method = "canTarget(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)
     private void modifyCanTarget(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
         if (target instanceof PlayerEntity) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
-            ChatDataManager.EntityChatData chatData = getChatData(thisEntity);
-            if (chatData.friendship > 0) {
+            EntityChatData entityData = getChatData(thisEntity, (PlayerEntity) target);
+            PlayerData playerData = entityData.getPlayerData(target.getDisplayName().getString());
+            if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
                 cir.setReturnValue(false);
             }
@@ -53,11 +61,11 @@ public class MixinLivingEntity {
         if (attacker instanceof PlayerEntity && thisEntity instanceof MobEntity && !thisEntity.isDead()) {
             // Generate attacked message (only if the previous user message was not an attacked message)
             // We don't want to constantly generate messages during a prolonged, multi-damage event
-            ChatDataManager.EntityChatData chatData = getChatData(thisEntity);
+            ServerPlayerEntity player = (ServerPlayerEntity) attacker;
+            EntityChatData chatData = getChatData(thisEntity, player);
             if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
                 // Only auto-generate a response to being attacked if chat data already exists
                 // and this is the first attack event.
-                ServerPlayerEntity player = (ServerPlayerEntity) attacker;
                 ItemStack weapon = player.getMainHandStack();
                 String weaponName = weapon.isEmpty() ? "with fists" : "with " + weapon.getItem().toString();
 
