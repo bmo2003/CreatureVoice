@@ -97,7 +97,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                  if (!this.entity.getNavigation().isFollowingPath()) {
                      Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
                      if (path != null) {
-                         LOGGER.info("Start moving along path");
+                         LOGGER.debug("Start moving along path");
                          this.entity.getNavigation().startMovingAlong(path, this.speed);
                      }
                  }

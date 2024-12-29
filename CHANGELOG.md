@@ -29,6 +29,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Fixed
 - Fixed a regression caused by adding a "-forge" suffix to one of our builds
+- Do not show auto-generated message above the player's head (you have arrived, show item, etc...)
 
 ## [1.1.0] - 2024-08-07
 
