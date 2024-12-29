@@ -371,7 +371,7 @@ public class ServerPackets {
 
                     // Write the entity's chat updated data
                     buffer.writeString(chatData.entityId);
-                    if (sender != null) {
+                    if (sender != null && chatData.auto_generated == 0) {
                         buffer.writeString(sender.getUuidAsString());
                         buffer.writeString(sender.getDisplayName().getString());
                     } else {
