@@ -20,7 +20,7 @@
 1. **Install Fabric Loader & API:** Follow the instructions [here](https://fabricmc.net/use/).
 2. **Install CreatureChat Mod:** Download and copy `creaturechat-*.jar` and `fabric-api-*.jar` into your `.minecraft/mods` folder.
 3. **Launch Minecraft** with the Fabric profile.
-4. **Configure AI:** A LLM (large language model) is required for generating text (AI options listed below)
+4. **Configure AI:** A LLM (large language model) is required for generating text (AI options **listed below**)
 
 ### Forge (with Sinytra Connector)
 *NOTE: Sintra Connector only supports Minecraft 1.20.1.*
@@ -30,7 +30,7 @@
 3. **Install Sinytra Connector:** Download [Sinytra Connector](https://www.curseforge.com/minecraft/mc-mods/sinytra-connector) and copy the `*.jar` into your `.minecraft/mods` folder.
 4. **Install CreatureChat Mod:** Download and copy `creaturechat-*.jar` into your `.minecraft/mods` folder.
 6. **Launch Minecraft** with the Forge profile.
-7. **Configure AI:** A LLM (large language model) is required for generating text (AI options listed below)
+7. **Configure AI:** A LLM (large language model) is required for generating text (AI options **listed below**)
 
 ## AI Options
 CreatureChat **requires** an AI / LLM (large language model) to generate text (characters and chat). There are many different
