@@ -36,12 +36,9 @@
 CreatureChat **requires** an AI / LLM (large language model) to generate text (characters and chat). There are many different
 options for connecting an LLM. 
 
-1. ### Free & Local:
-   - Use open-source and free-to-use LLMs without any API fees. [**Difficulty: Hard**]
-2. ### Bring Your Own Key: 
-   - Use your own API key from providers like OpenAI or Groq. [**Difficulty: Medium**]
-3. ### Token Shop: 
-   - Supports CreatureChat by purchasing tokens from the developers on Discord. [**Difficulty: Easy**]
+1. **Free & Local**: Use open-source and free-to-use LLMs without any API fees. [**Difficulty: Hard**]
+2. **Bring Your Own Key**: Use your own API key from providers like OpenAI or Groq. [**Difficulty: Medium**]
+3. **Token Shop**: Supports CreatureChat by purchasing tokens from the developers on Discord. [**Difficulty: Easy**]
 
 ### 1. Free & Local
 CreatureChat fully supports **free and open-source** LLMs. To get started:
