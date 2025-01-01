@@ -7,7 +7,11 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## Unreleased
 
 ### Changed
+- Refactor of EntityChatData constructor (no need for playerName anymore)
 - Improved LLM / AI Options in README.md (to more clearly separate free and paid options)
+
+### Fixed
+- Fixed a bug which broadcasts death messages for any mob with a customName (now it must also have a character sheet)
 
 ## [1.2.0] - 2024-12-28
 

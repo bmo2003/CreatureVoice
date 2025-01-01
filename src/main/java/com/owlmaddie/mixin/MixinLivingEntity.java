@@ -28,16 +28,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public class MixinLivingEntity {
 
-    private EntityChatData getChatData(LivingEntity entity, PlayerEntity player) {
+    private EntityChatData getChatData(LivingEntity entity) {
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        return chatDataManager.getOrCreateChatData(entity.getUuidAsString(), player.getDisplayName().getString());
+        return chatDataManager.getOrCreateChatData(entity.getUuidAsString());
     }
 
     @Inject(method = "canTarget(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)
     private void modifyCanTarget(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
         if (target instanceof PlayerEntity) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
-            EntityChatData entityData = getChatData(thisEntity, (PlayerEntity) target);
+            EntityChatData entityData = getChatData(thisEntity);
             PlayerData playerData = entityData.getPlayerData(target.getDisplayName().getString());
             if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
@@ -62,7 +62,7 @@ public class MixinLivingEntity {
             // Generate attacked message (only if the previous user message was not an attacked message)
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ServerPlayerEntity player = (ServerPlayerEntity) attacker;
-            EntityChatData chatData = getChatData(thisEntity, player);
+            EntityChatData chatData = getChatData(thisEntity);
             if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
                 // Only auto-generate a response to being attacked if chat data already exists
                 // and this is the first attack event.
@@ -94,10 +94,14 @@ public class MixinLivingEntity {
                 return;
             }
 
-            // Get the original death message
-            Text deathMessage = entity.getDamageTracker().getDeathMessage();
-            // Broadcast the death message to all players in the world
-            ServerPackets.BroadcastMessage(deathMessage);
+            // Get chatData for the entity
+            EntityChatData chatData = getChatData(entity);
+            if (chatData != null && !chatData.characterSheet.isEmpty()) {
+                // Get the original death message
+                Text deathMessage = entity.getDamageTracker().getDeathMessage();
+                // Broadcast the death message to all players in the world
+                ServerPackets.BroadcastMessage(deathMessage);
+            }
         }
     }
 }

@@ -143,9 +143,8 @@ public class ClientPackets {
                 }
 
                 // Get entity chat data for current entity & player
-                String currentPlayerName = client.player.getDisplayName().getString();
                 ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString(), currentPlayerName);
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
 
                 if (senderPlayerId != null && sender == ChatDataManager.ChatSender.USER && status == ChatDataManager.ChatStatus.DISPLAY) {
                     // Add player message to queue for rendering
@@ -160,7 +159,7 @@ public class ClientPackets {
                     chatData.currentLineNumber = line;
                     chatData.status = status;
                     chatData.sender = sender;
-                    chatData.players = players; // friendships
+                    chatData.players = players;
                 }
 
                 // Play sound with volume based on distance (from player or entity)
