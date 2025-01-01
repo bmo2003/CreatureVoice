@@ -58,8 +58,8 @@ public class BehaviorTests {
             "Please keep me safe friend",
             "Don't let them hurt me please");
     List<String> unFleeMessages = Arrays.asList(
-            "I'm sorry, please stop running away",
-            "Stop fleeing please",
+            "I'm so sorry, please stop running away",
+            "Stop fleeing immediately",
             "You are safe now, please stop running");
     List<String> friendshipUpMessages = Arrays.asList(
             "Hi friend! I am so happy to see you again!",

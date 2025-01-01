@@ -9,6 +9,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Changed
 - Refactor of EntityChatData constructor (no need for playerName anymore)
 - Improved LLM / AI Options in README.md (to more clearly separate free and paid options)
+- Improved LLM unit tests for UNFLEE (trying to prevent failures for brave archer)
 
 ### Fixed
 - Fixed a bug which broadcasts too many death messages (any mob with a custom name). Now it must also have a character sheet.
