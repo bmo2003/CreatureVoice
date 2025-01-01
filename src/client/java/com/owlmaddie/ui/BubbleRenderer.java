@@ -70,9 +70,9 @@ public class BubbleRenderer {
 
         // Draw UI text background (based on friendship)
         // Draw TOP
-        if (friendship == -3) {
+        if (friendship == -3 && !base_name.endsWith("-player")) {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-enemy"));
-        } else if (friendship == 3) {
+        } else if (friendship == 3 && !base_name.endsWith("-player")) {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-friend"));
         } else {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name));
