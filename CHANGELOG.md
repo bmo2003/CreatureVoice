@@ -4,10 +4,17 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [1.2.1] - 2025-01-01
 
 ### Changed
+- Refactor of EntityChatData constructor (no need for playerName anymore)
 - Improved LLM / AI Options in README.md (to more clearly separate free and paid options)
+
+### Fixed
+- Fixed a bug which broadcasts too many death messages (any mob with a custom name). Now it must also have a character sheet.
+- Prevent crash due to missing texture when max friend/enemy + right click on entity
+- Fixed bug which caused a max friend to interact with both off hand + main hand, causing both a message + riding (only check main hand now)
+- Hide auto-generated messages from briefly appearing from the mob (i.e. interact, show, attack, arrival)
 
 ## [1.2.0] - 2024-12-28
 

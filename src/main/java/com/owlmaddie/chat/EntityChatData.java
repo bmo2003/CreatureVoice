@@ -65,12 +65,9 @@ public class EntityChatData {
     // The map to store data for each player interacting with this entity
     public Map<String, PlayerData> players;
 
-    public EntityChatData(String entityId, String playerName) {
+    public EntityChatData(String entityId) {
         this.entityId = entityId;
         this.players = new HashMap<>();
-        if (!playerName.isEmpty()) {
-            this.players.put(playerName, new PlayerData());
-        }
         this.currentMessage = "";
         this.currentLineNumber = 0;
         this.characterSheet = "";
