@@ -61,7 +61,7 @@ For those already using a third-party API (e.g., OpenAI, Groq):
 - Integrate your own API key for seamless connectivity.
 - Costs depend on the provider’s usage-based pricing model.
 - By default, CreatureChat uses the OpenAI endpoint and `gpt-3.5-turbo` model, known for its balance of low cost and fast performance.
-- Be aware that OpenAI’s developer API does not include free usage. Please review the [OpenAI pricing](https://openai.com/pricing#language-models) for detailed information.
+- Be aware that OpenAI’s developer API does not include free usage. Please review the [OpenAI pricing](https://openai.com/api/pricing/) for detailed information.
 - To create an OpenAI API key, visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys), and use the **+ Create new secret key** button.
 - Set the API key & model in-game:
   - `/creaturechat key set <YOUR-SECRET-KEY-HERE>`
