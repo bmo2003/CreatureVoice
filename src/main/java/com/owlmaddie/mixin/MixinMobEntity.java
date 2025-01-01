@@ -27,6 +27,16 @@ public class MixinMobEntity {
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
     private void onItemGiven(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+        // Only process interactions on the server side
+        if (player.getWorld().isClient()) {
+            return;
+        }
+
+        // Only process interactions for the main hand
+        if (hand != Hand.MAIN_HAND) {
+            return;
+        }
+
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
 
