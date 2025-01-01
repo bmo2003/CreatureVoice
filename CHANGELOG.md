@@ -14,6 +14,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Fixed a bug which broadcasts death messages for any mob with a customName (now it must also have a character sheet)
 - Prevent crash due to missing texture when max friend/enemy + right click on entity
 - Fixed bug which caused a max friend to interact with both off hand + main hand, causing both a message + riding (only check main hand now)
+- Hide auto-generated messages from briefly appearing from the mob (i.e. interact, show, attack, arrival)
 
 ## [1.2.0] - 2024-12-28
 

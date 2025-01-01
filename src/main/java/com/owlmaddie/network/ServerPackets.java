@@ -365,6 +365,11 @@ public class ServerPackets {
                     entity.setPersistent();
                 }
 
+                // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
+                if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
+                    chatData.status = ChatDataManager.ChatStatus.PENDING;
+                }
+
                 // Iterate over all players and send the packet
                 for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
                     PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
