@@ -309,7 +309,7 @@ public class BubbleRenderer {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
         // Get Name of entity
-        String nameText = "CreatureChat";
+        String nameText = "";
         if (entity instanceof MobEntity) {
             // Custom Name Tag (MobEntity)
             if (entity.getCustomName() != null) {
@@ -519,6 +519,9 @@ public class BubbleRenderer {
                 if (chatData.status == ChatDataManager.ChatStatus.NONE) {
                     // Draw 'start chat' button
                     drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
+
+                    // Draw Entity (Custom Name)
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                 } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
                     // Draw 'pending' button

@@ -16,6 +16,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Prevent crash due to missing texture when max friend/enemy + right click on entity
 - Fixed bug which caused a max friend to interact with both off hand + main hand, causing both a message + riding (only check main hand now)
 - Hide auto-generated messages from briefly appearing from the mob (i.e. interact, show, attack, arrival)
+- Name tags were hidden for entities with no character sheet (they are now rendered)
 
 ## [1.2.0] - 2024-12-28
 
