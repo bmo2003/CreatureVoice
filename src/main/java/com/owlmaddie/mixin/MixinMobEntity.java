@@ -1,8 +1,12 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -23,8 +27,23 @@ public class MixinMobEntity {
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
     private void onItemGiven(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+        // Only process interactions on the server side
+        if (player.getWorld().isClient()) {
+            return;
+        }
+
+        // Only process interactions for the main hand
+        if (hand != Hand.MAIN_HAND) {
+            return;
+        }
+
         ItemStack itemStack = player.getStackInHand(hand);
         MobEntity thisEntity = (MobEntity) (Object) this;
+
+        // Don't interact with Villagers (avoid issues with trade UI) OR Tameable (i.e. sit / no-sit)
+        if (thisEntity instanceof VillagerEntity || thisEntity instanceof TameableEntity) {
+            return;
+        }
 
         // Determine if the item is a bucket
         // We don't want to interact on buckets
@@ -43,26 +62,36 @@ public class MixinMobEntity {
             return;
         }
 
+        // Get chat data for entity
+        ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
+        EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+        PlayerData playerData = entityData.getPlayerData(player.getDisplayName().getString());
+
         // Check if the player successfully interacts with an item
-        if (!itemStack.isEmpty() && player instanceof ServerPlayerEntity) {
-            ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
-            String itemName = itemStack.getItem().getName().getString();
-            int itemCount = itemStack.getCount();
+        if (player instanceof ServerPlayerEntity) {
+            // Player has item in hand
+            if (!itemStack.isEmpty()) {
+                ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+                String itemName = itemStack.getItem().getName().getString();
+                int itemCount = itemStack.getCount();
 
-            // Decide verb
-            String action_verb = " shows ";
-            if (cir.getReturnValue().isAccepted()) {
-                action_verb = " gives ";
-            }
+                // Decide verb
+                String action_verb = " shows ";
+                if (cir.getReturnValue().isAccepted()) {
+                    action_verb = " gives ";
+                }
 
-            // Prepare a message about the interaction
-            String giveItemMessage = "<" + serverPlayer.getName().getString() +
-                    action_verb + "you " + itemCount + " " + itemName + ">";
+                // Prepare a message about the interaction
+                String giveItemMessage = "<" + serverPlayer.getName().getString() +
+                        action_verb + "you " + itemCount + " " + itemName + ">";
 
-            ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-            ChatDataManager.EntityChatData chatData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
-            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                ServerPackets.generate_chat("N/A", chatData, serverPlayer, thisEntity, giveItemMessage, true);
+                if (!entityData.characterSheet.isEmpty() && entityData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                    ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, giveItemMessage, true);
+                }
+
+            } else if (itemStack.isEmpty() && playerData.friendship == 3) {
+                // Player's hand is empty, Ride your best friend!
+                player.startRiding(thisEntity, true);
             }
         }
     }

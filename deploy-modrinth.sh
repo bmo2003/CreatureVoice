@@ -8,7 +8,7 @@ API_URL="https://api.modrinth.com/v2"
 USER_AGENT="CreatureChat-Minecraft-Mod:modrinth@owlmaddie.com"
 PROJECT_ID="rvR0de1E"
 AUTHOR_ID="k6RiShdd"
-SLEEP_DURATION=10
+SLEEP_DURATION=5
 
 # Read the first changelog block
 CHANGELOG=$(awk '/^## \[/{ if (p) exit; p=1 } p' "$CHANGELOG_FILE")
@@ -34,7 +34,7 @@ for FILE in creaturechat*.jar; do
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
-    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\(.*\)\.jar/\1/p')
+    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION+$MINECRAFT_VERSION"
 
     # Verify that OUR_VERSION and MINECRAFT_VERSION are not empty and OUR_VERSION matches VERSION
@@ -43,13 +43,14 @@ for FILE in creaturechat*.jar; do
       exit 1
     fi
 
-    # Check if the version already exists
-    echo "Checking if version $VERSION_NUMBER already exists on Modrinth..."
-    if curl --retry 3 --retry-delay 5 --silent --fail -X GET "$API_URL/project/creaturechat/version/$VERSION_NUMBER" > /dev/null 2>&1; then
-      echo "Version $VERSION_NUMBER already exists, skipping."
-      continue
+    # Determine the loaders and dependencies based on the file name
+    if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
+      LOADERS='["forge"]'
+      DEPENDENCIES='[{"project_id": "u58R1TMW", "dependency_type": "required"}, {"project_id": "Aqlf1Shp", "dependency_type": "required"}]'
+    else
+      LOADERS='["fabric"]'
+      DEPENDENCIES='[{"project_id": "P7dR8mSH", "dependency_type": "required"}]'
     fi
-    echo "Version $VERSION_NUMBER does not exist. Preparing to upload..."
 
     # Calculate file hashes
     SHA512_HASH=$(sha512sum "$FILE" | awk '{ print $1 }')
@@ -59,9 +60,9 @@ for FILE in creaturechat*.jar; do
     # Create a new version payload
     PAYLOAD=$(jq -n --arg version_number "$VERSION_NUMBER" \
       --arg changelog "$CHANGELOG" \
-      --argjson dependencies '[{"project_id": "P7dR8mSH", "dependency_type": "required"}]' \
+      --argjson dependencies "$DEPENDENCIES" \
       --argjson game_versions '["'"$MINECRAFT_VERSION"'"]' \
-      --argjson loaders '["fabric"]' \
+      --argjson loaders "$LOADERS" \
       --arg project_id "$PROJECT_ID" \
       --arg name "CreatureChat $VERSION_NUMBER" \
       --argjson file_parts '["file"]' \

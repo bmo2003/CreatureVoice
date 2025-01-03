@@ -2,6 +2,8 @@ package com.owlmaddie.ui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.utils.EntityHeights;
 import com.owlmaddie.utils.EntityRendererAccessor;
 import com.owlmaddie.utils.TextureLoader;
@@ -9,6 +11,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.font.TextRenderer.TextLayerType;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -17,6 +20,7 @@ import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonPart;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -27,6 +31,7 @@ import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,6 +48,10 @@ public class BubbleRenderer {
     public static long lastTick = 0;
     public static int light = 15728880;
     public static int overlay = OverlayTexture.DEFAULT_UV;
+    public static List<String> whitelist = new ArrayList<>();
+    public static List<String> blacklist = new ArrayList<>();
+    private static int queryEntityDataCount = 0;
+    private static List<Entity> relevantEntities;
 
     public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         // Set shader & texture
@@ -61,9 +70,9 @@ public class BubbleRenderer {
 
         // Draw UI text background (based on friendship)
         // Draw TOP
-        if (friendship == -3) {
+        if (friendship == -3 && !base_name.endsWith("-player")) {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-enemy"));
-        } else if (friendship == 3) {
+        } else if (friendship == 3 && !base_name.endsWith("-player")) {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-friend"));
         } else {
             RenderSystem.setShaderTexture(0, textures.GetUI(base_name));
@@ -344,7 +353,7 @@ public class BubbleRenderer {
         TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
 
         // Get Name of entity
-        String nameText = "CreatureChat";
+        String nameText = "";
         if (entity instanceof MobEntity) {
             // Custom Name Tag (MobEntity)
             if (entity.getCustomName() != null) {
@@ -391,16 +400,39 @@ public class BubbleRenderer {
         // Get camera position
         Vec3d interpolatedCameraPos = new Vec3d(camera.getPos().x, camera.getPos().y, camera.getPos().z);
 
-        // Get all entities
-        List<Entity> nearbyEntities = world.getOtherEntities(null, area);
+        // Increment query counter
+        queryEntityDataCount++;
 
-        // Filter to include only MobEntity & PlayerEntity but exclude any camera 1st person entity and any entities with passengers
-        List<Entity> relevantEntities = nearbyEntities.stream()
-                .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
-                .filter(entity -> !entity.hasPassengers())
-                .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
-                .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
-                .collect(Collectors.toList());
+        // This query count helps us cache the list of relevant entities. We can refresh
+        // the list every 3rd call to this render function
+        if (queryEntityDataCount % 3 == 0 || relevantEntities == null) {
+            // Get all entities
+            List<Entity> nearbyEntities = world.getOtherEntities(null, area);
+
+            // Filter to include only MobEntity & PlayerEntity but exclude any camera 1st person entity and any entities with passengers
+            relevantEntities = nearbyEntities.stream()
+                    .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
+                    .filter(entity -> !entity.hasPassengers())
+                    .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
+                    .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
+                    .filter(entity -> {
+                        // Always include PlayerEntity
+                        if (entity instanceof PlayerEntity) {
+                            return true;
+                        }
+                        Identifier entityId = Registries.ENTITY_TYPE.getId(entity.getType());
+                        String entityIdString = entityId.toString();
+                        // Check blacklist first
+                        if (blacklist.contains(entityIdString)) {
+                            return false;
+                        }
+                        // If whitelist is not empty, only include entities in the whitelist
+                        return whitelist.isEmpty() || whitelist.contains(entityIdString);
+                    })
+                    .collect(Collectors.toList());
+
+            queryEntityDataCount = 0;
+        }
 
         for (Entity entity : relevantEntities) {
 
@@ -484,12 +516,20 @@ public class BubbleRenderer {
             // Get position matrix
             Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-            // Look-up greeting (if any)
-            ChatDataManager.EntityChatData chatData = null;
+            // Get the player
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+
+            // Get chat message (if any)
+            EntityChatData chatData = null;
+            PlayerData playerData = null;
             if (entity instanceof MobEntity) {
                 chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
+                if (chatData != null) {
+                    playerData = chatData.getPlayerData(player.getDisplayName().getString());
+                }
             } else if (entity instanceof PlayerEntity) {
                 chatData = PlayerMessageManager.getMessage(entity.getUuid());
+                playerData = new PlayerData(); // no friendship needed for player messages
             }
 
             float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
@@ -524,6 +564,9 @@ public class BubbleRenderer {
                     // Draw 'start chat' button
                     drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
 
+                    // Draw Entity (Custom Name)
+                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
+
                 } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
                     // Draw 'pending' button
                     drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
@@ -533,13 +576,13 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     // Draw text background (no smaller than 50F tall)
-                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, playerData.friendship);
 
                     // Draw face icon of entity
                     drawEntityIcon(matrices, entity, -82, 7, 32, 32);
 
                     // Draw Friendship status
-                    drawFriendshipStatus(matrices, 51, 18, 31, 21, chatData.friendship);
+                    drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
 
                     // Draw 'arrows' & 'keyboard' buttons
                     if (chatData.currentLineNumber > 0) {
@@ -559,10 +602,10 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, false);
 
                     // Draw 'resume chat' button
-                    if (chatData.friendship == 3) {
+                    if (playerData.friendship == 3) {
                         // Friend chat bubble
                         drawIcon("button-chat-friend", matrices, -16, textHeaderHeight, 32, 17);
-                    } else if (chatData.friendship == -3) {
+                    } else if (playerData.friendship == -3) {
                         // Enemy chat bubble
                         drawIcon("button-chat-enemy", matrices, -16, textHeaderHeight, 32, 17);
                     } else {
@@ -575,7 +618,7 @@ public class BubbleRenderer {
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     // Draw text background
-                    drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, chatData.friendship);
+                    drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, playerData.friendship);
 
                     // Draw face icon of player
                     drawPlayerIcon(matrices, entity, -75, 14, 18, 18);

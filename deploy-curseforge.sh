@@ -6,26 +6,64 @@ CURSEFORGE_API_KEY=${CURSEFORGE_API_KEY}
 CHANGELOG_FILE="./CHANGELOG.md"
 API_URL="https://minecraft.curseforge.com/api"
 PROJECT_ID=1012118
-DEPENDENCY_SLUG="fabric-api"
 USER_AGENT="CreatureChat-Minecraft-Mod:curseforge@owlmaddie.com"
-SLEEP_DURATION=30
+SLEEP_DURATION=5
 
-# Function to fetch game version IDs
+# Function to fetch version types and return the base game type ID
+fetch_base_version_id() {
+  local base_version=$(echo "$1" | grep -oE '^[0-9]+\.[0-9]+')
+  local version_types_cache="/tmp/version_types.json"
+
+  if [ ! -f "$version_types_cache" ]; then
+    curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/version-types" > "$version_types_cache"
+  fi
+
+  local version_types_response=$(cat "$version_types_cache")
+  local base_version_id=$(echo "$version_types_response" | jq -r --arg base_version "Minecraft $base_version" '.[] | select(.name == $base_version) | .id')
+
+  if [ -z "$base_version_id" ]; then
+    echo "ERROR: Base version ID not found."
+    exit 1
+  fi
+
+  echo "$base_version_id"
+}
+
+# Main function to fetch game version IDs
 fetch_game_version_ids() {
   local minecraft_version="$1"
-  local response=$(curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/versions")
 
+  # Fetch the base version ID
+  local base_version_id=$(fetch_base_version_id "$minecraft_version")
+
+  # Cache the game versions JSON data
+  local game_versions_cache="/tmp/game_versions.json"
+  if [ ! -f "$game_versions_cache" ]; then
+    curl --retry 3 --retry-delay 5 -s -H "X-Api-Token: $CURSEFORGE_API_KEY" "$API_URL/game/versions" > "$game_versions_cache"
+  fi
+
+  local response=$(cat "$game_versions_cache")
+
+  # Find the specific version ID from the cached data
+  local minecraft_id=$(echo "$response" | jq -r --arg base_version_id "$base_version_id" --arg full_version "$minecraft_version" '.[] | select(.gameVersionTypeID == ($base_version_id | tonumber) and .name == $full_version) | .id' | head -n 1)
+
+  if [ -z "$minecraft_id" ]; then
+    echo "ERROR: Minecraft version ID not found."
+    exit 1
+  fi
+
+  # Retrieve the other IDs as before
   local client_id=$(echo "$response" | jq -r '.[] | select(.name == "Client") | .id')
   local server_id=$(echo "$response" | jq -r '.[] | select(.name == "Server") | .id')
   local fabric_id=$(echo "$response" | jq -r '.[] | select(.name == "Fabric") | .id')
-  local minecraft_id=$(echo "$response" | jq -r --arg mv "$minecraft_version" '.[] | select(.name == $mv) | .id' | head -n 1)
+  local forge_id=$(echo "$response" | jq -r '.[] | select(.name == "Forge") | .id')
 
-  if [ -z "$client_id" ] || [ -z "$server_id" ] || [ -z "$fabric_id" ] || [ -z "$minecraft_id" ]; then
+  if [ -z "$client_id" ] || [ -z "$server_id" ] || ([ -z "$fabric_id" ] && [ -z "$forge_id" ]); then
     echo "ERROR: One or more game version IDs not found."
     exit 1
   fi
 
-  echo "$client_id $server_id $fabric_id $minecraft_id"
+  echo "$client_id $server_id $fabric_id $forge_id $minecraft_id"
 }
 
 # Read the first changelog block
@@ -52,7 +90,7 @@ for FILE in creaturechat*.jar; do
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
-    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\(.*\)\.jar/\1/p')
+    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION-$MINECRAFT_VERSION"
 
     # Verify that OUR_VERSION and MINECRAFT_VERSION are not empty and OUR_VERSION matches VERSION
@@ -64,16 +102,33 @@ for FILE in creaturechat*.jar; do
     echo "Preparing to upload $FILE_BASENAME as version $VERSION_NUMBER..."
 
     # Fetch game version IDs
+    GAME_TYPE_ID=$(fetch_base_version_id "$MINECRAFT_VERSION")
     GAME_VERSION_IDS=($(fetch_game_version_ids "$MINECRAFT_VERSION"))
+
+    # DEBUG
+    echo "Minecraft Type ID: $GAME_TYPE_ID"
+    echo "Minecraft Versions IDs (client_id: ${GAME_VERSION_IDS[0]}, server_id: ${GAME_VERSION_IDS[1]}, fabric_id: ${GAME_VERSION_IDS[2]}, forge_id: ${GAME_VERSION_IDS[3]}, minecraft_id: ${GAME_VERSION_IDS[4]})"
+
+    # Determine the dependency slugs and loader ID based on the file name
+    if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
+      DEPENDENCY_SLUGS=("sinytra-connector" "forgified-fabric-api")
+      GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[3]}, ${GAME_VERSION_IDS[4]}]"
+    else
+      DEPENDENCY_SLUGS=("fabric-api")
+      GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[2]}, ${GAME_VERSION_IDS[4]}]"
+    fi
+
+    # Create dependencies array for payload
+    RELATIONS=$(for slug in "${DEPENDENCY_SLUGS[@]}"; do jq -n --arg slug "$slug" '{"slug": $slug, "type": "requiredDependency"}'; done | jq -s .)
 
     # Create a new version payload
     PAYLOAD=$(jq -n --arg changelog "$CHANGELOG" \
       --arg changelogType "markdown" \
       --arg displayName "$FILE_BASENAME" \
-      --argjson gameVersions "$(printf '%s\n' "${GAME_VERSION_IDS[@]}" | jq -R . | jq -s .)" \
-      --argjson gameVersionTypeIds '[75125]' \
+      --argjson gameVersions "$GAME_VERSIONS" \
+      --argjson gameVersionTypeIds "[$GAME_TYPE_ID]" \
       --arg releaseType "release" \
-      --argjson relations '[{"slug": "'"$DEPENDENCY_SLUG"'", "type": "requiredDependency"}]' \
+      --argjson relations "$RELATIONS" \
       '{
         "changelog": $changelog,
         "changelogType": $changelogType,

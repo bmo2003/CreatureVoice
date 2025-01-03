@@ -3,15 +3,17 @@ package com.owlmaddie.goals;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.RangedAttackMob;
 import net.minecraft.entity.mob.Angerable;
+import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.GolemEntity;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.EnumSet;
+
+import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
 
 /**
  * The {@code AttackPlayerGoal} class instructs a Mob Entity to show aggression towards a target Entity.
@@ -23,7 +25,7 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     protected enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
     protected EntityState currentState = EntityState.IDLE;
     protected int cooldownTimer = 0;
-    protected final int CHARGE_TIME = 15; // Time before leaping / attacking
+    protected final int CHARGE_TIME = 12; // Time before leaping / attacking
     protected final double MOVE_DISTANCE = 200D; // 20 blocks away
     protected final double CHARGE_DISTANCE = 25D; // 5 blocks away
     protected final double ATTACK_DISTANCE = 4D; // 2 blocks away
@@ -94,12 +96,10 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
 
         // Spawn red particles to simulate 'injury'
-        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ParticleTypes.DAMAGE_INDICATOR,
-                this.targetEntity.getX(),
-                this.targetEntity.getBodyY(0.5D),
-                this.targetEntity.getZ(),
-                10, // number of particles
-                0.1, 0.1, 0.1, 0.2); // speed and randomness
+        int numParticles = ThreadLocalRandom.current().nextInt(2, 7);  // Random number between 2 (inclusive) and 7 (exclusive)
+        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ATTACK_PARTICLE,
+                this.targetEntity.getX(), this.targetEntity.getBodyY(0.5D), this.targetEntity.getZ(),
+                numParticles, 0.5, 0.5, 0.1, 0.4);
     }
 
     @Override

@@ -45,14 +45,22 @@ public class BehaviorTests {
             "Please follow me",
             "Come with me please",
             "Quickly, please come this way");
+    List<String> leadMessages = Arrays.asList(
+            "Take me to a secret forrest",
+            "Where is the strong hold?",
+            "Can you help me find the location of the secret artifact?");
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
-            "DIEEE!");
+            "Fight me now!");
     List<String> protectMessages = Arrays.asList(
             "Please protect me",
             "Please keep me safe friend",
             "Don't let them hurt me please");
+    List<String> unFleeMessages = Arrays.asList(
+            "I'm so sorry, please stop running away",
+            "Stop fleeing immediately",
+            "You are safe now, please stop running");
     List<String> friendshipUpMessages = Arrays.asList(
             "Hi friend! I am so happy to see you again!",
             "Looking forward to hanging out with you.",
@@ -109,6 +117,27 @@ public class BehaviorTests {
     public void followNervous() {
         for (String message : followMessages) {
             testPromptForBehavior(nervousPath, List.of(message), "FOLLOW");
+        }
+    }
+
+    @Test
+    public void leadBrave() {
+        for (String message : leadMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "LEAD");
+        }
+    }
+
+    @Test
+    public void leadNervous() {
+        for (String message : leadMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "LEAD");
+        }
+    }
+
+    @Test
+    public void unFleeBrave() {
+        for (String message : unFleeMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "UNFLEE");
         }
     }
 
@@ -174,7 +203,7 @@ public class BehaviorTests {
 
             // Add test message
             for (String message : messages) {
-                entityTestData.addMessage(message, ChatDataManager.ChatSender.USER);
+                entityTestData.addMessage(message, ChatDataManager.ChatSender.USER, "TestPlayer1");
             }
 
             // Get prompt
