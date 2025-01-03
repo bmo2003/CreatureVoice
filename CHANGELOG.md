@@ -6,6 +6,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ## Unreleased
 
+### Added
+- Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
+- Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
+
+### Changed
+- Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
+
 ### Fixed
 - Changing death message timestamp output to use DEBUG log level
 
