@@ -164,7 +164,7 @@ public class EntityChatData {
         // Add PLAYER context information
         Map<String, String> contextData = new HashMap<>();
         contextData.put("player_name", player.getDisplayName().getString());
-        contextData.put("player_health", player.getHealth() + "/" + player.getMaxHealth());
+        contextData.put("player_health", Math.round(player.getHealth()) + "/" + Math.round(player.getMaxHealth()));
         contextData.put("player_hunger", String.valueOf(player.getHungerManager().getFoodLevel()));
         contextData.put("player_held_item", String.valueOf(player.getMainHandStack().getItem().toString()));
         contextData.put("player_biome", player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath());
@@ -227,7 +227,7 @@ public class EntityChatData {
             contextData.put("entity_name", entity.getCustomName().getString());
         }
         contextData.put("entity_type", entity.getType().getName().getString());
-        contextData.put("entity_health", entity.getHealth() + "/" + entity.getMaxHealth());
+        contextData.put("entity_health", Math.round(entity.getHealth()) + "/" + Math.round(entity.getMaxHealth()));
         contextData.put("entity_personality", getCharacterProp("Personality"));
         contextData.put("entity_speaking_style", getCharacterProp("Speaking Style / Tone"));
         contextData.put("entity_likes", getCharacterProp("Likes"));
@@ -237,6 +237,11 @@ public class EntityChatData {
         contextData.put("entity_class", getCharacterProp("Class"));
         contextData.put("entity_skills", getCharacterProp("Skills"));
         contextData.put("entity_background", getCharacterProp("Background"));
+        if (entity.age < 0) {
+            contextData.put("entity_maturity", "Baby");
+        } else {
+            contextData.put("entity_maturity", "Adult");
+        }
 
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (playerData != null) {

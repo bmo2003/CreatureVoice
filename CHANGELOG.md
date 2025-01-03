@@ -7,14 +7,16 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## Unreleased
 
 ### Added
+- Added Entity Maturity (baby or adult) into system-chat prompt
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
-- Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 
 ### Changed
+- Simplified system-chat prompt (less tokens) and rounded health & hunger values (less tokens)
 - Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
+- Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 
 ### Fixed
-- Changing death message timestamp output to use DEBUG log level
+- Reduced death message output in logs to use DEBUG log level
 
 ## [1.2.1] - 2025-01-01
 
