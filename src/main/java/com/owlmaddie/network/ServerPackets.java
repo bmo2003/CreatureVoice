@@ -254,7 +254,7 @@ public class ServerPackets {
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
             String entityUUID = entity.getUuidAsString();
             if (entity.getRemovalReason() == Entity.RemovalReason.KILLED && ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
-                LOGGER.info("Entity killed (" + entityUUID + "), updating death time stamp.");
+                LOGGER.debug("Entity killed (" + entityUUID + "), updating death time stamp.");
                 ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
             }
         });
@@ -359,7 +359,7 @@ public class ServerPackets {
                 // Set custom name (if null)
                 String characterName = chatData.getCharacterProp("name");
                 if (!characterName.isEmpty() && !characterName.equals("N/A") && entity.getCustomName() == null) {
-                    LOGGER.info("Setting entity name to " + characterName + " for " + chatData.entityId);
+                    LOGGER.debug("Setting entity name to " + characterName + " for " + chatData.entityId);
                     entity.setCustomName(Text.literal(characterName));
                     entity.setCustomNameVisible(true);
                     entity.setPersistent();
