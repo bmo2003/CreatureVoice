@@ -3,7 +3,8 @@
 	"package": "com.owlmaddie.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"EntityRendererMixin"
+		"EntityRendererMixin",
+		"MixinPlayerSkinTexture"
 	],
 	"injectors": {
 		"defaultRequire": 1

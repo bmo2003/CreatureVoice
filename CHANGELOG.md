@@ -7,6 +7,8 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## Unreleased
 
 ### Added
+- New Custom Player Icon support (if black/white pixel set at 31, 49), uses certain empty UV coordinates in player skin file.
+- New mixin to extend PlayerSkinTexture to make a copy of the NativeImage (used later for custom skin rendering)
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 
