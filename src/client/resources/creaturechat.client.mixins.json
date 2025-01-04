@@ -6,7 +6,7 @@
 		"EntityRendererMixin"
 	],
 	"env": {
-		"client.MixinPlayerSkinTexturePre1202": {
+		"client.MixinPlayerSkinTexture1201Pre": {
 			"minVersion": "1.20",
 			"maxVersion": "1.20.1"
 		},

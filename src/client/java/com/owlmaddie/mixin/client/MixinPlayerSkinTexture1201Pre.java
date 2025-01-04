@@ -12,11 +12,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerSkinTexture.class)
-public abstract class MixinPlayerSkinTexturePre1202 extends ResourceTexture implements IPlayerSkinTexture {
+public abstract class MixinPlayerSkinTexture1201Pre extends ResourceTexture implements IPlayerSkinTexture {
     @Unique
     private NativeImage cachedSkinImage;
 
-    public MixinPlayerSkinTexturePre1202(Identifier location) {
+    public MixinPlayerSkinTexture1201Pre(Identifier location) {
         super(location);
     }
 
