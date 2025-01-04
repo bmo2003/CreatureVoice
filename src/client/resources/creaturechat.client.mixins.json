@@ -3,12 +3,13 @@
 	"package": "com.owlmaddie.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"EntityRendererMixin"
+		"EntityRendererMixin",
+		"MixinPlayerCustomTexture",
+		"MixinPlayerSkinTexture1202Plus"
 	],
 	"env": {
-		"client.MixinPlayerSkinTexture1201Pre": {
-			"minVersion": "1.20",
-			"maxVersion": "1.20.1"
+		"client.MixinPlayerCustomTexture": {
+			"minVersion": "1.20.2"
 		},
 		"client.MixinPlayerSkinTexture1202Plus": {
 			"minVersion": "1.20.2"

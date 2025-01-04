@@ -1,4 +1,4 @@
-package com.owlmaddie.utils;
+package com.owlmaddie.skin;
 
 import net.minecraft.client.texture.NativeImage;
 import org.jetbrains.annotations.Nullable;

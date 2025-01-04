@@ -1,6 +1,6 @@
 package com.owlmaddie.mixin.client;
 
-import com.owlmaddie.utils.IPlayerSkinTexture;
+import com.owlmaddie.skin.IPlayerSkinTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.PlayerSkinTexture;
 import net.minecraft.client.texture.ResourceTexture;

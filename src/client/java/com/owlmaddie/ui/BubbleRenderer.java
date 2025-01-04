@@ -1,14 +1,11 @@
 package com.owlmaddie.ui;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
-import com.owlmaddie.utils.EntityHeights;
-import com.owlmaddie.utils.EntityRendererAccessor;
-import com.owlmaddie.utils.IPlayerSkinTexture;
-import com.owlmaddie.utils.TextureLoader;
+import com.owlmaddie.skin.PlayerCustomTexture;
+import com.owlmaddie.utils.*;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -16,8 +13,6 @@ import net.minecraft.client.font.TextRenderer.TextLayerType;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
@@ -30,7 +25,6 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.slf4j.Logger;
@@ -234,7 +228,7 @@ public class BubbleRenderer {
         Identifier playerTexture = renderer.getTexture(entity);
 
         // Check for black and white pixels (using the Mixin-based check)
-        boolean customSkinFound = checkCustomSkinKey(playerTexture);
+        boolean customSkinFound = PlayerCustomTexture.hasCustomIcon(playerTexture);
 
         // Set shader & texture
         RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
@@ -331,52 +325,6 @@ public class BubbleRenderer {
         // Disable blending and depth test
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
-    }
-
-    public static boolean checkCustomSkinKey(Identifier skinId) {
-        // 1. Grab the AbstractTexture from the TextureManager
-        AbstractTexture tex = MinecraftClient.getInstance().getTextureManager().getTexture(skinId);
-
-        // 2. Check if it implements our Mixin interface: IPlayerSkinTexture
-        if (tex instanceof IPlayerSkinTexture iSkin) {
-            // 3. Get the NativeImage we stored in the Mixin
-            NativeImage image = iSkin.getLoadedImage();
-            if (image != null) {
-                int width = image.getWidth();
-                int height = image.getHeight();
-
-                // Check we have the full 64x64
-                if (width == 64 && height == 64) {
-                    // Example: black & white pixel at (31,48) and (32,48)
-                    int color31_48 = image.getColor(31, 49);
-                    int color32_48 = image.getColor(32, 49);
-                    return (color31_48 == 0xFF000000 && color32_48 == 0xFFFFFFFF);
-                }
-            }
-        }
-
-        // If it's still loading, or not a PlayerSkinTexture, or no NativeImage loaded yet
-        return false;
-    }
-
-    @Nullable
-    public static NativeImage getPlayerSkinAsNativeImage(GameProfile profile) {
-        // 1. Ask the SkinProvider for the textures
-        if (MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile) == null) {
-            return null; // No skin or still loading
-        }
-
-        // 2. Identify the texture ID
-        Identifier skinId = MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile).texture();
-
-        // 3. Get the AbstractTexture from the TextureManager
-        AbstractTexture tex = MinecraftClient.getInstance().getTextureManager().getTexture(skinId);
-        if (tex instanceof IPlayerSkinTexture iSkin) {
-            // 4. Get the in-memory NativeImage
-            return iSkin.getLoadedImage();
-        }
-
-        return null; // Not yet loaded or is a different texture type
     }
 
     private static void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
