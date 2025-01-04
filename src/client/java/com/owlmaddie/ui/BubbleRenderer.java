@@ -18,7 +18,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.SkinTextures;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
@@ -363,13 +362,12 @@ public class BubbleRenderer {
     @Nullable
     public static NativeImage getPlayerSkinAsNativeImage(GameProfile profile) {
         // 1. Ask the SkinProvider for the textures
-        SkinTextures skinTextures = MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile);
-        if (skinTextures == null) {
+        if (MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile) == null) {
             return null; // No skin or still loading
         }
 
         // 2. Identify the texture ID
-        Identifier skinId = skinTextures.texture();
+        Identifier skinId = MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile).texture();
 
         // 3. Get the AbstractTexture from the TextureManager
         AbstractTexture tex = MinecraftClient.getInstance().getTextureManager().getTexture(skinId);
