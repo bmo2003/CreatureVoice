@@ -13,9 +13,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
   - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
 
+### Changed
+- Seperated Player and Entity message broadcasts (different packets for simplicity)
+
 ### Fixed
 - Fixed death messages for mobs with no chat data
 - Fixed transparent background behind chat screen for Minecraft 1.20 and 1.20.1.
+- Removed extra message broadcast (which was unnecessary)
 
 ## [1.2.1] - 2025-01-01
 

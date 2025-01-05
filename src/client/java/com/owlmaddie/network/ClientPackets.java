@@ -108,17 +108,9 @@ public class ClientPackets {
 
     public static void register() {
         // Client-side packet handler, message sync
-        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_MESSAGE, (client, handler, buffer, responseSender) -> {
+        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_ENTITY_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
-            String sendingPlayerIdStr = buffer.readString(32767);
-            String senderPlayerName = buffer.readString(32767);
-            UUID senderPlayerId;
-            if (!sendingPlayerIdStr.isEmpty()) {
-                senderPlayerId = UUID.fromString(sendingPlayerIdStr);
-            } else {
-                senderPlayerId = null;
-            }
             String message = buffer.readString(32767);
             int line = buffer.readInt();
             String status_name = buffer.readString(32767);
@@ -146,24 +138,37 @@ public class ClientPackets {
                 ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
 
-                if (senderPlayerId != null && sender == ChatDataManager.ChatSender.USER && status == ChatDataManager.ChatStatus.DISPLAY) {
-                    // Add player message to queue for rendering
-                    PlayerMessageManager.addMessage(senderPlayerId, message, senderPlayerName, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
-                    chatData.status = ChatDataManager.ChatStatus.PENDING;
-
-                } else {
-                    // Add entity message
-                    if (!message.isEmpty()) {
-                        chatData.currentMessage = message;
-                    }
-                    chatData.currentLineNumber = line;
-                    chatData.status = status;
-                    chatData.sender = sender;
-                    chatData.players = players;
+                // Add entity message
+                if (!message.isEmpty()) {
+                    chatData.currentMessage = message;
                 }
+                chatData.currentLineNumber = line;
+                chatData.status = status;
+                chatData.sender = sender;
+                chatData.players = players;
 
                 // Play sound with volume based on distance (from player or entity)
                 playNearbyUISound(client, entity, 0.2f);
+            });
+        });
+
+        // Client-side packet handler, message sync
+        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_PLAYER_MESSAGE, (client, handler, buffer, responseSender) -> {
+            // Read the data from the server packet
+            UUID senderPlayerId = UUID.fromString(buffer.readString());
+            String senderPlayerName = buffer.readString(32767);
+            String message = buffer.readString(32767);
+
+            // Update the chat data manager on the client-side
+            client.execute(() -> { // Make sure to run on the client thread
+                // Ensure client.player is initialized
+                if (client.player == null || client.world == null) {
+                    LOGGER.warn("Client not fully initialized. Dropping message for sender '{}'.", senderPlayerId);
+                    return;
+                }
+
+                // Add player message to queue for rendering
+                PlayerMessageManager.addMessage(senderPlayerId, message, senderPlayerName, ChatDataManager.TICKS_TO_DISPLAY_USER_MESSAGE);
             });
         });
 

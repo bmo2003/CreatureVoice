@@ -556,9 +556,6 @@ public class EntityChatData {
                     previousMessages.clear();
                 }
             }
-
-            // Broadcast to all players
-            ServerPackets.BroadcastPacketMessage(this, player);
         });
     }
 
@@ -603,15 +600,17 @@ public class EntityChatData {
         // Determine status for message
         if (sender == ChatDataManager.ChatSender.ASSISTANT) {
             status = ChatDataManager.ChatStatus.DISPLAY;
-        } else if (sender == ChatDataManager.ChatSender.USER && systemPrompt.equals("system-chat")) {
-            // Only show system-chat messages above players (not system-character ones)
-            status = ChatDataManager.ChatStatus.DISPLAY;
         } else {
             status = ChatDataManager.ChatStatus.PENDING;
         }
 
-        // Broadcast to all players
-        ServerPackets.BroadcastPacketMessage(this, player);
+        if (sender == ChatDataManager.ChatSender.USER && systemPrompt.equals("system-chat") && auto_generated == 0) {
+            // Broadcast new player message (when not auto-generated)
+            ServerPackets.BroadcastPlayerMessage(this, player);
+        }
+
+        // Broadcast new entity message status (i.e. pending)
+        ServerPackets.BroadcastEntityMessage(this);
     }
 
     // Get wrapped lines
@@ -631,13 +630,13 @@ public class EntityChatData {
         currentLineNumber = Math.min(Math.max(lineNumber, 0), totalLines);
 
         // Broadcast to all players
-        ServerPackets.BroadcastPacketMessage(this, null);
+        ServerPackets.BroadcastEntityMessage(this);
     }
 
     public void setStatus(ChatDataManager.ChatStatus new_status) {
         status = new_status;
 
         // Broadcast to all players
-        ServerPackets.BroadcastPacketMessage(this, null);
+        ServerPackets.BroadcastEntityMessage(this);
     }
 }
