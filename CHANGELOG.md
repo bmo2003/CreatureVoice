@@ -11,6 +11,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
   - New Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
   - New mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
 - Chat messages are now displayed in chat bubbles above players heads
+- New command `/creaturechat chatbubbles set <on | off>` to show or hide player chat messages in bubbles
 - Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
   - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
 

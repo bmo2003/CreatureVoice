@@ -1,6 +1,8 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.commands.ConfigurationHandler;
+import com.owlmaddie.network.ServerPackets;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -19,19 +21,23 @@ public abstract class MixinOnChat {
 
     @Inject(method = "onChatMessage", at = @At("HEAD"), cancellable = true)
     private void onChatMessage(ChatMessageC2SPacket packet, CallbackInfo ci) {
-        // Get the player who sent the message
-        ServerPlayNetworkHandler handler = (ServerPlayNetworkHandler) (Object) this;
-        ServerPlayerEntity player = handler.player;
+        ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        if (config.getChatBubbles()) {
 
-        // Get the chat message
-        String chatMessage = packet.chatMessage();
+            // Get the player who sent the message
+            ServerPlayNetworkHandler handler = (ServerPlayNetworkHandler) (Object) this;
+            ServerPlayerEntity player = handler.player;
 
-        // Example: Call your broadcast function
-        EntityChatData chatData = new EntityChatData(player.getUuidAsString());
-        chatData.currentMessage = chatMessage;
-        BroadcastPlayerMessage(chatData, player);
+            // Get the chat message
+            String chatMessage = packet.chatMessage();
 
-        // Optionally, cancel the event to prevent the default behavior
-        //ci.cancel();
+            // Example: Call your broadcast function
+            EntityChatData chatData = new EntityChatData(player.getUuidAsString());
+            chatData.currentMessage = chatMessage;
+            BroadcastPlayerMessage(chatData, player);
+
+            // Optionally, cancel the event to prevent the default behavior
+            //ci.cancel();
+        }
     }
 }

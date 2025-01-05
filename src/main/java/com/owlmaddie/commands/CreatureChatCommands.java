@@ -49,6 +49,7 @@ public class CreatureChatCommands {
                 .then(registerStoryCommand())
                 .then(registerWhitelistCommand())
                 .then(registerBlacklistCommand())
+                .then(registerChatBubbleCommand())
                 .then(registerHelpCommand()));
     }
 
@@ -95,6 +96,35 @@ public class CreatureChatCommands {
                 .map(Identifier::toString)
                 .collect(Collectors.toList());
     }
+    private static LiteralArgumentBuilder<ServerCommandSource> registerChatBubbleCommand() {
+        return CommandManager.literal("chatbubble")
+                .requires(source -> source.hasPermissionLevel(4))
+                .then(CommandManager.literal("set")
+                        .then(CommandManager.literal("on")
+                                .then(addConfigArgs((context, useServerConfig) -> setChatBubbleEnabled(context, true, useServerConfig)))
+                                .executes(context -> setChatBubbleEnabled(context, true, false)))
+                        .then(CommandManager.literal("off")
+                                .then(addConfigArgs((context, useServerConfig) -> setChatBubbleEnabled(context, false, useServerConfig)))
+                                .executes(context -> setChatBubbleEnabled(context, false, false))));
+    }
+
+    private static int setChatBubbleEnabled(CommandContext<ServerCommandSource> context, boolean enabled, boolean useServerConfig) {
+        ServerCommandSource source = context.getSource();
+        ConfigurationHandler configHandler = new ConfigurationHandler(source.getServer());
+        ConfigurationHandler.Config config = configHandler.loadConfig();
+
+        config.setChatBubbles(enabled);
+
+        if (configHandler.saveConfig(config, useServerConfig)) {
+            Text feedbackMessage = Text.literal("Player chat bubbles have been " + (enabled ? "enabled" : "disabled") + ".").formatted(Formatting.GREEN);
+            source.sendFeedback(() -> feedbackMessage, true);
+            return 1;
+        } else {
+            Text feedbackMessage = Text.literal("Failed to update player chat bubble setting.").formatted(Formatting.RED);
+            source.sendFeedback(() -> feedbackMessage, false);
+            return 0;
+        }
+    }
 
     private static LiteralArgumentBuilder<ServerCommandSource> registerWhitelistCommand() {
         return CommandManager.literal("whitelist")
@@ -135,6 +165,7 @@ public class CreatureChatCommands {
                             + "/creaturechat model set <model> - Sets the model\n"
                             + "/creaturechat timeout set <seconds> - Sets the API timeout\n"
                             + "/creaturechat story set \"<story>\" - Sets a custom story\n"
+                            + "/creaturechat chatbubbles set <on | off> - Show player chat bubbles\n"
                             + "/creaturechat whitelist <entityType | all | clear> - Show chat bubbles\n"
                             + "/creaturechat blacklist <entityType | all | clear> - Hide chat bubbles\n"
                             + "\n"
@@ -151,43 +182,42 @@ public class CreatureChatCommands {
                 .requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.literal("set")
                         .then(CommandManager.argument("value", StringArgumentType.string())
-                                .executes(context -> {
+                                .then(addConfigArgs((context, useServerConfig) -> {
                                     String story = StringArgumentType.getString(context, "value");
                                     ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
-                                    config.setStory(story); // Assuming Config has a `setStory` method
-                                    if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, true)) {
+                                    config.setStory(story);
+                                    if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, useServerConfig)) {
                                         context.getSource().sendFeedback(() -> Text.literal("Story set successfully: " + story).formatted(Formatting.GREEN), true);
                                         return 1;
                                     } else {
                                         context.getSource().sendFeedback(() -> Text.literal("Failed to set story!").formatted(Formatting.RED), false);
                                         return 0;
                                     }
-                                })
-                        ))
+                                }))))
                 .then(CommandManager.literal("clear")
-                        .executes(context -> {
+                        .then(addConfigArgs((context, useServerConfig) -> {
                             ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
-                            config.setStory(""); // Clear the story
-                            if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, true)) {
+                            config.setStory("");
+                            if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, useServerConfig)) {
                                 context.getSource().sendFeedback(() -> Text.literal("Story cleared successfully!").formatted(Formatting.GREEN), true);
                                 return 1;
                             } else {
                                 context.getSource().sendFeedback(() -> Text.literal("Failed to clear story!").formatted(Formatting.RED), false);
                                 return 0;
                             }
-                        }))
+                        })))
                 .then(CommandManager.literal("display")
-                        .executes(context -> {
-                            ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
-                            String story = config.getStory(); // Assuming Config has a `getStory` method
-                            if (story == null || story.isEmpty()) {
-                                context.getSource().sendFeedback(() -> Text.literal("No story is currently set.").formatted(Formatting.RED), false);
-                                return 0;
-                            } else {
-                                context.getSource().sendFeedback(() -> Text.literal("Current story: " + story).formatted(Formatting.AQUA), false);
-                                return 1;
-                            }
-                        }));
+                .executes(context -> {
+                    ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
+                    String story = config.getStory();
+                    if (story == null || story.isEmpty()) {
+                        context.getSource().sendFeedback(() -> Text.literal("No story is currently set.").formatted(Formatting.RED), false);
+                        return 0;
+                    } else {
+                        context.getSource().sendFeedback(() -> Text.literal("Current story: " + story).formatted(Formatting.AQUA), false);
+                        return 1;
+                    }
+                }));
     }
 
     private static <T> int setConfig(ServerCommandSource source, String settingName, T value, boolean useServerConfig, String settingDescription) {
