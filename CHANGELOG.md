@@ -7,14 +7,14 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## Unreleased
 
 ### Added
-- Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
-- Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
-
-### Changed
-- Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
+- Player Icons (custom art embedded in player skin)
+  - New mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
+- Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
+  - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
 
 ### Fixed
-- Changing death message timestamp output to use DEBUG log level
+- Fixed death messages for mobs with no chat data
+- Fixed transparent background behind chat screen for Minecraft 1.20 and 1.20.1.
 
 ## [1.2.1] - 2025-01-01
 
