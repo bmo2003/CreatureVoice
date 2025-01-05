@@ -1,4 +1,4 @@
-# Icons for CreatureChat
+# Icon Tutorial for CreatureChat
 
 <img src="src/main/resources/assets/creaturechat/screenshots/custom-player-icon1.png" width="100%" style="image-rendering: pixelated;">
 
