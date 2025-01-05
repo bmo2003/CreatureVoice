@@ -17,12 +17,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * loading custom player icons in the unused UV coordinates of the player skin image.
  */
 @Mixin(PlayerSkinTexture.class)
-public abstract class MixinPlayerSkinTexture1202Plus extends ResourceTexture implements IPlayerSkinTexture {
+public abstract class MixinPlayerSkinTexture extends ResourceTexture implements IPlayerSkinTexture {
 
     @Unique
     private NativeImage cachedSkinImage;
 
-    public MixinPlayerSkinTexture1202Plus(Identifier location) {
+    public MixinPlayerSkinTexture(Identifier location) {
         super(location);
     }
 
