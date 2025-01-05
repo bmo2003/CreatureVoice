@@ -18,6 +18,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Fixed
 - Changing death message timestamp output to use DEBUG log level
 - Bug with build causing issues with 1.20, 1.20.1 builds (wrong minimum version set in fabric.mod.json)
+- Dark transparent background behind chat screen added back for Minecraft 1.20 and 1.20.1.
 
 ## [1.2.1] - 2025-01-01
 
