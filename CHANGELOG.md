@@ -8,6 +8,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Added
 - Player Icons (custom art embedded in player skin)
+  - New Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
   - New mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
 - Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
   - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
