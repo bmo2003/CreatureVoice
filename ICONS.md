@@ -7,7 +7,7 @@ Customize entity and player icons in **CreatureChat** by following this step-by-
 ---
 
 ## **Custom Entity Icons**
-<img src="src/main/resources/assets/creaturechat/textures/entity/pig/pig.png" width="256" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/big-pig.png" width="440" style="image-rendering: pixelated;">
 
 ### Folder Structure:
 To add custom icons for entities, place the icon files in the following path:
