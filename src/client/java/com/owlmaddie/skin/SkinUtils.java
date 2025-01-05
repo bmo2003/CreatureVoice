@@ -4,20 +4,19 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.util.Identifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * SkinUtils contains functions to check for certain black and white pixel values in a skin, to determine
+ * if the skin contains a custom hidden icon to show in the player chat message.
+ */
 public class SkinUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-
     public static boolean checkCustomSkinKey(Identifier skinId) {
-        LOGGER.info("mixin checkCustomSkinKey called");
-        // 1. Grab the AbstractTexture from the TextureManager
+        // Grab the AbstractTexture from the TextureManager
         AbstractTexture tex = MinecraftClient.getInstance().getTextureManager().getTexture(skinId);
 
-        // 2. Check if it implements our Mixin interface: IPlayerSkinTexture
+        // Check if it implements our Mixin interface: IPlayerSkinTexture
         if (tex instanceof IPlayerSkinTexture iSkin) {
-            // 3. Get the NativeImage we stored in the Mixin
+            // Get the NativeImage we stored in the Mixin
             NativeImage image = iSkin.getLoadedImage();
             if (image != null) {
                 int width = image.getWidth();
