@@ -525,16 +525,18 @@ public class EntityChatData {
                     }
                 }
 
-                // Add ASSISTANT message to history
-                this.addMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
-
                 // Get cleaned message (i.e. no <BEHAVIOR> strings)
                 String cleanedMessage = result.getCleanedMessage();
                 if (cleanedMessage.isEmpty()) {
                     cleanedMessage = Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE);
                 }
-                // Update the current message to a 'cleaned version'
-                this.currentMessage = cleanedMessage;
+
+                // Add ASSISTANT message to history
+                this.addMessage(cleanedMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+
+                // Update the last entry in previousMessages to use the original message
+                this.previousMessages.set(this.previousMessages.size() - 1,
+                        new ChatMessage(result.getOriginalMessage(), ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
 
             } else {
                 // Error / No Chat Message (Failure)
