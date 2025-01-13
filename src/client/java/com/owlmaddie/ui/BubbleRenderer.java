@@ -260,7 +260,8 @@ public class BubbleRenderer {
                     {56.0F, 16.0F, 64.0F, 20.0F, 16F, 12F},// Row 2 right bottom
                     {56.0F, 28.0F, 64.0F, 36.0F, 0F, 16F}, // Row 3 left
                     {56.0F, 36.0F, 64.0F, 44.0F, 8F, 16F}, // Row 3 middle
-                    {56.0F, 44.0F, 64.0F, 52.0F, 16F, 16F},// Row 3 right
+                    {56.0F, 44.0F, 64.0F, 48, 16F, 16F},   // Row 3 top right
+                    {12.0F, 48.0F, 20.0F, 52, 16F, 20F},   // Row 3 bottom right
             };
             float scaleFactor = 0.77F;
 
