@@ -1,6 +1,6 @@
 # Icon Tutorial for CreatureChat
 
-<img src="src/main/resources/assets/creaturechat/screenshots/custom-player-icon1.png" width="100%" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/side-by-side-icons.png" width="100%" style="image-rendering: pixelated;">
 
 ### Customize entity and player icons in **CreatureChat** by following this step-by-step guide.
 
