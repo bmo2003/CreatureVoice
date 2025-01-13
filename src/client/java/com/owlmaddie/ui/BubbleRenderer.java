@@ -288,6 +288,12 @@ public class BubbleRenderer {
                         .color(255, 255, 255, 255).texture(newU1, newV1).light(light).overlay(overlay).next();
             }
         } else {
+            // make skin appear smaller and centered
+            x += 2;
+            y += 2;
+            width -= 4;
+            height -= 4;
+
             // Normal face coordinates
             float u1 = 8.0F / 64.0F;
             float v1 = 8.0F / 64.0F;

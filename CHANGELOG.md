@@ -17,6 +17,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Changed
 - Seperated Player and Entity message broadcasts (different packets for simplicity)
+- Reduced size of player skin face on chat bubble, to match sizes of custom icons (for consistency)
 
 ### Fixed
 - Fixed death messages for mobs with no chat data
