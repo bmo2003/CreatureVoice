@@ -1,6 +1,6 @@
 # Icon Tutorial for CreatureChat
 
-<img src="src/main/resources/assets/creaturechat/screenshots/custom-player-icon1.png" width="100%" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/side-by-side-icons.png" width="100%" style="image-rendering: pixelated;">
 
 ### Customize entity and player icons in **CreatureChat** by following this step-by-step guide.
 
@@ -65,9 +65,9 @@ Here are the full list of coordinates for the custom player icon UV.
 
 ```
 UV_COORDINATES = [
-    [0.0, 0.0, 8.0, 8.0, 0.0, 0.0],        # row 1 left
-    [24.0, 0.0, 32.0, 8.0, 8.0, 0.0],      # row 1 middle
-    [32.0, 0.0, 40.0, 8.0, 16.0, 0.0],     # row 1 right
+    [0.0, 0.0, 8.0, 8.0, 0.0, 0.0],     # row 1 left
+    [24.0, 0.0, 32.0, 8.0, 8.0, 0.0],   # row 1 middle
+    [32.0, 0.0, 40.0, 8.0, 16.0, 0.0],  # row 1 right
 
     [56.0, 0.0, 64.0, 8.0, 0.0, 8.0],      # row 2 left
     [56.0, 20.0, 64.0, 28.0, 8.0, 8.0],    # row 2 middle
@@ -76,7 +76,8 @@ UV_COORDINATES = [
 
     [56.0, 28.0, 64.0, 36.0, 0.0, 16.0],   # row 3 left
     [56.0, 36.0, 64.0, 44.0, 8.0, 16.0],   # row 3 middle
-    [56.0, 44.0, 64.0, 52.0, 16.0, 16.0],  # row 3 right
+    [56.0, 44.0, 64.0, 48.0, 16.0, 16.0],  # row 3 top right
+    [12.0, 48.0, 20.0, 52.0, 16.0, 20.0],  # row 3 bottom right
 ]
 ```
 
