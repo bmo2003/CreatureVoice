@@ -4,13 +4,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [1.3.0] - 2025-01-14
 
 ### Added
-- Player Icons (custom art embedded in player skin)
-  - New Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
-  - New mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
-- Chat messages are now displayed in chat bubbles above players heads
+- In-game chat messages are now displayed in chat bubbles above players heads!
+- Custom player icons (icons can be embedded in player skin file)
+  - Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
+  - Mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
 - New command `/creaturechat chatbubbles set <on | off>` to show or hide player chat messages in bubbles
 - Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
   - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
@@ -18,9 +18,10 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Changed
 - Seperated Player and Entity message broadcasts (different packets for simplicity)
 - Reduced size of player skin face on chat bubble, to match sizes of custom icons (for consistency)
+- Updated entity icons for allay, creeper, and pig
 
 ### Fixed
-- Fixed death messages for mobs with no chat data
+- Hide death messages for mobs with no chat data
 - Fixed transparent background behind chat screen for Minecraft 1.20 and 1.20.1.
 - Removed extra message broadcast (which was unnecessary)
 
