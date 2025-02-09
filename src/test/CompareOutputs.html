@@ -53,10 +53,22 @@
         /* Improved Readability */
         td, th { font-size: 16px; }
 
+        /* Model Filter Checkboxes */
+        .model-filters {
+            margin-bottom: 10px;
+        }
+        .model-filters label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 <h2>Behavior Test Outputs</h2>
+
+<!-- Model Filter Checkboxes -->
+<div class="model-filters" id="modelFilters"></div>
+
 <table id="outputTable">
     <thead>
     <tr>
@@ -67,11 +79,37 @@
 </table>
 
 <script>
+    let availableModels = new Set();
+
     async function loadBehaviorData() {
         try {
             const response = await fetch('BehaviorOutputs.json');
             const data = await response.json();
             const tableBody = document.querySelector("#outputTable tbody");
+
+            // Collect unique model names
+            Object.values(data).forEach(modelResponses => {
+                Object.keys(modelResponses).forEach(model => availableModels.add(model));
+            });
+
+            // Generate model checkboxes
+            const filtersDiv = document.getElementById("modelFilters");
+            availableModels.forEach(model => {
+                const sanitizedModel = sanitizeClassName(model);
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = true;
+                checkbox.id = sanitizedModel;
+                checkbox.onchange = updateModelVisibility;
+
+                const label = document.createElement("label");
+                label.htmlFor = sanitizedModel;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(" " + model));
+
+                filtersDiv.appendChild(label);
+            });
 
             // Sort prompts alphabetically
             const sortedKeys = Object.keys(data).sort();
@@ -91,8 +129,10 @@
                 nestedRow.classList.add("nested");
                 nestedRow.innerHTML = `<td>
                         <table model-count="${modelCount}">
-                            <tr>${Object.keys(modelResponses).map(model => `<th>${escapeHTML(model)}</th>`).join("")}</tr>
-                            <tr>${Object.values(modelResponses).map(output => `<td>${formatText(escapeHTML(output))}</td>`).join("")}</tr>
+                            <tr>${Object.keys(modelResponses).map(model =>
+                    `<th class="model-col ${sanitizeClassName(model)}">${escapeHTML(model)}</th>`).join("")}</tr>
+                            <tr>${Object.keys(modelResponses).map(model =>
+                    `<td class="model-col ${sanitizeClassName(model)}">${formatText(escapeHTML(modelResponses[model]))}</td>`).join("")}</tr>
                         </table>
                     </td>`;
                 tableBody.appendChild(nestedRow);
@@ -100,6 +140,16 @@
         } catch (error) {
             console.error("Failed to load BehaviorOutputs.json", error);
         }
+    }
+
+    function updateModelVisibility() {
+        availableModels.forEach(model => {
+            const sanitizedModel = sanitizeClassName(model);
+            const isChecked = document.getElementById(sanitizedModel).checked;
+            document.querySelectorAll(`.model-col.${sanitizedModel}`).forEach(el => {
+                el.style.display = isChecked ? "" : "none";
+            });
+        });
     }
 
     function toggleNested(row) {
@@ -136,6 +186,11 @@
         if (prompt.includes("nervous-rogue.json")) return "nervous";
         if (prompt.includes("brave-archer.json")) return "brave";
         return "";
+    }
+
+    // Sanitize model names to be used in CSS classes
+    function sanitizeClassName(model) {
+        return model.replace(/[^a-zA-Z0-9]/g, "_"); // Replace non-alphanumeric characters with "_"
     }
 
     loadBehaviorData();
