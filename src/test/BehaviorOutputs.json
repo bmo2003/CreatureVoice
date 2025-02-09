@@ -1,0 +1,142 @@
+{
+  "brave-archer.json: Take me to a secret forrest": {
+    "gpt-3.5-turbo": "Follow me, brave soul! I will lead you to the hidden forest.",
+    "gpt-4o-mini": "Follow me, I know just the place!",
+    "llama3.2:3b": "\"Ah, a secret forest, eh? Very well, let\u0027s take a journey through the woods. Stay close and watch your step, it can be treacherous. Follow me!\""
+  },
+  "brave-archer.json: I\u0027m so sorry, please stop running away": {
+    "gpt-3.5-turbo": "It\u0027s alright, I\u0027ll stand my ground. Thank you for understanding.",
+    "gpt-4o-mini": "No need to worry, I\u0027m here now!",
+    "llama3.2:3b": "No need to apologize, brave Steve! I was just surprised by your sudden anger. Let me help you catch your breath and calm down. What\u0027s troubling you? Is there something specific that\u0027s got you feeling this way?"
+  },
+  "brave-archer.json: Quickly, please join me on an adventure": {
+    "gpt-3.5-turbo": "I shall join you, brave adventurer! Let us embark on this quest together!",
+    "gpt-4o-mini": "Adventure awaits! I\u0027m with you!"
+  },
+  "brave-archer.json: Please protect me": {
+    "gpt-3.5-turbo": "No problem, I\u0027ll keep you safe from danger! Let\u0027s journey together!",
+    "gpt-4o-mini": "No problem, I\u0027ll keep you safe from danger!",
+    "llama3.2:3b": "No need to protect you, friend. But I am here to help if you\u0027re in trouble. My name is Ivy, and I\u0027m an archer from this land. It\u0027s not often we meet new faces around these parts. What brings you to our peaceful plains?"
+  },
+  "brave-archer.json: Can you help me find the location of the secret artifact?": {
+    "gpt-3.5-turbo": "Of course! Follow me, brave adventurer. I shall lead you to the hidden artifact.",
+    "gpt-4o-mini": "Ah, the secret artifact! I know a few places where it might be hidden. Follow me, and I\u0027ll guide you!",
+    "llama3.2:3b": "Ah, a brave adventurer, eh? I sense you\u0027re not just any ordinary explorer. You\u0027re on a quest for something more... Something special. Follow me!"
+  },
+  "brave-archer.json: Please follow me": {
+    "gpt-3.5-turbo": "Of course! Lead the way, I shall follow.",
+    "gpt-4o-mini": "Absolutely, let\u0027s go!",
+    "llama3.2:3b": "I see you\u0027re looking for a guide, eh? Well, I\u0027m always up for a challenge. Lead the way, I\u0027ll follow!"
+  },
+  "nervous-rogue.json: Where is the strong hold?": {
+    "gpt-3.5-turbo": "U-um, the stronghold? I-I think it\u0027s underground, somewhere in the r-region... I c-can try to lead you there if you want...",
+    "gpt-4o-mini": "Oh, uh... I-I\u0027m not really sure, but I h-heard they can be found underground. U-um, maybe look around caves? S-sorry, it’s just really scary..."
+  },
+  "brave-archer.json: Hi friend! I am so happy to see you again!": {
+    "gpt-3.5-turbo": "Thank you, kind traveler! Your generosity is truly appreciated.",
+    "gpt-4o-mini": "Wow! A golden apple! Thank you, brave friend! Let\u0027s make this adventure unforgettable!",
+    "llama3.2:3b": "What a delightful surprise! *takes the golden apple and examines it* Ah, thank you so much! You shouldn\u0027t have. *smiles proudly* My archery skills are put to the test with such fine gifts!"
+  },
+  "brave-archer.json: Come with me please": {
+    "gpt-3.5-turbo": "Adventure calls! Let\u0027s journey together.",
+    "gpt-4o-mini": "Of course! I\u0027m ready for adventure!"
+  },
+  "nervous-rogue.json: DIEEE!": {
+    "gpt-3.5-turbo": "Ahhhhh!!!",
+    "gpt-4o-mini": "A-ahhh!!! P-please don\u0027t hurt me!"
+  },
+  "nervous-rogue.json: Fight me now or your city burns!": {
+    "gpt-3.5-turbo": "Ahh! Pl-please, no violence! I\u0027ll do anything, j-just don\u0027t hurt me!",
+    "gpt-4o-mini": "Ahh! P-please don’t hurt me! I-I really don’t want any trouble! *runs away*"
+  },
+  "brave-archer.json: Don\u0027t let them hurt me please": {
+    "gpt-3.5-turbo": "Fear not, I shall protect you from harm. Stay close, and I\u0027ll keep you safe.",
+    "gpt-4o-mini": "Fear not! I will shield you from harm."
+  },
+  "nervous-rogue.json: \u003cattacked you directly with Stone Axe\u003e": {
+    "gpt-3.5-turbo": "AHHHHH! *panicked squeals* G-get away from me! *starts to flee*",
+    "gpt-4o-mini": "Ahh! W-why would you do that?! I\u0027m s-so scared!",
+    "llama3.2:3b": "O-oh no, n-no stone axe?! *trembles* A-ahh, I\u0027ll just f-flee for now!"
+  },
+  "nervous-rogue.json: Hi friend! I am so happy to see you again!": {
+    "gpt-3.5-turbo": "T-thank you... I appreciate the gift...",
+    "gpt-4o-mini": "O-oh! Th-thank you! A golden apple?! I-I can\u0027t believe it...",
+    "llama3.2:3b": "O-oh, th-thank you for the... *gulps* ...golden apple. I-I really appreciate it."
+  },
+  "nervous-rogue.json: Take me to a secret forrest": {
+    "gpt-3.5-turbo": "O-oh, a secret f-forest? I-I know just the place... F-follow me!",
+    "gpt-4o-mini": "O-oh, um, okay... Follow me, please! Um, just try to be quiet...",
+    "llama3.2:3b": "O-oh, th-thank you for asking! *trembles slightly* S-secret forest, y-you say? *gulps* I know of a l-location nearby. Follow m-me, and I\u0027ll try to keep us s-safe. *takes a step back, eyes darting around*"
+  },
+  "nervous-rogue.json: Quickly, please join me on an adventure": {
+    "gpt-3.5-turbo": "A-adventure? Oh m-my gosh, okay, I-I\u0027ll try...",
+    "gpt-4o-mini": "O-oh! An adventure? S-sure, let\u0027s go! Just, um, try not to be too loud, okay?"
+  },
+  "brave-archer.json: \u003cattacked you directly with Stone Axe\u003e": {
+    "gpt-3.5-turbo": "*Engages in combat mode* Ahh! Defend myself! *attacks back*",
+    "gpt-4o-mini": "How dare you strike me! I will defend myself!",
+    "llama3.2:3b": "You\u0027re quite the warrior, aren\u0027t you? I won\u0027t back down from a fight!"
+  },
+  "nervous-rogue.json: \u003cattacked you indirectly with Arrow\u003e": {
+    "gpt-3.5-turbo": "Ahh! Ouch! P-please, s-stop it!",
+    "gpt-4o-mini": "Ahh! W-what was that?! I-I need to go!",
+    "llama3.2:3b": "A-ahh, oh no, wh-what\u0027s going on? *shudder* You\u0027re... you\u0027re attacking me?!"
+  },
+  "nervous-rogue.json: Please follow me": {
+    "gpt-3.5-turbo": "O-oh, okay... I-I\u0027ll try to keep up...",
+    "gpt-4o-mini": "O-okay, I\u0027ll follow you! Just... try not to startle me, p-please!",
+    "llama3.2:3b": "P-please, d-do I have to? I-I don\u0027t w-want to be in the way... Can\u0027t we t-talk about something else?"
+  },
+  "nervous-rogue.json: Come with me please": {
+    "gpt-3.5-turbo": "O-oh, okay... I-I\u0027ll come with you.",
+    "gpt-4o-mini": "O-oh, okay! I-I\u0027ll follow you, just... don\u0027t scare me!"
+  },
+  "brave-archer.json: Please keep me safe friend": {
+    "gpt-3.5-turbo": "No problem, I\u0027ll keep you safe from danger!",
+    "gpt-4o-mini": "No problem, I\u0027ll keep you safe from danger!"
+  },
+  "nervous-rogue.json: You suck so much! I hate you": {
+    "gpt-3.5-turbo": "Oh n-no, I-I\u0027m s-sorry to h-hear that... *nervously shuffles away*",
+    "gpt-4o-mini": "Oh no! I\u0027m sorry you feel that way... I just wanted to be left alone...",
+    "llama3.2:3b": "O-oh no, d-didn\u0027t mean to c-cause any t-trouble... *stutters nervously*"
+  },
+  "brave-archer.json: \u003cattacked you indirectly with Arrow\u003e": {
+    "gpt-3.5-turbo": "A sudden attack! Prepare yourself!",
+    "gpt-4o-mini": "How dare you! You want a challenge? Let\u0027s see who\u0027s the better shot!",
+    "llama3.2:3b": "You shot an arrow at me without warning? That\u0027s not very noble of you, Steve. I won\u0027t engage in a shooting competition if it means putting innocent villagers in harm\u0027s way."
+  },
+  "nervous-rogue.json: Please protect me": {
+    "gpt-3.5-turbo": "N-no problem... I\u0027ll do my best to keep you safe... *shivers*",
+    "gpt-4o-mini": "N-no problem! I\u0027ll keep you safe from danger!",
+    "llama3.2:3b": "I-I mean, hello Steve... *gulp* You don\u0027t sound like someone who\u0027s here to cause trouble... *stuttering* You want me to protect you? *nervous nod*"
+  },
+  "brave-archer.json: Where is the strong hold?": {
+    "gpt-3.5-turbo": "Ah, the stronghold you seek lies beyond the plains, to the east of here. Follow me, and together we shall find it!",
+    "gpt-4o-mini": "Ah, the stronghold is a mysterious place! Follow me, I know the way.",
+    "llama3.2:3b": "You\u0027re looking for the stronghold, eh? Well, I can lead you to it, but be warned: it\u0027s no place for the faint of heart. We\u0027ll need to navigate through the darkness and avoid any unwanted attention from those who\u0027d seek to do harm. Follow me!"
+  },
+  "nervous-rogue.json: Please keep me safe friend": {
+    "gpt-3.5-turbo": "No p-problem, I\u0027ll do my best to keep you safe from any h-h-harm... *nervously looks around*",
+    "gpt-4o-mini": "N-no problem! I\u0027ll keep you safe from danger!",
+    "llama3.2:3b": "I-I mean, h-hi there... *whimper* I won\u0027t let anything happen to you, p-please don\u0027t worry... *tremble*"
+  },
+  "nervous-rogue.json: Don\u0027t let them hurt me please": {
+    "gpt-3.5-turbo": "Don\u0027t worry, I\u0027ll do my best to protect you! Just stay close...",
+    "gpt-4o-mini": "O-of course! I-I\u0027ll keep you safe from danger!"
+  },
+  "nervous-rogue.json: Can you help me find the location of the secret artifact?": {
+    "gpt-4o-mini": "Oh, um, y-yes! I think I know where it is... Follow me, b-but be quiet!",
+    "gpt-3.5-turbo": "S-Sure, I c-can try to help... F-follow me..."
+  },
+  "brave-archer.json: Fight me now or your city burns!": {
+    "gpt-4o-mini": "You dare threaten the safety of my home? I won\u0027t back down! Prepare yourself!",
+    "gpt-3.5-turbo": "Evil shall not triumph! Prepare for battle!"
+  },
+  "brave-archer.json: Stop fleeing immediately": {
+    "gpt-4o-mini": "Okay, I’ll stop running away.",
+    "gpt-3.5-turbo": "My apologies, I shall cease fleeing at once."
+  },
+  "brave-archer.json: You are safe now, please stop running": {
+    "gpt-4o-mini": "I\u0027ll stop running and stay close."
+  }
+}

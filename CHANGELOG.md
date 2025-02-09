@@ -8,6 +8,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Added
 - Added Entity Maturity (baby or adult) into system-chat prompt
+- Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 
 ### Changed

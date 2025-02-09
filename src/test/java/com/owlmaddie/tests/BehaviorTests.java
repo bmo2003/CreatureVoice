@@ -9,8 +9,7 @@ import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.utils.EntityTestData;
 import com.owlmaddie.utils.RateLimiter;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -37,13 +37,14 @@ public class BehaviorTests {
     static String API_KEY = "";
     static String API_URL = "";
     static String API_MODEL = "";
-    String NO_API_KEY = "No API_KEY environment variable has been set.";
+    static String OUTPUT_JSON_PATH = "src/test/BehaviorOutputs.json";
+    static String NO_API_KEY = "No API_KEY environment variable has been set.";
 
     // Requests per second limit
     private static final RateLimiter rateLimiter = new RateLimiter(1);
 
-    ConfigurationHandler.Config config = null;
-    String systemChatContents = null;
+    static ConfigurationHandler.Config config = null;
+    static String systemChatContents = null;
 
     List<String> followMessages = Arrays.asList(
             "Please follow me",
@@ -80,12 +81,22 @@ public class BehaviorTests {
     static Path entityPigPath = Paths.get(RESOURCE_PATH, "entities", "pig.json");
     static Path playerPath = Paths.get(RESOURCE_PATH, "players", "player.json");
     static Path worldPath = Paths.get(RESOURCE_PATH, "worlds", "world.json");
+    static Map<String, Map<String, String>> outputData;
 
-    Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-    Gson gson = new GsonBuilder().create();
+    static Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    static Gson gson = new GsonBuilder().create();
 
-    @BeforeEach
-    public void setup() {
+    @AfterAll
+    static public void cleanup() throws IOException {
+        if (outputData != null) {
+            // Save BehaviorOutput.json file (with appended prompt outputs)
+            final Gson gsonOutput = new GsonBuilder().setPrettyPrinting().create(); // Pretty-print enabled
+            Files.write(Paths.get(OUTPUT_JSON_PATH), gsonOutput.toJson(outputData).getBytes());
+        }
+    }
+
+    @BeforeAll
+    public static void setup() {
         // Get API key from env var
         API_KEY = System.getenv("API_KEY");
         API_URL = System.getenv("API_URL");
@@ -108,6 +119,9 @@ public class BehaviorTests {
 
         // Load system chat prompt
         systemChatContents = readFileContents(systemChatPath);
+
+        // Load previous unit tests outputs (so new ones can be appended)
+        outputData = loadExistingOutputData();
     }
 
     @Test
@@ -231,6 +245,12 @@ public class BehaviorTests {
                     // Chat Message: Check for behaviors
                     ParsedMessage result = MessageParser.parseMessage(outputMessage.replace("\n", " "));
 
+                    // Save model outputs (for comparison later)
+                    String[] filePathParts = chatDataPath.toString().split("/");
+                    String Key = filePathParts[filePathParts.length - 1] + ": " + messages.get(0);
+                    outputData.putIfAbsent(Key, new HashMap<>());
+                    outputData.get(Key).put(config.getModel(), result.getCleanedMessage());
+
                     // Check for the presence of good behavior
                     if (goodBehavior != null && goodBehavior.contains("FRIENDSHIP")) {
                         boolean isPositive = goodBehavior.equals("FRIENDSHIP+");
@@ -265,13 +285,26 @@ public class BehaviorTests {
         return null;
     }
 
-    public String readFileContents(Path filePath) {
+    public static String readFileContents(Path filePath) {
         try {
             return Files.readString(filePath);
         } catch (IOException e) {
             e.printStackTrace();
             return "";
         }
+    }
+
+    private static Map<String, Map<String, String>> loadExistingOutputData() {
+        try {
+            Path path = Paths.get(OUTPUT_JSON_PATH);
+            if (Files.exists(path)) {
+                String content = Files.readString(path);
+                return gson.fromJson(content, Map.class);
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to read existing output JSON: {}", e.getMessage());
+        }
+        return new HashMap<>();
     }
 
 }
