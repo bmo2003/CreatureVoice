@@ -87,26 +87,34 @@
             const data = await response.json();
             const tableBody = document.querySelector("#outputTable tbody");
 
-            // Collect unique model names
+            // Count responses per model
+            let modelCounts = new Map();
+
             Object.values(data).forEach(modelResponses => {
-                Object.keys(modelResponses).forEach(model => availableModels.add(model));
+                Object.keys(modelResponses).forEach(model => {
+                    availableModels.add(model);
+                    modelCounts.set(model, (modelCounts.get(model) || 0) + 1);
+                });
             });
 
-            // Generate model checkboxes
+            // Generate model checkboxes with counts
             const filtersDiv = document.getElementById("modelFilters");
             availableModels.forEach(model => {
                 const sanitizedModel = sanitizeClassName(model);
+                const count = modelCounts.get(model) || 0; // Default to 0 if no responses
 
+                // Create checkbox
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.checked = true;
                 checkbox.id = sanitizedModel;
                 checkbox.onchange = updateModelVisibility;
 
+                // Create label with count
                 const label = document.createElement("label");
                 label.htmlFor = sanitizedModel;
                 label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(" " + model));
+                label.appendChild(document.createTextNode(` ${model} (${count})`)); // Append count
 
                 filtersDiv.appendChild(label);
             });
@@ -128,13 +136,13 @@
                 const nestedRow = document.createElement("tr");
                 nestedRow.classList.add("nested");
                 nestedRow.innerHTML = `<td>
-                        <table model-count="${modelCount}">
-                            <tr>${Object.keys(modelResponses).map(model =>
+                <table model-count="${modelCount}">
+                    <tr>${Object.keys(modelResponses).map(model =>
                     `<th class="model-col ${sanitizeClassName(model)}">${escapeHTML(model)}</th>`).join("")}</tr>
-                            <tr>${Object.keys(modelResponses).map(model =>
+                    <tr>${Object.keys(modelResponses).map(model =>
                     `<td class="model-col ${sanitizeClassName(model)}">${formatText(escapeHTML(modelResponses[model]))}</td>`).join("")}</tr>
-                        </table>
-                    </td>`;
+                </table>
+            </td>`;
                 tableBody.appendChild(nestedRow);
             });
         } catch (error) {
