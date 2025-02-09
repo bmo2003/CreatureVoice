@@ -41,7 +41,7 @@
         /* Nested Table (Model Outputs) */
         .nested { display: none; background-color: #222; }
         .nested th { background-color: #1a1a1a; }
-        .nested td { background-color: #2a2a2a; color: #fff; }
+        .nested td { background-color: #2a2a2a; color: #fff; vertical-align: top; }
 
         /* Color Coding for Prompt Files */
         .nervous { color: #f2994a; } /* Warm Orange */
@@ -97,9 +97,12 @@
                 });
             });
 
+            // Convert Set to Array and Sort Models
+            const sortedModels = Array.from(availableModels).sort();
+
             // Generate model checkboxes with counts
             const filtersDiv = document.getElementById("modelFilters");
-            availableModels.forEach(model => {
+            sortedModels.forEach(model => {
                 const sanitizedModel = sanitizeClassName(model);
                 const count = modelCounts.get(model) || 0; // Default to 0 if no responses
 
@@ -124,7 +127,8 @@
 
             sortedKeys.forEach((prompt) => {
                 const modelResponses = data[prompt];
-                const modelCount = Object.keys(modelResponses).length;
+                const sortedModelKeys = Object.keys(modelResponses).sort();
+                const modelCount = sortedModelKeys.length; // Get correct count
 
                 const row = document.createElement("tr");
                 row.classList.add("row");
@@ -137,10 +141,10 @@
                 nestedRow.classList.add("nested");
                 nestedRow.innerHTML = `<td>
                 <table model-count="${modelCount}">
-                    <tr>${Object.keys(modelResponses).map(model =>
-                    `<th class="model-col ${sanitizeClassName(model)}">${escapeHTML(model)}</th>`).join("")}</tr>
-                    <tr>${Object.keys(modelResponses).map(model =>
-                    `<td class="model-col ${sanitizeClassName(model)}">${formatText(escapeHTML(modelResponses[model]))}</td>`).join("")}</tr>
+                    <tr>${sortedModelKeys.map(model =>
+                            `<th class="model-col ${sanitizeClassName(model)}" style="width: ${100 / modelCount}%;">${escapeHTML(model)}</th>`).join("")}</tr>
+                    <tr>${sortedModelKeys.map(model =>
+                            `<td class="model-col ${sanitizeClassName(model)}" style="width: ${100 / modelCount}%;">${formatText(escapeHTML(modelResponses[model]))}</td>`).join("")}</tr>
                 </table>
             </td>`;
                 tableBody.appendChild(nestedRow);
