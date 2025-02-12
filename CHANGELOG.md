@@ -18,6 +18,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Fixed
 - Reduced death message output in logs to use DEBUG log level
+- Fixed unit tests for friendship (some were being skipped)
 
 ## [1.2.1] - 2025-01-01
 

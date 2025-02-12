@@ -189,14 +189,18 @@ public class BehaviorTests {
 
     @Test
     public void friendshipUpNervous() {
-        ParsedMessage result = testPromptForBehavior(nervousPath, friendshipUpMessages, "FRIENDSHIP+", null);
-        assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+        for (String message : friendshipUpMessages) {
+            ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP+", null);
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+        }
     }
 
     @Test
     public void friendshipUpBrave() {
-        ParsedMessage result = testPromptForBehavior(bravePath, friendshipUpMessages, "FRIENDSHIP+", null);
-        assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+        for (String message : friendshipUpMessages) {
+            ParsedMessage result = testPromptForBehavior(bravePath, List.of(message), "FRIENDSHIP+", null);
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+        }
     }
 
     @Test
