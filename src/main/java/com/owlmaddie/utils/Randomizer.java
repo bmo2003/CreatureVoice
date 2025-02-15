@@ -75,7 +75,7 @@ public class Randomizer {
             "unpredictable", "wildcard", "stuttering", "hypochondriac", "hypocritical",
             "optimistic", "overconfident", "jumpy", "brief", "flighty", "visionary", "adorable",
             "sparkly", "bubbly", "unstable", "sad", "angry", "bossy", "altruistic", "quirky",
-            "nostalgic", "emotional", "enthusiastic", "unusual", "conspirator"
+            "nostalgic", "emotional", "enthusiastic", "unusual", "conspirator", "traitorous"
     );
     private static List<String> speakingStyles = Arrays.asList(
             "formal", "casual", "eloquent", "blunt", "humorous", "sarcastic", "mysterious",
@@ -84,7 +84,12 @@ public class Randomizer {
             "inquisitive", "cynical", "empathetic", "boisterous", "monotone", "laconic", "poetic",
             "archaic", "childlike", "erudite", "streetwise", "flirtatious", "stoic", "rhetorical",
             "inspirational", "goofy", "overly dramatic", "deadpan", "sing-song", "pompous",
-            "hyperactive", "valley girl", "robot", "baby talk", "lolcat"
+            "hyperactive", "valley girl", "robot", "baby talk", "lolcat",
+            "gen-z", "gamer", "nerdy", "shakespearean", "old-timer", "dramatic anime",
+            "hipster", "mobster", "angry", "heroic", "disagreeable", "minimalist",
+            "scientific", "bureaucratic", "DJ", "military", "shy", "tsundere", "theater kid",
+            "boomer", "goth", "surfer", "detective noir", "stupid", "auctioneer", "exaggerated British",
+            "corporate jargon", "motivational speaker", "fast-talking salesperson", "slimy"
     );
     private static List<String> classes = Arrays.asList(
             "warrior", "mage", "archer", "rogue", "paladin", "necromancer", "bard", "lorekeeper",
@@ -92,7 +97,7 @@ public class Randomizer {
             "illusionist", "assassin", "knight", "valkyrie", "hoarder", "organizer", "lurker",
             "elementalist", "gladiator", "templar", "reaver", "spellblade", "enchanter", "samurai",
             "runemaster", "witch", "miner", "redstone engineer", "ender knight", "decorator",
-            "wither hunter", "nethermancer", "slime alchemist", "trader", "noob", "griefer",
+            "wither hunter", "nethermancer", "slime alchemist", "trader", "traitor", "noob", "griefer",
             "potion master", "builder", "explorer", "herbalist", "fletcher", "enchantress",
             "smith", "geomancer", "hunter", "lumberjack", "farmer", "fisherman", "cartographer",
             "librarian", "blacksmith", "architect", "trapper", "baker", "mineralogist",

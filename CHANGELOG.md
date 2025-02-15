@@ -10,11 +10,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Added Entity Maturity (baby or adult) into system-chat prompt
 - Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
+- Added many new speaking styles (minimalist, nerdy, stupid, gen-z, old timer, boomer, etc...)
 
 ### Changed
-- Simplified system-chat prompt (less tokens) and rounded health & hunger values (less tokens)
+- Simplified system-chat prompt (less tokens), rounded health & hunger values, and improved variety of examples (less tokens)
 - Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
+- Removed a few variables from the chat context (creative mode, hardcore, difficulty)
 
 ### Fixed
 - Reduced death message output in logs to use DEBUG log level
