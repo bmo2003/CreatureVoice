@@ -45,6 +45,7 @@ the affiliate program.
   - Affiliates can initiate a redemption request using the `/affiliate redeem` command in the CreatureChat Discord server to withdraw earnings in either tokens or PayPal.
 
 - **Minimum Redemption Thresholds:**
+  - **30 Days:** Commissions must accumulate for a minimum of 30 days before redeeming. 
   - **Tokens:** $5+ commission balance. Tokens are paid immediately upon redemption.
   - **PayPal:** $50+ commission balance. PayPal redemptions require verification of affiliate activity, including clicks, purchases, refunds, and chargebacks.
     - Payments are processed within 3 to 5 business days after approval.
