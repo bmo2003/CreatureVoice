@@ -9,6 +9,7 @@
 		"MixinBucketable",
 		"MixinEntityChatData",
 		"MixinWitherEntity",
+		"MixinVexEntity",
 		"MixinVillagerEntity",
 		"MixinOnChat"
 	],

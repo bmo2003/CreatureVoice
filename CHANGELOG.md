@@ -14,6 +14,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Fixed
 - Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)
+- Vexes no longer take damage when chat data exists
 
 ## [1.3.0] - 2025-01-14
 
