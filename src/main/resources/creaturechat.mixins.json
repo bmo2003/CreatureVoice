@@ -10,6 +10,7 @@
 		"MixinEntityChatData",
 		"MixinWitherEntity",
 		"MixinVexEntity",
+		"MixinWanderingTrader",
 		"MixinVillagerEntity",
 		"MixinOnChat"
 	],
