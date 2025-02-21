@@ -351,10 +351,10 @@ public class ServerPackets {
                 chatData.currentLineNumber, chatData.sender);
 
         for (ServerWorld world : serverInstance.getWorlds()) {
+            // Find Entity by UUID and update custom name
             UUID entityId = UUID.fromString(chatData.entityId);
             MobEntity entity = (MobEntity)ServerEntityFinder.getEntityByUUID(world, entityId);
             if (entity != null) {
-                // Set custom name (if null)
                 String characterName = chatData.getCharacterProp("name");
                 if (!characterName.isEmpty() && !characterName.equals("N/A") && entity.getCustomName() == null) {
                     LOGGER.debug("Setting entity name to " + characterName + " for " + chatData.entityId);
@@ -362,27 +362,27 @@ public class ServerPackets {
                     entity.setCustomNameVisible(true);
                     entity.setPersistent();
                 }
-
-                // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
-                if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
-                    chatData.status = ChatDataManager.ChatStatus.PENDING;
-                }
-
-                // Iterate over all players and send the packet
-                for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-                    PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
-                    buffer.writeString(chatData.entityId);
-                    buffer.writeString(chatData.currentMessage);
-                    buffer.writeInt(chatData.currentLineNumber);
-                    buffer.writeString(chatData.status.toString());
-                    buffer.writeString(chatData.sender.toString());
-                    writePlayerDataMap(buffer, chatData.players);
-
-                    // Send message to player
-                    ServerPlayNetworking.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
-                }
-                break;
             }
+
+            // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
+            if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
+                chatData.status = ChatDataManager.ChatStatus.PENDING;
+            }
+
+            // Iterate over all players and send the packet
+            for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
+                PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+                buffer.writeString(chatData.entityId);
+                buffer.writeString(chatData.currentMessage);
+                buffer.writeInt(chatData.currentLineNumber);
+                buffer.writeString(chatData.status.toString());
+                buffer.writeString(chatData.sender.toString());
+                writePlayerDataMap(buffer, chatData.players);
+
+                // Send message to player
+                ServerPlayNetworking.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
+            }
+            break;
         }
     }
 

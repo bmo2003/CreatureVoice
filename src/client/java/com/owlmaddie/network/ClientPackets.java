@@ -127,16 +127,9 @@ public class ClientPackets {
                     return;
                 }
 
-                // Update the chat data manager on the client-side
-                MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
-                if (entity == null) {
-                    LOGGER.warn("Entity with ID '{}' not found. Skipping message processing.", entityId);
-                    return;
-                }
-
                 // Get entity chat data for current entity & player
                 ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
-                EntityChatData chatData = chatDataManager.getOrCreateChatData(entity.getUuidAsString());
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(entityId.toString());
 
                 // Add entity message
                 if (!message.isEmpty()) {
@@ -148,7 +141,10 @@ public class ClientPackets {
                 chatData.players = players;
 
                 // Play sound with volume based on distance (from player or entity)
-                playNearbyUISound(client, entity, 0.2f);
+                MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
+                if (entity != null) {
+                    playNearbyUISound(client, entity, 0.2f);
+                }
             });
         });
 

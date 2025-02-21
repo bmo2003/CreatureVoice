@@ -13,7 +13,9 @@ import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
 import com.owlmaddie.utils.VillagerEntityAccessor;
+import com.owlmaddie.utils.WitherEntityAccessor;
 import net.minecraft.entity.ExperienceOrbEntity;
+import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -428,6 +430,13 @@ public class EntityChatData {
                             // Stop any attack/flee if friendship improves
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+
+                            if (entity instanceof WitherEntity && new_friendship == 3) {
+                                // Best friend a Nether and get a NETHER_STAR
+                                WitherEntity wither = (WitherEntity) entity;
+                                ((WitherEntityAccessor) wither).callDropEquipment(entity.getWorld().getDamageSources().generic(), 1, true);
+                                entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_WITHER_DEATH, SoundCategory.PLAYERS, 0.3F, 1.0F);
+                            }
 
                             if (entity instanceof EnderDragonEntity && new_friendship == 3) {
                                 // Trigger end of game (friendship always wins!)
