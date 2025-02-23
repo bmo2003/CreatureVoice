@@ -37,11 +37,11 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ### Added
 - In-game chat messages are now displayed in chat bubbles above players heads!
 - Custom player icons (icons can be embedded in player skin file)
-    - Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
-    - Mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
+  - Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
+  - Mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
 - New command `/creaturechat chatbubbles set <on | off>` to show or hide player chat messages in bubbles
 - Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
-    - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
+  - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
 
 ### Changed
 - Seperated Player and Entity message broadcasts (different packets for simplicity)
