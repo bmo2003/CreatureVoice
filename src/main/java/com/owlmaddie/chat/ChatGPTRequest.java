@@ -196,6 +196,7 @@ public class ChatGPTRequest {
                         lastErrorMessage = cleanError;
                     } catch (Exception e) {
                         LOGGER.error("Failed to read error response", e);
+                        lastErrorMessage = "Failed to read error response: " + e.getMessage();
                     }
                     return null;
                 } else {
@@ -214,12 +215,16 @@ public class ChatGPTRequest {
                     if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
                         String content = chatGPTResponse.choices.get(0).message.content;
                         return content;
+                    } else {
+                        lastErrorMessage = "Failed to parse response from LLM";
+                        return null;
                     }
                 }
-            } catch (IOException e) {
-                LOGGER.error("Failed to fetch message from ChatGPT", e);
+            } catch (Exception e) {
+                LOGGER.error("Failed to request message from LLM", e);
+                lastErrorMessage = "Failed to request message from LLM: " + e.getMessage();
+                return null;
             }
-            return null; // If there was an error or no response, return null
         });
     }
 }
