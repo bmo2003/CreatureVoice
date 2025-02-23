@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavior Test Outputs</title>
+    <style>
+        /* Dark Theme Background */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #181818;
+            color: #ddd;
+            margin: 20px;
+        }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #444; }
+
+        /* Column Width Adjustments */
+        table[model-count="2"] th, table[model-count="2"] td { width: 50%; }
+        table[model-count="3"] th, table[model-count="3"] td { width: 33%; }
+        table[model-count="4"] th, table[model-count="4"] td { width: 25%; }
+
+        /* Header Styling */
+        th {
+            background-color: #111;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Clickable Rows */
+        .row {
+            cursor: pointer;
+            background-color: #2a2a2a; /* Dark gray */
+        }
+        .row:nth-child(even) { background-color: #3a3a3a; } /* Alternating banding */
+        .row:hover { background-color: #4a4a4a; } /* Slightly lighter gray */
+        .row.highlight { background-color: gold !important; color: #000; }
+
+        /* Nested Table (Model Outputs) */
+        .nested { display: none; background-color: #222; }
+        .nested th { background-color: #1a1a1a; }
+        .nested td { background-color: #2a2a2a; color: #fff; vertical-align: top; }
+
+        /* Color Coding for Prompt Files */
+        .nervous { color: #f2994a; } /* Warm Orange */
+        .brave { color: #6fcf97; } /* Soft Pastel Green */
+
+        /* Italicize <bracketed text> */
+        i { font-style: italic; }
+
+        /* Improved Readability */
+        td, th { font-size: 16px; }
+
+        /* Model Filter Checkboxes */
+        .model-filters {
+            margin-bottom: 10px;
+        }
+        .model-filters label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h2>Behavior Test Outputs</h2>
+
+<!-- Model Filter Checkboxes -->
+<div class="model-filters" id="modelFilters"></div>
+
+<table id="outputTable">
+    <thead>
+    <tr>
+        <th>Prompt</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    let availableModels = new Set();
+
+    async function loadBehaviorData() {
+        try {
+            const response = await fetch('BehaviorOutputs.json');
+            const data = await response.json();
+            const tableBody = document.querySelector("#outputTable tbody");
+
+            // Count responses per model
+            let modelCounts = new Map();
+
+            Object.values(data).forEach(modelResponses => {
+                Object.keys(modelResponses).forEach(model => {
+                    availableModels.add(model);
+                    modelCounts.set(model, (modelCounts.get(model) || 0) + 1);
+                });
+            });
+
+            // Convert Set to Array and Sort Models
+            const sortedModels = Array.from(availableModels).sort();
+
+            // Generate model checkboxes with counts
+            const filtersDiv = document.getElementById("modelFilters");
+            sortedModels.forEach(model => {
+                const sanitizedModel = sanitizeClassName(model);
+                const count = modelCounts.get(model) || 0; // Default to 0 if no responses
+
+                // Create checkbox
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = true;
+                checkbox.id = sanitizedModel;
+                checkbox.onchange = updateModelVisibility;
+
+                // Create label with count
+                const label = document.createElement("label");
+                label.htmlFor = sanitizedModel;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(` ${model} (${count})`)); // Append count
+
+                filtersDiv.appendChild(label);
+            });
+
+            // Sort prompts alphabetically
+            const sortedKeys = Object.keys(data).sort();
+
+            sortedKeys.forEach((prompt) => {
+                const modelResponses = data[prompt];
+                const sortedModelKeys = Object.keys(modelResponses).sort();
+                const modelCount = sortedModelKeys.length; // Get correct count
+
+                const row = document.createElement("tr");
+                row.classList.add("row");
+                row.classList.add(getClass(prompt)); // Apply color class
+                row.innerHTML = `<td>${formatText(escapeHTML(prompt))}</td>`;
+                row.onclick = () => toggleNested(row);
+                tableBody.appendChild(row);
+
+                const nestedRow = document.createElement("tr");
+                nestedRow.classList.add("nested");
+                nestedRow.innerHTML = `<td>
+                <table model-count="${modelCount}">
+                    <tr>${sortedModelKeys.map(model =>
+                            `<th class="model-col ${sanitizeClassName(model)}" style="width: ${100 / modelCount}%;">${escapeHTML(model)}</th>`).join("")}</tr>
+                    <tr>${sortedModelKeys.map(model =>
+                            `<td class="model-col ${sanitizeClassName(model)}" style="width: ${100 / modelCount}%;">${formatText(escapeHTML(modelResponses[model]))}</td>`).join("")}</tr>
+                </table>
+            </td>`;
+                tableBody.appendChild(nestedRow);
+            });
+        } catch (error) {
+            console.error("Failed to load BehaviorOutputs.json", error);
+        }
+    }
+
+    function updateModelVisibility() {
+        availableModels.forEach(model => {
+            const sanitizedModel = sanitizeClassName(model);
+            const isChecked = document.getElementById(sanitizedModel).checked;
+            document.querySelectorAll(`.model-col.${sanitizedModel}`).forEach(el => {
+                el.style.display = isChecked ? "" : "none";
+            });
+        });
+    }
+
+    function toggleNested(row) {
+        document.querySelectorAll('.row').forEach(r => r.classList.remove('highlight'));
+        document.querySelectorAll('.nested').forEach(n => n.style.display = 'none');
+
+        row.classList.add('highlight');
+        let nextRow = row.nextElementSibling;
+        if (nextRow && nextRow.classList.contains('nested')) {
+            nextRow.style.display = 'table-row';
+        }
+    }
+
+    // Escape special characters to prevent HTML injection
+    function escapeHTML(text) {
+        return text.replace(/[&<>"']/g, function (char) {
+            return ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[char];
+        });
+    }
+
+    // Italicize text inside <brackets>
+    function formatText(text) {
+        return text.replace(/&lt;(.*?)&gt;/g, "<i>&lt;$1&gt;</i>");
+    }
+
+    // Assign color class based on prompt type
+    function getClass(prompt) {
+        if (prompt.includes("nervous-rogue.json")) return "nervous";
+        if (prompt.includes("brave-archer.json")) return "brave";
+        return "";
+    }
+
+    // Sanitize model names to be used in CSS classes
+    function sanitizeClassName(model) {
+        return model.replace(/[^a-zA-Z0-9]/g, "_"); // Replace non-alphanumeric characters with "_"
+    }
+
+    loadBehaviorData();
+</script>
+</body>
+</html>
