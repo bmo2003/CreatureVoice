@@ -11,11 +11,13 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 
 ### Changed
 - Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
+- Improved error handling to prevent broken "..." pending chat status. (HTTP and message processing is more protected)
 
 ### Fixed
 - Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)
 - Vexes no longer take damage when chat data exists
 - Wandering Trader no longer despawns if it has chat data
+- Removed randomized error messages from chat history (so it doesn't break the chat history when an error is shown)
 
 ## [1.3.0] - 2025-01-14
 
