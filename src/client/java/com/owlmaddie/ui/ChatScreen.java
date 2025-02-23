@@ -2,6 +2,7 @@ package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ClientPackets;
+import com.owlmaddie.utils.VersionUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -99,6 +100,11 @@ public class ChatScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Render custom background only for older versions
+        if (VersionUtils.isOlderThan("1.20.2")) {
+            renderBackground(context);
+        }
+
         // Render the label text above the text field
         int labelWidth = textRenderer.getWidth(labelText);
         int labelX = (this.width - labelWidth) / 2; // Centered X position
@@ -114,6 +120,11 @@ public class ChatScreen extends Screen {
 
         // Call super.render if necessary
         super.render(context, mouseX, mouseY, delta);
+    }
+
+    public void renderBackground(DrawContext context) {
+        // Draw a slightly lighter semi-transparent rectangle as the background
+        context.fillGradient(0, 0, this.width, this.height, 0xA3000000, 0xA3000000);
     }
 
     @Override

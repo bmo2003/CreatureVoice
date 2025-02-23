@@ -71,6 +71,7 @@ public class ConfigurationHandler {
         private int maxOutputTokens = 200;
         private double percentOfContext = 0.75;
         private int timeout = 10;
+        private boolean chatBubbles = true;
         private List<String> whitelist = new ArrayList<>();
         private List<String> blacklist = new ArrayList<>();
         private String story = "";
@@ -114,5 +115,9 @@ public class ConfigurationHandler {
 
         public String getStory() { return story; }
         public void setStory(String story) { this.story = story; }
+
+        // Add getter and setter
+        public boolean getChatBubbles() { return chatBubbles; }
+        public void setChatBubbles(boolean chatBubblesEnabled) { this.chatBubbles = chatBubblesEnabled; }
     }
 }

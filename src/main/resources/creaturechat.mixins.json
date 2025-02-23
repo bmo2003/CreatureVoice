@@ -7,7 +7,12 @@
 		"MixinMobEntityAccessor",
 		"MixinLivingEntity",
 		"MixinBucketable",
-		"MixinVillagerEntity"
+		"MixinEntityChatData",
+		"MixinWitherEntity",
+		"MixinVexEntity",
+		"MixinWanderingTrader",
+		"MixinVillagerEntity",
+		"MixinOnChat"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -4,9 +4,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
-import com.owlmaddie.utils.EntityHeights;
-import com.owlmaddie.utils.EntityRendererAccessor;
-import com.owlmaddie.utils.TextureLoader;
+import com.owlmaddie.skin.PlayerCustomTexture;
+import com.owlmaddie.utils.*;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -228,6 +227,9 @@ public class BubbleRenderer {
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
         Identifier playerTexture = renderer.getTexture(entity);
 
+        // Check for black and white pixels (using the Mixin-based check)
+        boolean customSkinFound = PlayerCustomTexture.hasCustomIcon(playerTexture);
+
         // Set shader & texture
         RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
         RenderSystem.setShaderTexture(0, playerTexture);
@@ -241,42 +243,90 @@ public class BubbleRenderer {
         // Prepare the tessellator and buffer
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
-
-        // Get the current matrix position
-        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
-
-        // Begin drawing quads with the correct vertex format
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
 
-        // Texture coordinates for the face region (8, 8) to (16, 16) in a 64x64 texture
-        float textureWidth = 64.0F;
-        float textureHeight = 64.0F;
-        float u1 = 8.0F / textureWidth;
-        float v1 = 8.0F / textureHeight;
-        float u2 = 16.0F / textureWidth;
-        float v2 = 16.0F / textureHeight;
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
         float z = -0.01F;
 
-        // Draw face
-        bufferBuilder.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(u1, v2).light(light).overlay(overlay).next();  // bottom left
-        bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(u2, v2).light(light).overlay(overlay).next();   // bottom right
-        bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(u2, v1).light(light).overlay(overlay).next();  // top right
-        bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(u1, v1).light(light).overlay(overlay).next(); // top left
+        if (customSkinFound) {
+            // Hidden icon UV coordinates
+            float[][] newCoordinates = {
+                    {0.0F, 0.0F, 8.0F, 8.0F, 0F, 0F},     // Row 1 left
+                    {24.0F, 0.0F, 32.0F, 8.0F, 8F, 0F},   // Row 1 middle
+                    {32.0F, 0.0F, 40.0F, 8.0F, 16F, 0F},  // Row 1 right
+                    {56.0F, 0.0F, 64.0F, 8.0F, 0F, 8F},   // Row 2 left
+                    {56.0F, 20.0F, 64.0F, 28.0F, 8F, 8F}, // Row 2 middle
+                    {36.0F, 16.0F, 44.0F, 20.0F, 16F, 8F},// Row 2 right top
+                    {56.0F, 16.0F, 64.0F, 20.0F, 16F, 12F},// Row 2 right bottom
+                    {56.0F, 28.0F, 64.0F, 36.0F, 0F, 16F}, // Row 3 left
+                    {56.0F, 36.0F, 64.0F, 44.0F, 8F, 16F}, // Row 3 middle
+                    {56.0F, 44.0F, 64.0F, 48, 16F, 16F},   // Row 3 top right
+                    {12.0F, 48.0F, 20.0F, 52, 16F, 20F},   // Row 3 bottom right
+            };
+            float scaleFactor = 0.77F;
 
-        // Coordinates for the hat (overlay)
-        float hatU1 = 40.0F / textureWidth;
-        float hatV1 = 8.0F / textureHeight;
-        float hatU2 = 48.0F / textureWidth;
-        float hatV2 = 16.0F / textureHeight;
+            for (float[] coords : newCoordinates) {
+                float newU1 = coords[0] / 64.0F;
+                float newV1 = coords[1] / 64.0F;
+                float newU2 = coords[2] / 64.0F;
+                float newV2 = coords[3] / 64.0F;
 
-        // Adjust depth for hat layer
-        z -= 0.01F;
+                float offsetX = coords[4] * scaleFactor;
+                float offsetY = coords[5] * scaleFactor;
+                float scaledX = x + offsetX;
+                float scaledY = y + offsetY;
+                float scaledWidth = (coords[2] - coords[0]) * scaleFactor;
+                float scaledHeight = (coords[3] - coords[1]) * scaleFactor;
 
-        // Draw hat (overlay)
-        bufferBuilder.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(hatU1, hatV2).light(light).overlay(overlay).next();
-        bufferBuilder.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(hatU2, hatV2).light(light).overlay(overlay).next();
-        bufferBuilder.vertex(matrix4f, x + width, y, z).color(255, 255, 255, 255).texture(hatU2, hatV1).light(light).overlay(overlay).next();
-        bufferBuilder.vertex(matrix4f, x, y, z).color(255, 255, 255, 255).texture(hatU1, hatV1).light(light).overlay(overlay).next();
+                bufferBuilder.vertex(matrix4f, scaledX, scaledY + scaledHeight, z)
+                        .color(255, 255, 255, 255).texture(newU1, newV2).light(light).overlay(overlay).next();
+                bufferBuilder.vertex(matrix4f, scaledX + scaledWidth, scaledY + scaledHeight, z)
+                        .color(255, 255, 255, 255).texture(newU2, newV2).light(light).overlay(overlay).next();
+                bufferBuilder.vertex(matrix4f, scaledX + scaledWidth, scaledY, z)
+                        .color(255, 255, 255, 255).texture(newU2, newV1).light(light).overlay(overlay).next();
+                bufferBuilder.vertex(matrix4f, scaledX, scaledY, z)
+                        .color(255, 255, 255, 255).texture(newU1, newV1).light(light).overlay(overlay).next();
+            }
+        } else {
+            // make skin appear smaller and centered
+            x += 2;
+            y += 2;
+            width -= 4;
+            height -= 4;
+
+            // Normal face coordinates
+            float u1 = 8.0F / 64.0F;
+            float v1 = 8.0F / 64.0F;
+            float u2 = 16.0F / 64.0F;
+            float v2 = 16.0F / 64.0F;
+
+            bufferBuilder.vertex(matrix4f, x, y + height, z)
+                    .color(255, 255, 255, 255).texture(u1, v2).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, x + width, y + height, z)
+                    .color(255, 255, 255, 255).texture(u2, v2).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, x + width, y, z)
+                    .color(255, 255, 255, 255).texture(u2, v1).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, x, y, z)
+                    .color(255, 255, 255, 255).texture(u1, v1).light(light).overlay(overlay).next();
+
+            // Hat layer
+            float hatU1 = 40.0F / 64.0F;
+            float hatV1 = 8.0F / 64.0F;
+            float hatU2 = 48.0F / 64.0F;
+            float hatV2 = 16.0F / 64.0F;
+
+            z -= 0.01F;
+
+            bufferBuilder.vertex(matrix4f, x, y + height, z)
+                    .color(255, 255, 255, 255).texture(hatU1, hatV2).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, x + width, y + height, z)
+                    .color(255, 255, 255, 255).texture(hatU2, hatV2).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, x + width, y, z)
+                    .color(255, 255, 255, 255).texture(hatU2, hatV1).light(light).overlay(overlay).next();
+            bufferBuilder.vertex(matrix4f, x, y, z)
+                    .color(255, 255, 255, 255).texture(hatU1, hatV1).light(light).overlay(overlay).next();
+        }
+
         tessellator.draw();
 
         // Disable blending and depth test

@@ -7,20 +7,51 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 ## Unreleased
 
 ### Added
+- Wither now drops a Nether Star at max friendship (for pacifists)
 - Added Entity Maturity (baby or adult) into system-chat prompt
 - Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 - Added many new speaking styles (minimalist, nerdy, stupid, gen-z, old timer, boomer, etc...)
+- Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
+- Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 
 ### Changed
+- Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
+- Improved error handling to prevent broken "..." pending chat status. (HTTP and message processing is more protected)
+- Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
 - Simplified system-chat prompt (less tokens), rounded health & hunger values, and improved variety of examples (less tokens)
 - Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 - Removed a few variables from the chat context (creative mode, hardcore, difficulty)
 
 ### Fixed
+- Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)
+- Vexes no longer take damage when chat data exists
+- Wandering Trader no longer despawns if it has chat data
+- Removed randomized error messages from chat history (so it doesn't break the chat history when an error is shown)
 - Reduced death message output in logs to use DEBUG log level
 - Fixed unit tests for friendship (some were being skipped)
+
+## [1.3.0] - 2025-01-14
+
+### Added
+- In-game chat messages are now displayed in chat bubbles above players heads!
+- Custom player icons (icons can be embedded in player skin file)
+    - Step-by-Step **Icon** Tutorial: [ICON.md](ICONS.md)
+    - Mixin to extend PlayerSkinTexture to make a copy of the NativeImage + pixel toggle to enable
+- New command `/creaturechat chatbubbles set <on | off>` to show or hide player chat messages in bubbles
+- Improved LLM Unit tests (to prevent rate limit issues from certain providers when running all tests)
+    - Check friendship direction (+ or -) in LLM unit tests (to verify friendship direction is output correctly)
+
+### Changed
+- Seperated Player and Entity message broadcasts (different packets for simplicity)
+- Reduced size of player skin face on chat bubble, to match sizes of custom icons (for consistency)
+- Updated entity icons for allay, creeper, and pig
+
+### Fixed
+- Hide death messages for mobs with no chat data
+- Fixed transparent background behind chat screen for Minecraft 1.20 and 1.20.1.
+- Removed extra message broadcast (which was unnecessary)
 
 ## [1.2.1] - 2025-01-01
 
