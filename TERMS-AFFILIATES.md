@@ -9,7 +9,7 @@ link.
 
 Participation in the program is subject to the following terms and conditions ("Terms"). By
 joining, you agree to abide by these Terms. If you do not agree, you may not participate in
-the affiliate program.
+the affiliate program. **CreatureChat is not affiliated with or endorsed by Minecraft, Microsoft, or Mojang.**
 
 ---
 
@@ -41,19 +41,19 @@ the affiliate program.
 
 ## 4. Redeeming Commissions
 - **Viewing Earnings & Redemption:**
-  - Affiliates can view their statistics, including *clicks, checkouts, purchases, refunds, chargebacks, and earned* commissions, by using the `/affiliate balance` command in the CreatureChat Discord server.
-  - Affiliates can initiate a redemption request using the `/affiliate redeem` command in the CreatureChat Discord server to withdraw earnings in either tokens or PayPal.
+  - Affiliates can view their statistics, including *clicks, checkouts, samples, purchases, refunds, chargebacks, self-purchases, and earned* commissions, by using the `/affiliate balance` command in the CreatureChat Discord server.
+  - Affiliates can initiate a redemption request using the `/affiliate redeem` command in the CreatureChat Discord server to withdraw earnings in either tokens or PayPal (USD).
 
 - **Minimum Redemption Thresholds:**
   - **30 Days:** Commissions must accumulate for a minimum of 30 days before redeeming. 
   - **Tokens:** $5+ commission balance. Tokens are paid immediately upon redemption.
-  - **PayPal:** $50+ commission balance. PayPal redemptions require verification of affiliate activity, including clicks, purchases, refunds, and chargebacks.
+  - **PayPal:** $50+ commission balance. PayPal (USD) redemptions require verification of affiliate activity, including *clicks, purchases, refunds, self-purchases, and chargebacks*.
     - Payments are processed within 3 to 5 business days after approval.
     - All PayPal redemptions are processed exclusively in USD, regardless of the affiliate’s local currency.
 
 - **Chargebacks & Unresponsive Affiliates:**
-  - Chargebacks and refunds will reduce your commission balance.
-  - Excessive chargebacks or refunds may lead to removal from the program and forfeiture of unpaid commissions.
+  - Chargebacks, self-purchases, and refunds will reduce your commission balance.
+  - Excessive chargebacks, self-purchases, or refunds may lead to removal from the program and forfeiture of unpaid commissions.
   - If an affiliate becomes unresponsive for **6 months or longer**, any unpaid commissions may be forfeited at our discretion.
 
 ---
@@ -71,7 +71,7 @@ To maintain fairness and integrity:
 ---
 
 ## 6. Privacy and Data Use
-- Cookies are used to track affiliate activity, including clicks, checkouts, and purchases.
+- Cookies are used to track affiliate activity, including *clicks, checkouts, samples, and purchases*.
 - Your personal data is processed in accordance with our [Privacy Policy](PRIVACY.md). We respect your privacy and only use your data for legitimate program operations.
 
 ---
