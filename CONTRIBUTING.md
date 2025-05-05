@@ -9,14 +9,14 @@ everyone involved.
 
 Before you begin:
 
-- Ensure you have a [GitLab account](https://gitlab.openshot.org/) linked to your email.
-- Familiarize yourself with the [GitLab Flow](https://docs.gitlab.com/ee/topics/gitlab_flow.html) to understand our branch management and release structure.
+- Ensure you have a [GitHub account](https://github.com/CreatureChat/creature-chat) linked to your email.
+- Familiarize yourself with the [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow) to understand our branch management and release structure.
 - Make sure you have a basic understanding of the [Fabric modding platform](https://fabricmc.net/).
 
 ## Making Changes
 
 1. **Fork the Repository**
-    - Fork the project repository: http://gitlab.openshot.org/minecraft/creature-chat
+    - Fork the project repository: https://github.com/CreatureChat/creature-chat
     - Clone your fork to your local machine and set up the development environment as described in [INSTALL.md](INSTALL.md).
 
 2. **Create a Branch**
@@ -32,7 +32,7 @@ Before you begin:
     - Test your changes thoroughly, making sure they provide the functionality described in your branch name.
 
 5. **Push Changes**
-    - Push your changes to your fork on GitLab.
+    - Push your changes to your fork on GitHub.
 
 ## Submitting a Merge Request
 
@@ -50,7 +50,7 @@ Before you begin:
 
 ## Reporting Bugs
 
-- Bugs are tracked as GitLab issues. Create an issue on our repository and clearly describe the bug with as much detail as possible, steps to reproduce, expected outcome, and actual outcome.
+- Bugs are tracked as GitHub issues. Create an issue on our repository and clearly describe the bug with as much detail as possible, steps to reproduce, expected outcome, and actual outcome.
 
 ## Community
 

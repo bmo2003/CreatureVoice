@@ -10,7 +10,7 @@
 	],
 	"contact": {
 		"homepage": "http://discord.creaturechat.com",
-		"sources": "http://gitlab.openshot.org/minecraft/creature-chat"
+		"sources": "https://github.com/CreatureChat/creature-chat"
 	},
 	"license": "GPLv3",
 	"icon": "assets/creaturechat/icon.png",
