@@ -15,7 +15,7 @@ build the mod._
 ## Clone the Repository
 Open a terminal or command prompt and run the following command to clone the repository:
 ```
-git clone http://gitlab.openshot.org/minecraft/creature-chat.git
+git clone https://github.com/CreatureChat/creature-chat.git
 ```
 
 Navigate into the cloned directory:

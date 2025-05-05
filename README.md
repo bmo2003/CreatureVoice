@@ -114,7 +114,7 @@ Supports CreatureChat by purchasing tokens from the developers:
 ### Contact & Resources
 
 - [Join us on Discord](https://discord.gg/m9dvPFmN3e)
-- [Build Instructions](INSTALL.md) ([Source Code](http://gitlab.openshot.org/minecraft/creature-chat))
+- [Build Instructions](INSTALL.md) ([Source Code](https://github.com/CreatureChat/creature-chat))
 - [Player & Entity Icon Tutorial](ICONS.md)
 - Download from [Modrinth](https://modrinth.com/project/creaturechat)
 - Follow Us: [YouTube](https://www.youtube.com/@CreatureChat/featured) | 
