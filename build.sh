@@ -10,10 +10,28 @@ for i in "${!versions[@]}"; do
     yarn_mappings="${mappings[$i]}"
     fabric_version="${fabric_versions[$i]}"
 
+    if [[ -n "$ONLY_VERSION" && "$minecraft_version" != "$ONLY_VERSION" ]]; then
+        continue
+    fi
+
     echo "****"
-    echo "Building for Minecraft Version $minecraft_version with Fabric $fabric_version"
+    echo "Preparing build for Minecraft $minecraft_version with Fabric $fabric_version"
     echo "****"
 
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "[DRY RUN] Would update gradle.properties:"
+        echo "  minecraft_version=$minecraft_version"
+        echo "  yarn_mappings=$yarn_mappings"
+        echo "  loader_version=0.15.11"
+        echo "  fabric_version=$fabric_version"
+        echo "[DRY RUN] Would edit fabric.mod.json: \"minecraft\": \"~$minecraft_version\""
+        echo "[DRY RUN] Would run: ./gradlew build -x test"
+        echo "[DRY RUN] Would fetch: https://github.com/FabricMC/fabric/releases/download/${fabric_version//+/%2B}/fabric-api-${fabric_version}.jar"
+        echo ""
+        continue
+    fi
+
+    # Modify configs
     sed -i "s/^minecraft_version=.*/minecraft_version=$minecraft_version/" gradle.properties
     sed -i "s/^yarn_mappings=.*/yarn_mappings=$yarn_mappings/" gradle.properties
     sed -i "s/^loader_version=.*/loader_version=0.15.11/" gradle.properties
