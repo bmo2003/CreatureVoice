@@ -56,6 +56,9 @@ Branding, art, documentation, screenshots, and other non-code assets are license
 Attribution–NonCommercial 4.0 International** license (see [LICENSE-ASSETS.md](LICENSE-ASSETS.md)).  
 That means you may reuse them **only for non-commercial purposes** and **must** provide attribution.
 
+You may reference the project’s name in phrases such as **“Fork of CreatureChat”**, provided such
+use is purely descriptive and does **not** imply endorsement or official affiliation.
+
 If you publish a fork on Modrinth, CurseForge, or elsewhere:
 
 - Use a different name and branding.

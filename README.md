@@ -121,16 +121,14 @@ Supports CreatureChat™ by purchasing tokens from the developers:
 [Twitter](https://twitter.com/TheCreatureChat) |
 [TikTok](https://www.tiktok.com/@creaturechat)
 
-### Legal Information
-
-Please review our [Terms of Service](TERMS.md) and [Privacy Policy](PRIVACY.md) before using CreatureChat™.  
-By using our services, you agree to comply with these documents.
-
 ### License
 
 - [![REUSE Status](https://img.shields.io/badge/REUSE-compliant-brightgreen)](https://reuse.software)
-- **Source Code:** [GNU GPL v3](LICENSE.md)
-- **Non-Code Assets:** [CC BY-NC 4.0](LICENSE-ASSETS.md)  
-  (screenshots, textures, logos, docs, and other non-code files)
+- **Source code:** [GNU GPL v3](LICENSE.md)
+- **Non-code assets:** [CC BY-NC 4.0](LICENSE-ASSETS.md)
 
-**CreatureChat™ is a trademark of owlmaddie LLC; use without permission is prohibited.**
+### Legal Notices
+
+- By using CreatureChat™ you agree to our [Terms of Service](TERMS.md) and [Privacy Policy](PRIVACY.md).
+- CreatureChat™ is an independent project and is **not** endorsed by Mojang AB, Microsoft Corp., or OpenAI. *Minecraft®* is a trademark of Mojang AB. *ChatGPT®* is a trademark of OpenAI OpCo, LLC. All trademarks appear here for identification only.
+- *CreatureChat™* is a trademark of owlmaddie LLC (registration pending). Factual nominative references such as “Fork of CreatureChat” that do **not** imply endorsement are allowed; all other uses of the name or logo require prior permission.

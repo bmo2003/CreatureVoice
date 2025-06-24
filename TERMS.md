@@ -17,8 +17,13 @@ This service leverages OpenAI's APIs, among potentially other LLM providers, to 
 - **Privacy and Security:** You agree not to transmit any private or sensitive information through CreatureChat™, including but not limited to credit card numbers, financial information, phone numbers, contact information, mailing addresses, API keys (CreatureChat or OpenAI), usernames, passwords, or any other sensitive information.
 - You are responsible for all activities conducted through your account and compliance with these Terms.
 
-## 4. Eligibility and User Responsibilities
-- You must be at least the minimum age required to access and use Discord and Minecraft and meet the minimum age required by the laws in your country. By agreeing to these Terms, you represent and warrant that you are of legal age to form a binding contract and meet all of the foregoing eligibility requirements.
+## 3A. AI-Generated Content
+CreatureChat™ relies on third-party language models that generate text autonomously. Although we apply safety filters, 
+outputs may at times be inaccurate, offensive, or unlawful. **You are solely responsible** for any content produced 
+through your use of CreatureChat™ and agree that owlmaddie LLC shall not be liable for such content.
+
+## 4. Eligibility
+- You must be at least **13 years old** — or the minimum digital-service age of consent in your country, whichever is higher — and meet the age requirements in the Minecraft® and Discord™ terms. CreatureChat™ is **not intended for children under 13**; if you are under 13 you may not use the services.
 - Users are also required to follow the [Minecraft Terms of Use](https://www.minecraft.net/terms) and the [Discord Terms of Service](https://discord.com/terms) when using their respective services in conjunction with CreatureChat™.
 
 ## 5. User Conduct
@@ -37,9 +42,12 @@ affect the terms under which you have purchased or used the CreatureChat™ API 
 - CreatureChat™ API keys and tokens expire 36 months from the date of purchase. Users must use their keys and tokens within this time frame as any unused keys and tokens will be forfeited upon expiration.
 - Gameplay Hours Disclaimer: Estimated gameplay hours are based on average usage during our tests. Actual playtime may vary depending on individual play styles and token usage.
 
-## 8. Intellectual Property
-All rights, title, and interest in and to the CreatureChat™ services, including all associated intellectual property 
-rights, are owned by owlmaddie, LLC or our licensors.
+## 8. Intellectual Property & Licenses
+All rights, title, and interest in CreatureChat™ are owned by owlmaddie LLC or its licensors.
+- **Source code:** Licensed to you under GNU GPL v3 (binary and source).
+- **Non-code assets:** Licensed under CC BY-NC 4.0.  
+These licenses let you download, run, modify, and share the mod as permitted.  
+The CreatureChat™ name and logo remain our trademarks; only fair, nominative reference is allowed.
 
 ## 9. No Warranty
 The CreatureChat™ mod and services are provided "as is" without warranties of any kind, either express or implied. 
