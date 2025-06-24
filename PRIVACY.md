@@ -1,11 +1,11 @@
-# Privacy Policy for *CreatureChat API* & *Token Shop*
+# Privacy Policy for *CreatureChat™ API* & *Token Shop*
 
 ## 1. Introduction
-This Privacy Policy outlines the types of information collected and recorded by the CreatureChat API, Token Shop, and
-how we use it. This policy applies to our use of all data collected by us in relation to your use of CreatureChat API 
+This Privacy Policy outlines the types of information collected and recorded by the CreatureChat™ API, Token Shop, and
+how we use it. This policy applies to our use of all data collected by us in relation to your use of CreatureChat™ API 
 services. 
 
-**We collect no information from the CreatureChat mod when using OpenAI API keys, Local LLMs, or other API services.**
+**We collect no information from the CreatureChat™ mod when using OpenAI API keys, Local LLMs, or other API services.**
 
 ## 2. Information We Collect
 - **Discord Data:** We collect your Discord username and ID to facilitate service delivery, key generation, and maintain usage statistics.
@@ -19,7 +19,7 @@ We use the information we collect from you to:
 - Enhance and improve our services and customer support.
 
 ## 4. Storage of Your Information
-- **Data Storage:** We store CreatureChat API keys, usage statistics, and metadata in order to fulfill the services.
+- **Data Storage:** We store CreatureChat™ API keys, usage statistics, and metadata in order to fulfill the services.
 - **Security:** All data transmissions are secured via SSL/HTTPS. Data flows securely from FastSpring to AWS, and then to Discord as part of our operational processes.
 
 ## 5. Sharing of Your Information

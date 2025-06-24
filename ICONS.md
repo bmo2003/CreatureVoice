@@ -1,8 +1,8 @@
-# Icon Tutorial for CreatureChat
+# Icon Tutorial for CreatureChat™
 
 <img src="src/main/resources/assets/creaturechat/screenshots/side-by-side-icons.png" width="100%" style="image-rendering: pixelated;">
 
-### Customize entity and player icons in **CreatureChat** by following this step-by-step guide.
+### Customize entity and player icons in **CreatureChat™** by following this step-by-step guide.
 
 ---
 
@@ -53,7 +53,7 @@ To activate a custom player icon, include a **black and white key** in your skin
 1. Add a **black square** at: `(28, 48)`
 2. Add a **white square** at: `(32, 48)`
 
-CreatureChat will detect this key and enable your custom icon.
+CreatureChat™ will detect this key and enable your custom icon.
 
 ### Step 4: Upload Skin in the Minecraft Launcher
 
@@ -83,5 +83,5 @@ UV_COORDINATES = [
 
 ---
 
-## Enjoy customizing your CreatureChat experience! 😊
+## Enjoy customizing your CreatureChat™ experience! 😊
 

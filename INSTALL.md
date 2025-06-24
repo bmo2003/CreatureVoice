@@ -1,6 +1,6 @@
-# Building CreatureChat
+# Building CreatureChat™
 
-This **guide** will walk you through the steps required to clone and build the CreatureChat 
+This **guide** will walk you through the steps required to clone and build the CreatureChat™ 
 **Fabric Mod** from our **Git** repository. _NOTE: Please ensure you have Git installed on your 
 computer before you begin. You will also need Java and an appropriate Gradle setup to 
 build the mod._

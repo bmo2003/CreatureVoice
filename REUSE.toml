@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2025 owlmaddie LLC
+# SPDX-License-Identifier: GPL-3.0-or-later
+version = 1
+SPDX-PackageName = "CreatureChat"
+SPDX-PackageSupplier = "licensing@openshot.org, licensing@owlmaddie.com"
+SPDX-PackageDownloadLocation = "https://github.com/CreatureChat/creature-chat"
+
+[[annotations]]
+path = ["build.gradle", "settings.gradle", "gradle.properties", "build.sh", "deploy-**.sh"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 owlmaddie LLC"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2015-2021 The original authors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["**/**.json", "**/**.html", "**/**.accesswidener"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 owlmaddie LLC"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [".gitignore", ".gitlab-ci.yml", "**.md", "src/main/resources/data/creaturechat/prompts/**", "src/main/resources/assets/creaturechat/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 owlmaddie LLC"
+SPDX-License-Identifier = "CC-BY-NC-4.0"

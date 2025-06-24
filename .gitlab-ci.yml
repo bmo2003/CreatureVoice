@@ -8,9 +8,21 @@ cache:
     - .gradle/caches
 
 stages:
+  - lint
   - build
   - test
   - deploy
+
+licensing:
+  stage: lint
+  before_script:
+    - export PATH="$HOME/.local/bin:$PATH"
+    - which reuse || echo "REUSE NOT FOUND"
+    - reuse --version
+  script:
+    - reuse lint
+  tags:
+    - minecraft
 
 # Build JAR files for each Minecraft & Fabric version
 build_mod:

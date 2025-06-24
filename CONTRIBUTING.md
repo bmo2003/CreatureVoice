@@ -1,6 +1,6 @@
-# Contributing to CreatureChat
+# Contributing to CreatureChat™
 
-First off, thank you for considering contributing to CreatureChat! It's people like you that 
+First off, thank you for considering contributing to CreatureChat™! It's people like you that 
 make the Minecraft modding community such a great place to be a part of. Here are a few 
 guidelines that we ask contributors to follow to make the process easy and effective for 
 everyone involved.
@@ -34,19 +34,36 @@ Before you begin:
 5. **Push Changes**
     - Push your changes to your fork on GitHub.
 
-## Submitting a Merge Request
+## Submitting a PR (Pull Request)
 
-1. **Merge Request**
+1. **Pull Request**
     - Make sure your branch is up to date with the main project branch you are targeting.
-    - Submit a merge request to the main repository in the appropriate branch.
+    - Submit a pull request to the main repository in the appropriate branch.
     - Include a descriptive title and a detailed first comment describing what your changes do.
 
 2. **Review Process**
-    - Other contributors and maintainers will review your merge request. Be open to discussing potential improvements.
-    - Make any requested changes to your merge request. This might require more commits.
+    - Other contributors and maintainers will review your pull request. Be open to discussing potential improvements.
+    - Make any requested changes to your pull request. This might require more commits.
 
 3. **Final Review and Merge**
-    - Once your merge request is approved, a project maintainer will merge it.
+    - Once your pull request is approved, a project maintainer will merge it.
+
+## Forking & Publishing
+
+You’re welcome to fork **CreatureChat™** under the project’s [GNU GPL v3](LICENSE.md) for source code.
+
+Branding, art, documentation, screenshots, and other non-code assets are licensed under the **Creative Commons 
+Attribution–NonCommercial 4.0 International** license (see [LICENSE-ASSETS.md](LICENSE-ASSETS.md)).  
+That means you may reuse them **only for non-commercial purposes** and **must** provide attribution.
+
+You may reference the project’s name in phrases such as **“Fork of CreatureChat”**, provided such
+use is purely descriptive and does **not** imply endorsement or official affiliation.
+
+If you publish a fork on Modrinth, CurseForge, or elsewhere:
+
+- Use a different name and branding.
+- Credit the original project.
+- State clearly that your fork is unofficial.
 
 ## Reporting Bugs
 
@@ -56,4 +73,4 @@ Before you begin:
 
 - Join our [Discord](https://discord.gg/m9dvPFmN3e) to chat with other contributors and get help with your development questions.
 
-Thank you for your contributions to the CreatureChat mod!
+Thank you for your contributions to the CreatureChat™ mod!
