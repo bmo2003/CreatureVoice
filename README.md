@@ -128,6 +128,7 @@ By using our services, you agree to comply with these documents.
 
 ### License
 
+- [![REUSE Status](https://img.shields.io/badge/REUSE-compliant-brightgreen)](https://reuse.software)
 - **Source Code:** [GNU GPL v3](LICENSE.md)
 - **Non-Code Assets:** [CC BY-NC 4.0](LICENSE-ASSETS.md)  
   (screenshots, textures, logos, docs, and other non-code files)
