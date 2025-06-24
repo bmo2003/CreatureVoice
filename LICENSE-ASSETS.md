@@ -10,7 +10,7 @@ This license applies to all **non-source content** in the CreatureChat™ reposi
 
 ---
 
-## License: Creative Commons Attribution-NonCommercial 4.0 International
+## License: [Creative Commons Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/)
 
 You are free to:
 
