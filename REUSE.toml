@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025 owlmaddie LLC
+# SPDX-License-Identifier: GPL-3.0-or-later
 version = 1
 SPDX-PackageName = "CreatureChat"
 SPDX-PackageSupplier = "licensing@openshot.org, licensing@owlmaddie.com"
