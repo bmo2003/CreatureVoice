@@ -21,6 +21,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
 - Removed a few variables from the chat context (creative mode, hardcore, difficulty)
 - Updated docs & asset licensing to use CC BY-NC 4.0 and added SPDX headers to all source-code files
+- Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
 
 ### Fixed
 - Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)

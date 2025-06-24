@@ -8,9 +8,15 @@ cache:
     - .gradle/caches
 
 stages:
+  - lint
   - build
   - test
   - deploy
+
+reuse_lint:
+  stage: lint
+  script:
+    - reuse lint
 
 # Build JAR files for each Minecraft & Fabric version
 build_mod:

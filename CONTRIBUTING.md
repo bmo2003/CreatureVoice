@@ -50,16 +50,17 @@ Before you begin:
 
 ## Forking & Publishing
 
-You’re welcome to fork CreatureChat™ under the GPLv3 license.
+You’re welcome to fork **CreatureChat™** under the project’s [GNU GPL v3](LICENSE.md) for source code.
 
-However, you **may not** use the name "CreatureChat" or reuse our art, documentation, markdown, screenshots, logo, or 
-branding in your fork — these are © owlmaddie LLC and licensed under Creative Commons Attribution‑NonCommercial 
-3.0 (CC BY‑NC‑3.0).
+Branding, art, documentation, screenshots, and other non-code assets are licensed under the **Creative Commons 
+Attribution–NonCommercial 4.0 International** license (see [LICENSE-ASSETS.md](LICENSE-ASSETS.md)).  
+That means you may reuse them **only for non-commercial purposes** and **must** provide attribution.
 
-If publishing a fork to Modrinth, CurseForge, or elsewhere:
+If you publish a fork on Modrinth, CurseForge, or elsewhere:
+
 - Use a different name and branding.
 - Credit the original project.
-- Clearly state your fork is unofficial.
+- State clearly that your fork is unofficial.
 
 ## Reporting Bugs
 
