@@ -16,7 +16,7 @@ stages:
 reuse_lint:
   stage: lint
   script:
-    - /home/jonathan/.local/bin/reuse lint
+    - reuse lint
   tags:
     - minecraft
 
