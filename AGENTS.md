@@ -1,4 +1,4 @@
-# CreatureChat Agent Instructions
+# CreatureChat™ Agent Instructions
 
 See **build.sh** for commands and supported Minecraft/Fabric versions.
 

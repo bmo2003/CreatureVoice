@@ -1,4 +1,4 @@
-# CreatureChat
+# CreatureChat™
 
 ## Chat with any mob in Minecraft! All creatures can talk & react using AI!
 
@@ -12,7 +12,7 @@
 
 ### Create meaningful conversations and enduring friendships? A betrayal perhaps?
 
-[![CreatureChat Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.png)](https://youtu.be/GdY969Orsh0?si=qRgCne10XqOBC8YB)
+[![CreatureChat™ Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.png)](https://youtu.be/GdY969Orsh0?si=qRgCne10XqOBC8YB)
 
 ## Installation Instructions
 ### Fabric (Recommended)
@@ -33,7 +33,7 @@
 7. **Configure AI:** A LLM (large language model) is required for generating text (AI options **listed below**)
 
 ## AI Options
-CreatureChat **requires** an AI / LLM (large language model) to generate text (characters and chat). There are many different
+CreatureChat™ **requires** an AI / LLM (large language model) to generate text (characters and chat). There are many different
 options for connecting an LLM. 
 
 1. **Free & Local**: Use open-source and free-to-use LLMs without any API fees. [**Difficulty: Hard**]
@@ -41,7 +41,7 @@ options for connecting an LLM.
 3. **Token Shop**: Supports CreatureChat by purchasing tokens from the developers on Discord. [**Difficulty: Easy**]
 
 ### 1. Free & Local
-CreatureChat fully supports **free and open-source** LLMs. To get started:
+CreatureChat™ fully supports **free and open-source** LLMs. To get started:
 
 - An HTTP endpoint compatible with the OpenAI Chat Completion JSON syntax is required. We highly recommend using:
   - [Ollama](https://ollama.com/) & [LiteLLM](https://litellm.vercel.app/) as your HTTP proxy.
@@ -60,7 +60,7 @@ For those already using a third-party API (e.g., OpenAI, Groq):
 
 - Integrate your own API key for seamless connectivity.
 - Costs depend on the provider’s usage-based pricing model.
-- By default, CreatureChat uses the OpenAI endpoint and `gpt-3.5-turbo` model, known for its balance of low cost and fast performance.
+- By default, CreatureChat™ uses the OpenAI endpoint and `gpt-3.5-turbo` model, known for its balance of low cost and fast performance.
 - Be aware that OpenAI’s developer API does not include free usage. Please review the [OpenAI pricing](https://openai.com/api/pricing/) for detailed information.
 - To create an OpenAI API key, visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys), and use the **+ Create new secret key** button.
 - Set the API key & model in-game:
@@ -68,7 +68,7 @@ For those already using a third-party API (e.g., OpenAI, Groq):
   - `/creaturechat model set gpt-3.5-turbo`
 
 ### 3. Token Shop
-Supports CreatureChat by purchasing tokens from the developers:
+Supports CreatureChat™ by purchasing tokens from the developers:
 
 - Easy setup with simple token packs, created for CreatureChat users.
 - More info is available in the #token-shop channel on our [Discord](https://discord.gg/m9dvPFmN3e).
@@ -120,26 +120,16 @@ Supports CreatureChat by purchasing tokens from the developers:
 - Follow Us: [YouTube](https://www.youtube.com/@CreatureChat/featured) | 
 [Twitter](https://twitter.com/TheCreatureChat) |
 [TikTok](https://www.tiktok.com/@creaturechat)
-
+- 
 ### Legal Information
 
-Please review our [Terms of Service](TERMS.md) and [Privacy Policy](PRIVACY.md) before using CreatureChat. 
+Please review our [Terms of Service](TERMS.md) and [Privacy Policy](PRIVACY.md) before using CreatureChat™.  
 By using our services, you agree to comply with these documents.
 
 ### License
 
-    CreatureChat is a Minecraft mod which allows chat conversations with entities.
-    Copyright (C) 2024 owlmaddie LLC
+- **Source Code:** Licensed under the [GNU GPLv3](LICENSE.md)
+- **Non-Code Assets:** Licensed under [CC BY-NC 3.0](LICENSE-ASSETS.md)  
+  (Includes: screenshots, textures, logos, documentation, and other non-code files)
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+**CreatureChat™ is a trademark of owlmaddie LLC; use without permission is prohibited.**

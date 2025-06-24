@@ -540,3 +540,8 @@ connection with the Program, unless a warranty or assumption of liability accomp
 a copy of the Program in return for a fee.
 
 _END OF TERMS AND CONDITIONS_
+
+## Non-Code Asset License
+
+This license applies to the source code only.
+For licensing of artwork, documentation, and other non-code assets, see [LICENSE-ASSETS.md](LICENSE-ASSETS.md).

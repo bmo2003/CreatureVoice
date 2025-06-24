@@ -1,15 +1,15 @@
-# Terms of Service for the CreatureChat Affiliate Program
+# Terms of Service for the CreatureChat™ Affiliate Program
 
 ## 1. Introduction
-Welcome to the CreatureChat Affiliate Program! CreatureChat is a Minecraft mod owned and operated
+Welcome to the CreatureChat™ Affiliate Program! CreatureChat™ is a Minecraft mod owned and operated
 by owlmaddie, LLC, a Texas-based company. Our mod enhances gameplay by enabling creatures within
 Minecraft to communicate using natural language processing. As a member of our affiliate program,
-you can earn commissions by promoting CreatureChat and driving sales through your unique affiliate
+you can earn commissions by promoting CreatureChat™ and driving sales through your unique affiliate
 link.
 
 Participation in the program is subject to the following terms and conditions ("Terms"). By
 joining, you agree to abide by these Terms. If you do not agree, you may not participate in
-the affiliate program. **CreatureChat is not affiliated with or endorsed by Minecraft, Microsoft, or Mojang.**
+the affiliate program. **CreatureChat™ is not affiliated with or endorsed by Minecraft, Microsoft, or Mojang.**
 
 ---
 
@@ -21,7 +21,7 @@ the affiliate program. **CreatureChat is not affiliated with or endorsed by Mine
   - Austria (AT), Luxembourg (LU), Ukraine (UA), Saudi Arabia (SA), Portugal (PT),
   - Argentina (AR), Sweden (SE), New Zealand (NZ), Spain (ES), Italy (IT), Philippines (PH), Mexico (MX).
 - We reserve the right to update the list of supported countries at any time.
-- Membership in our **Discord server** is required to participate in this program. Joining the program is done through the `/affiliate join` command in the CreatureChat Discord server.
+- Membership in our **Discord server** is required to participate in this program. Joining the program is done through the `/affiliate join` command in the CreatureChat™ Discord server.
 - If you leave or are banned from our Discord server for any reason, you will be automatically removed from the affiliate program, and any unpaid commissions may be forfeited at our discretion.
 
 ---
@@ -41,8 +41,8 @@ the affiliate program. **CreatureChat is not affiliated with or endorsed by Mine
 
 ## 4. Redeeming Commissions
 - **Viewing Earnings & Redemption:**
-  - Affiliates can view their statistics, including *clicks, checkouts, samples, purchases, refunds, chargebacks, self-purchases, and earned* commissions, by using the `/affiliate balance` command in the CreatureChat Discord server.
-  - Affiliates can initiate a redemption request using the `/affiliate redeem` command in the CreatureChat Discord server to withdraw earnings in either tokens or PayPal (USD).
+  - Affiliates can view their statistics, including *clicks, checkouts, samples, purchases, refunds, chargebacks, self-purchases, and earned* commissions, by using the `/affiliate balance` command in the CreatureChat™ Discord server.
+  - Affiliates can initiate a redemption request using the `/affiliate redeem` command in the CreatureChat™ Discord server to withdraw earnings in either tokens or PayPal (USD).
 
 - **Minimum Redemption Thresholds:**
   - **30 Days:** Commissions must accumulate for a minimum of 30 days before redeeming. 
@@ -63,8 +63,8 @@ To maintain fairness and integrity:
 - Affiliates must not:
   - Engage in fraudulent activities, including but not limited to fake purchases, spam, and misleading promotions.
   - Manipulate cookies, use cookie stuffing, or employ automated means to generate traffic.
-  - Misrepresent CreatureChat or its services in a deceptive or misleading manner.
-  - Use paid advertising (e.g., Google Ads, Facebook Ads) to bid on the "CreatureChat" brand name or related trademarks.
+  - Misrepresent CreatureChat™ or its services in a deceptive or misleading manner.
+  - Use paid advertising (e.g., Google Ads, Facebook Ads) to bid on the "CreatureChat™" brand name or related trademarks.
 - Affiliates are expected to follow applicable laws and ethical guidelines in their promotional activities.
 - Affiliates may be removed from the program at our discretion if their activities are deemed harmful, fraudulent, or abusive.
 
@@ -77,15 +77,15 @@ To maintain fairness and integrity:
 ---
 
 ## 7. Termination
-- Affiliates may leave the program at any time by using the `/affiliate leave` command in the CreatureChat Discord server.
+- Affiliates may leave the program at any time by using the `/affiliate leave` command in the CreatureChat™ Discord server.
 - We reserve the right to terminate your participation at any time for violations of these Terms or other actions deemed harmful to the program.
 - Upon termination, any unpaid commissions may be forfeited at our discretion, especially in cases of fraud, abuse, or policy violations.
-- Affiliates who are terminated for violations may not reapply unless explicitly permitted by CreatureChat.
+- Affiliates who are terminated for violations may not reapply unless explicitly permitted by CreatureChat™.
 
 ---
 
 ## 8. Limitation of Liability
-CreatureChat, owlmaddie, LLC, and its affiliates are not liable for indirect, incidental, special, punitive, or consequential damages
+CreatureChat™, owlmaddie, LLC, and its affiliates are not liable for indirect, incidental, special, punitive, or consequential damages
 arising from your participation in the affiliate program. Participation is at your own risk.
 
 ---
