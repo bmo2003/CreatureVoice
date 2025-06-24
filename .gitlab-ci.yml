@@ -15,6 +15,10 @@ stages:
 
 reuse_lint:
   stage: lint
+  before_script:
+    - export PATH="$HOME/.local/bin:$PATH"
+    - which reuse || echo "REUSE NOT FOUND"
+    - reuse --version
   script:
     - reuse lint
   tags:
