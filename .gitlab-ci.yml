@@ -17,6 +17,8 @@ reuse_lint:
   stage: lint
   script:
     - reuse lint
+  tags:
+    - minecraft
 
 # Build JAR files for each Minecraft & Fabric version
 build_mod:
