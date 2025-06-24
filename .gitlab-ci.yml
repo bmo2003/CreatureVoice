@@ -13,7 +13,7 @@ stages:
   - test
   - deploy
 
-reuse_lint:
+licensing:
   stage: lint
   before_script:
     - export PATH="$HOME/.local/bin:$PATH"
