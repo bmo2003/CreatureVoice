@@ -120,7 +120,7 @@ Supports CreatureChat™ by purchasing tokens from the developers:
 - Follow Us: [YouTube](https://www.youtube.com/@CreatureChat/featured) | 
 [Twitter](https://twitter.com/TheCreatureChat) |
 [TikTok](https://www.tiktok.com/@creaturechat)
-- 
+
 ### Legal Information
 
 Please review our [Terms of Service](TERMS.md) and [Privacy Policy](PRIVACY.md) before using CreatureChat™.  
