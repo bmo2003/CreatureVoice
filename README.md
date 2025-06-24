@@ -128,8 +128,8 @@ By using our services, you agree to comply with these documents.
 
 ### License
 
-- **Source Code:** Licensed under the [GNU GPLv3](LICENSE.md)
-- **Non-Code Assets:** Licensed under [CC BY-NC 3.0](LICENSE-ASSETS.md)  
-  (Includes: screenshots, textures, logos, documentation, and other non-code files)
+- **Source Code:** [GNU GPL v3](LICENSE.md)
+- **Non-Code Assets:** [CC BY-NC 4.0](LICENSE-ASSETS.md)  
+  (screenshots, textures, logos, docs, and other non-code files)
 
 **CreatureChat™ is a trademark of owlmaddie LLC; use without permission is prohibited.**

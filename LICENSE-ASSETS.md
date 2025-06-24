@@ -10,7 +10,7 @@ This license applies to all **non-source content** in the CreatureChat™ reposi
 
 ---
 
-## License: Creative Commons Attribution-NonCommercial 3.0 (CC BY-NC 3.0)
+## License: Creative Commons Attribution-NonCommercial 4.0 International
 
 You are free to:
 
@@ -41,7 +41,7 @@ To request permission for commercial use or branding-related inquiries, please c
 - licensing@openshot.org
 - licensing@owlmaddie.com
 
-Full license text: <https://creativecommons.org/licenses/by-nc/3.0/>
+Full license text: <https://creativecommons.org/licenses/by-nc/4.0/>
 
 ## Source Code License
 
