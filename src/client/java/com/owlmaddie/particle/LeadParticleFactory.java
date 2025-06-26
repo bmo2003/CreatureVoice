@@ -20,7 +20,7 @@ public class LeadParticleFactory implements ParticleFactory<LeadParticleEffect> 
 
     @Override
     public LeadParticle createParticle(LeadParticleEffect effect, ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
-        double angle = effect.getAngle();
+        double angle = effect.angle();;
         return new LeadParticle(world, x, y, z, 0, 0, 0, this.spriteProvider, angle);
     }
 }

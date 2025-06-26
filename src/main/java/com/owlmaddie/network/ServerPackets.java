@@ -259,9 +259,6 @@ public class ServerPackets {
                 ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
             }
         });
-
-        // Initialize networking after all receivers are registered
-        PacketHelper.initNetworking();
     }
 
     public static void send_whitelist_blacklist(ServerPlayerEntity player) {

@@ -18,6 +18,7 @@ import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -163,6 +164,12 @@ public class EntityChatData {
         return "N/A";
     }
 
+    // Get list of status effects for player (handle different Minecraft versions)
+    private static StatusEffect effectOf(StatusEffectInstance inst) {
+        return (inst.getEffectType() instanceof StatusEffect direct)
+                ? direct : (inst.getEffectType()).value();
+    }
+
     // Generate context object
     public Map<String, String> getPlayerContext(ServerPlayerEntity player, String userLanguage, ConfigurationHandler.Config config) {
         // Add PLAYER context information
@@ -187,15 +194,9 @@ public class EntityChatData {
         contextData.put("player_armor_feet", feetArmor.getItem().toString());
 
         // Get active player effects
-        String effectsString = player.getActiveStatusEffects()   // Map<?, StatusEffectInstance>
-                .values()                                        // Collection<StatusEffectInstance>
-                .stream()
-                .map(inst -> {
-                    StatusEffect effect = inst.getEffectType();  // same in both versions
-                    int amp = inst.getAmplifier() + 1;
-                    return effect.getTranslationKey() + " x" + amp;
-                })
-                .collect(Collectors.joining(", "));
+        String effectsString = player.getActiveStatusEffects().values().stream()
+            .map(inst -> effectOf(inst).getTranslationKey() + " x" + (inst.getAmplifier() + 1))
+            .collect(Collectors.joining(", "));
         contextData.put("player_active_effects", effectsString);
 
         // Add custom story section (if any)
