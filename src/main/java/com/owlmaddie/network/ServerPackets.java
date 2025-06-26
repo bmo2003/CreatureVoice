@@ -219,7 +219,7 @@ public class ServerPackets {
                 int start = i * chunkSize;
                 int end = Math.min(compressedData.length, start + chunkSize);
 
-                PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+                PacketByteBuf buffer = BufferHelper.create();
                 buffer.writeInt(i); // Packet sequence number
                 buffer.writeInt(totalPackets); // Total number of packets
 
@@ -260,11 +260,13 @@ public class ServerPackets {
             }
         });
 
+        // Initialize networking after all receivers are registered
+        PacketHelper.initNetworking();
     }
 
     public static void send_whitelist_blacklist(ServerPlayerEntity player) {
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
-        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buffer = BufferHelper.create();
 
         // Write the whitelist data to the buffer
         List<String> whitelist = config.getWhitelist();
@@ -371,7 +373,7 @@ public class ServerPackets {
 
             // Iterate over all players and send the packet
             for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-                PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+                PacketByteBuf buffer = BufferHelper.create();
                 buffer.writeString(chatData.entityId);
                 buffer.writeString(chatData.currentMessage);
                 buffer.writeInt(chatData.currentLineNumber);
@@ -393,7 +395,7 @@ public class ServerPackets {
                 chatData.currentMessage);
 
         // Create the buffer for the packet
-        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buffer = BufferHelper.create();
 
         // Write the sender's UUID and the chat message to the buffer
         buffer.writeString(sender.getUuidAsString());
@@ -408,7 +410,7 @@ public class ServerPackets {
 
     // Send new message to all connected players
     public static void BroadcastPlayerStatus(PlayerEntity player, boolean isChatOpen) {
-        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buffer = BufferHelper.create();
 
         // Write the entity's chat updated data
         buffer.writeString(player.getUuidAsString());

@@ -145,7 +145,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
             ServerWorld serverWorld = (ServerWorld) this.entity.getWorld();
 
             // Pass the angle using the "speed" argument, with deltaX, deltaY, deltaZ set to 0
-            LeadParticleEffect effect = new LeadParticleEffect(angle);
+            LeadParticleEffect effect = new LeadParticleEffect((float)angle);
             serverWorld.spawnParticles(effect, position.x, position.y + 0.05, position.z, 1, 0, 0, 0, 0);
         }
     }

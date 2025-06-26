@@ -31,4 +31,11 @@ public class PacketHelper {
             handler.accept(server, player, buf);
         });
     }
+
+    /**
+     * Initializes networking by registering the global receiver
+     */
+    public static void initNetworking() {
+
+    }
 }

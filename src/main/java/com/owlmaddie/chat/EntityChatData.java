@@ -187,12 +187,12 @@ public class EntityChatData {
         contextData.put("player_armor_feet", feetArmor.getItem().toString());
 
         // Get active player effects
-        String effectsString = player.getActiveStatusEffects()
-                .entrySet().stream()
-                .map(entry -> {
-                    // entry.getKey() is a RegistryEntry<StatusEffect>
-                    StatusEffect effect = entry.getKey();//.value();
-                    int amp = entry.getValue().getAmplifier() + 1;
+        String effectsString = player.getActiveStatusEffects()   // Map<?, StatusEffectInstance>
+                .values()                                        // Collection<StatusEffectInstance>
+                .stream()
+                .map(inst -> {
+                    StatusEffect effect = inst.getEffectType();  // same in both versions
+                    int amp = inst.getAmplifier() + 1;
                     return effect.getTranslationKey() + " x" + amp;
                 })
                 .collect(Collectors.joining(", "));

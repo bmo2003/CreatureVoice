@@ -1,3 +1,5 @@
+import org.gradle.util.VersionNumber
+
 plugins {
 	id 'fabric-loom' version '1.6.5'
 	id 'maven-publish'
@@ -10,46 +12,87 @@ base {
 	archivesName = project.archives_base_name
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Version‐range overrides: swap in any .java under src/vs/<folder>/java
-import org.gradle.util.VersionNumber
-
-def mcVer = VersionNumber.parse(project.minecraft_version)
-def versionGroups = [
-		'v1_20_0_1_20_3': ['1.20.0','1.20.3'],
-		'v1_20_4'       : ['1.20.4','1.20.4'],
-		'v1_20_5_1_20_6': ['1.20.5','1.20.6'],
-		'v1_21_0_1_21_6': ['1.21.0','1.21.6']
-]
-
+// ─── override logic (replace the old block) ────────────────────────────────
 afterEvaluate {
-	def sel = versionGroups.find { dir, range ->
-		mcVer >= VersionNumber.parse(range[0]) && mcVer <= VersionNumber.parse(range[1])
-	}?.key
-	if (!sel) return
 
-	def vsDir    = file("src/vs/$sel/java")
-	def mainRoot = file("src/main/java")
+	/* ------------------------------------------------------------------ */
+	logger.lifecycle ''
+	logger.lifecycle '======= CreatureChat version–specific sources ======='
 
-	sourceSets.main.java.srcDir vsDir
+	def mcVer  = VersionNumber.parse(project.minecraft_version)
+	def vsRoot = file('src/vs')
+	logger.lifecycle "Minecraft version        : ${project.minecraft_version}"
+	logger.lifecycle "Scanning override root   : ${vsRoot}"
 
-	// for each override file, exclude *only* the matching fallback
-	fileTree(dir: vsDir, includes: ['**/*.java']).each { File overrideFile ->
-		// build the path relative to vsDir, e.g. "com/owlmaddie/message/ExampleVersion.java"
-		def rel = vsDir.toPath()
-				.relativize(overrideFile.toPath())
-				.toString()
-				.replace(File.separator, '/')
+	/** "1_20_5"  → VersionNumber(1.20.5) */
+	def toVer = { raw -> VersionNumber.parse(raw.replace('_', '.')) }
 
-		// now tell Gradle: exclude that path—but only when it comes from src/main/java
-		sourceSets.main.java.exclude { details ->
-			def f = details.file
-			return f.absolutePath.startsWith(mainRoot.absolutePath) &&
-					details.relativePath.pathString == rel
+	/** Parse "v1_20_5_1_20_6" → [dir,min,max] */
+	def parseDir = { File dir ->
+		def m = (dir.name =~ /^v(\d+_\d+_\d+)(?:_(\d+_\d+_\d+))?$/)
+		if (!m) return null
+		def min = toVer(m[0][1])
+		def max = m[0][2] ? toVer(m[0][2]) : min
+		[dir: dir, min: min, max: max]
+	}
+
+	// Collect candidate folders
+	def candidates = vsRoot.listFiles()
+			?.findAll { it.directory }
+			?.collect { parseDir(it) }
+			?.findAll { it != null }
+
+	candidates.each {
+		logger.lifecycle " • found ${it.dir.name} | range ${it.min} – ${it.max}"
+	}
+
+	// Pick the folder whose [min,max] contains mcVer, preferring highest min
+	def chosen = candidates
+			.findAll { mcVer >= it.min && mcVer <= it.max }
+			.max { it.min }
+
+	if (!chosen) {
+		logger.lifecycle "No matching override folder – using base sources."
+		logger.lifecycle '===================================================\n'
+		return
+	}
+
+	logger.lifecycle "Selected folder          : ${chosen.dir.name}"
+	/* ------------------------------------------------------------------ */
+
+	/** helper to wire overrides into one source-set */
+	def applyOverrides = { String setName, File overrideRoot ->
+		if (!overrideRoot.exists()) {
+			logger.lifecycle " • [${setName}] no ${overrideRoot.name} – skipping"
+			return
+		}
+		logger.lifecycle " • [${setName}] adding ${overrideRoot}"
+
+		def baseSrc = file("src/$setName/java")
+		sourceSets[setName].java.srcDir overrideRoot
+
+		// Exclude fallback java files shadowed by overrides
+		fileTree(dir: overrideRoot, include: '**/*.java').each { File o ->
+			def rel = overrideRoot.toPath()
+					.relativize(o.toPath())
+					.toString()
+					.replace(File.separator, '/')
+			sourceSets[setName].java.exclude { d ->
+				d.file.absolutePath.startsWith(baseSrc.absolutePath) &&
+						d.relativePath.pathString == rel
+			}
 		}
 	}
+
+	/* apply to common and (if present) client source-sets -------------- */
+	applyOverrides('main',   file("${chosen.dir}/main/java"))
+	if (sourceSets.findByName('client')) {
+		applyOverrides('client', file("${chosen.dir}/client/java"))
+	}
+
+	logger.lifecycle '===================================================\n'
 }
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
 
 repositories {
 	// Add repositories to retrieve artifacts from in here.
