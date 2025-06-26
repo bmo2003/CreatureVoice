@@ -24,6 +24,7 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -166,8 +167,11 @@ public class EntityChatData {
 
     // Get list of status effects for player (handle different Minecraft versions)
     private static StatusEffect effectOf(StatusEffectInstance inst) {
-        return (inst.getEffectType() instanceof StatusEffect direct)
-                ? direct : (inst.getEffectType()).value();
+        Object raw = inst.getEffectType();        // 1.20.4: StatusEffect
+        if (raw instanceof StatusEffect se) {     // J 17-compatible pattern match
+            return se;
+        }
+        return ((RegistryEntry<StatusEffect>) raw).value();
     }
 
     // Generate context object
