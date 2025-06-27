@@ -4,6 +4,9 @@ set -euo pipefail
 ONLY_VERSION=${ONLY_VERSION:-}
 DRY_RUN=${DRY_RUN:-0}
 
+# Allow “pattern→empty” instead of “pattern→itself”
+shopt -s nullglob
+
 # Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
 VERSIONS=$(cat <<'EOF'
 1.20    1.20+build.1       0.16.14    1.10-SNAPSHOT   0.83.0+1.20
@@ -57,13 +60,20 @@ EOD
   find build/libs -name '*sources*.jar' -delete
   mv build/libs/creaturechat-*.jar .
 
+  # safe Forge packaging for exactly 1.20.1
   if [[ "$mc_version" == "1.20.1" ]]; then
-    jar=creaturechat-*+1.20.1.jar
-    cp "$jar" "${jar%.jar}-forge.jar"
-    touch FORGE
-    zip -r "${jar%.jar}-forge.jar" FORGE
+    forge_jars=(creaturechat-*+1.20.1.jar)
+    if (( ${#forge_jars[@]} )); then
+      jar="${forge_jars[0]}"
+      cp "$jar" "${jar%.jar}-forge.jar"
+      touch FORGE
+      zip -r "${jar%.jar}-forge.jar" FORGE
+    else
+      echo "Warning: no jar matched for Forge packaging (creaturechat-*+1.20.1.jar)" >&2
+    fi
   fi
 
+  # download Fabric API
   api_jar="fabric-api-${fabric_version}.jar"
   url="https://github.com/FabricMC/fabric/releases/download/${fabric_version//+/%2B}/${api_jar}"
   wget -q -O "$api_jar" "$url"
