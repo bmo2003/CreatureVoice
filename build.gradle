@@ -12,12 +12,12 @@ base {
 	archivesName = project.archives_base_name
 }
 
-// ─── override logic (replace the old block) ────────────────────────────────
+// Version-specific source overrides (based on Minecraft versions)
 afterEvaluate {
 
 	/* ------------------------------------------------------------------ */
 	logger.lifecycle ''
-	logger.lifecycle '======= CreatureChat version–specific sources ======='
+	logger.lifecycle '======= CreatureChat version-specific sources ======='
 
 	def mcVer  = VersionNumber.parse(project.minecraft_version)
 	def vsRoot = file('src/vs')
@@ -26,41 +26,37 @@ afterEvaluate {
 
 	/** "1_20_5"  → VersionNumber(1.20.5) */
 	def toVer = { raw -> VersionNumber.parse(raw.replace('_', '.')) }
-
-	/** Parse "v1_20_5_1_20_6" → [dir,min,max] */
-	def parseDir = { File dir ->
-		def m = (dir.name =~ /^v(\d+_\d+_\d+)(?:_(\d+_\d+_\d+))?$/)
+	def parse = { File dir ->
+		def m = (dir.name =~ /^v(\d+_\d+_\d+)$/)  // vX_Y_Z
 		if (!m) return null
-		def min = toVer(m[0][1])
-		def max = m[0][2] ? toVer(m[0][2]) : min
-		[dir: dir, min: min, max: max]
+		[dir: dir, ver: toVer(m[0][1])]
 	}
 
 	// Collect candidate folders
 	def candidates = vsRoot.listFiles()
 			?.findAll { it.directory }
-			?.collect { parseDir(it) }
-			?.findAll { it != null }
+			?.collect  { parse(it) }
+			?.findAll  { it != null }
 
-	candidates.each {
-		logger.lifecycle " • found ${it.dir.name} | range ${it.min} – ${it.max}"
-	}
+	candidates.each { logger.lifecycle " • found ${it.dir.name} | version ${it.ver}" }
 
-	// Pick the folder whose [min,max] contains mcVer, preferring highest min
-	def chosen = candidates
-			.findAll { mcVer >= it.min && mcVer <= it.max }
-			.max { it.min }
+	def applicable = candidates
+			.findAll { mcVer >= it.ver }
+			.sort     { it.ver }        // oldest → newest
 
-	if (!chosen) {
-		logger.lifecycle "No matching override folder – using base sources."
+	if (applicable.empty) {
+		logger.lifecycle "No matching overrides – using base sources."
 		logger.lifecycle '===================================================\n'
 		return
 	}
 
-	logger.lifecycle "Selected folder          : ${chosen.dir.name}"
-	/* ------------------------------------------------------------------ */
+	logger.lifecycle "Folders applied (oldest → newest): " +
+			applicable.collect { it.dir.name }
 
-	/** helper to wire overrides into one source-set */
+	def applied   = [ main: [], client: [] ]
+	def collected = [:].withDefault { [ main: [], client: [] ] }
+
+	/* helper to wire one override root */
 	def applyOverrides = { String setName, File overrideRoot ->
 		if (!overrideRoot.exists()) {
 			logger.lifecycle " • [${setName}] no ${overrideRoot.name} – skipping"
@@ -68,28 +64,52 @@ afterEvaluate {
 		}
 		logger.lifecycle " • [${setName}] adding ${overrideRoot}"
 
-		def baseSrc = file("src/$setName/java")
+		def baseSrc   = file("src/${setName}/java")
+		def prevRoots = applied[setName].toList()   // <- capture earlier roots
 		sourceSets[setName].java.srcDir overrideRoot
 
-		// Exclude fallback java files shadowed by overrides
-		fileTree(dir: overrideRoot, include: '**/*.java').each { File o ->
-			def rel = overrideRoot.toPath()
-					.relativize(o.toPath())
-					.toString()
-					.replace(File.separator, '/')
+		/* exclude duplicates already in base or earlier overrides */
+		fileTree(dir: overrideRoot, include: '**/*.java').each { File f ->
+			def rel = overrideRoot.toPath().relativize(f.toPath())
+					.toString().replace(File.separator, '/')
 			sourceSets[setName].java.exclude { d ->
-				d.file.absolutePath.startsWith(baseSrc.absolutePath) &&
-						d.relativePath.pathString == rel
+				d.relativePath.pathString == rel && (
+						d.file.absolutePath.startsWith(baseSrc.absolutePath) ||
+								prevRoots.any { p -> d.file.absolutePath.startsWith(p.absolutePath) }
+				)
 			}
+		}
+
+		/* remember kept files */
+		fileTree(dir: overrideRoot, include: '**/*.java')
+				.matching { exclude sourceSets[setName].java.excludes }
+				.files.each { File kept ->
+			def rel = overrideRoot.toPath().relativize(kept.toPath())
+					.toString().replace(File.separator, '/')
+			def folder = overrideRoot.parentFile.parentFile.name
+			collected[folder][setName] << rel
+		}
+
+		applied[setName] << overrideRoot        // now mark this as applied
+	}
+
+	applicable.each { verDir ->
+		logger.lifecycle "Applying overrides from ${verDir.dir.name}"
+		applyOverrides('main',   file("${verDir.dir}/main/java"))
+		if (sourceSets.findByName('client')) {
+			applyOverrides('client', file("${verDir.dir}/client/java"))
 		}
 	}
 
-	/* apply to common and (if present) client source-sets -------------- */
-	applyOverrides('main',   file("${chosen.dir}/main/java"))
-	if (sourceSets.findByName('client')) {
-		applyOverrides('client', file("${chosen.dir}/client/java"))
+	collected.each { folder, sets ->
+		logger.lifecycle "Overrides from ${folder}:"
+		['main','client'].each { set ->
+			if (sets[set]) {
+				logger.lifecycle "  (${set})"
+				sets[set].each { path -> logger.lifecycle "    • ${path}" }
+			}
+		}
 	}
-
 	logger.lifecycle '===================================================\n'
 }
 // ───────────────────────────────────────────────────────────────────────────
@@ -123,13 +143,9 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	
-	// Uncomment the following line to enable the deprecated Fabric API modules. 
-	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
-	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
 	// Test module dependencies
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+	testRuntimeOnly    'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 	testImplementation 'org.apache.commons:commons-lang3:3.12.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
 	testImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
