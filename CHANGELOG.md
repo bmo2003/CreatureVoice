@@ -21,6 +21,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Simplified system-chat prompt (less tokens), rounded health & hunger values, and improved variety of examples (less tokens)
 - Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
 - Removed a few variables from the chat context (creative mode, hardcore, difficulty)
+- Replacing isIndirect() usage with a more generic version
+- Replacing teleport() usage with a more generic override (more compatible with later versions of Minecraft)
 - Updated docs & asset licensing to use CC BY-NC 4.0 and added SPDX headers to all source-code files
 - Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
 - Updated [TERMS](TERMS.md) with new section related to AI generated content, and updated eligibility and licenses sections.

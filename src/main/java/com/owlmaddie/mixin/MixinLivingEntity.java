@@ -73,7 +73,7 @@ public class MixinLivingEntity {
                 String weaponName = weapon.isEmpty() ? "with fists" : "with " + weapon.getItem().toString();
 
                 // Determine if the damage was indirect
-                boolean isIndirect = source.isIndirect();
+                boolean isIndirect = attacker != null && attacker != source.getSource();
                 String directness = isIndirect ? "indirectly" : "directly";
 
                 String attackedMessage = "<" + player.getName().getString() + " attacked you " + directness + " with " + weaponName + ">";
