@@ -1,6 +1,6 @@
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  JAVA_HOME: "/home/jonathan/.jdks/openjdk-17"
+  JAVA_HOME: "/home/jonathan/.jdks/openjdk-21"
 
 cache:
   paths:
