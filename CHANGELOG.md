@@ -24,6 +24,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Updated docs & asset licensing to use CC BY-NC 4.0 and added SPDX headers to all source-code files
 - Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
 - Updated [TERMS](TERMS.md) with new section related to AI generated content, and updated eligibility and licenses sections.
+- Updated Gradle to 8.10 (fabric-loom to 1.8.9)
 
 ### Fixed
 - Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)
