@@ -3,7 +3,7 @@
 // Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.mixin;
 
-import com.owlmaddie.utils.ISquidEntity;
+import com.owlmaddie.controls.ISquidEntity;
 import net.minecraft.entity.passive.SquidEntity;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
