@@ -25,6 +25,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Replacing teleport() usage with a more generic override (more compatible with later versions of Minecraft)
 - Refactored render methods (vertex, bufferBuilder, Tessellator, getTexture) into QuadBuffer class (for override ability in later Minecraft versions)
 - Refactored squid swimming (helper method, interface)
+- Refactored damage functions (onDamage, and applying damage) to work with later versions of Minecraft.
 - Updated docs & asset licensing to use CC BY-NC 4.0 and added SPDX headers to all source-code files
 - Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
 - Updated [TERMS](TERMS.md) with new section related to AI generated content, and updated eligibility and licenses sections.
