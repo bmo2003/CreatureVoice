@@ -7,7 +7,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.render.EntityTextureHelper;
 import com.owlmaddie.render.QuadBuffer;
+import com.owlmaddie.render.ShaderHelper;
 import com.owlmaddie.skin.PlayerCustomTexture;
 import com.owlmaddie.utils.*;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
@@ -58,7 +60,7 @@ public class BubbleRenderer {
 
     public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
         // Set shader & texture
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+        ShaderHelper.setTexturedShader();
 
         // Enable depth test and blending
         RenderSystem.enableBlend();
@@ -113,7 +115,7 @@ public class BubbleRenderer {
         Identifier button_texture = textures.GetUI(ui_icon_name);
 
         // Set shader & texture
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+        ShaderHelper.setTexturedShader();
         RenderSystem.setShaderTexture(0, button_texture);
 
         // Enable depth test and blending
@@ -147,7 +149,7 @@ public class BubbleRenderer {
         String ui_icon_name = "friendship" + friendship;
 
         // Set shader
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+        ShaderHelper.setTexturedShader();
 
         // Set texture
         Identifier button_texture = textures.GetUI(ui_icon_name);
@@ -181,19 +183,20 @@ public class BubbleRenderer {
     }
 
     private static void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
-        // Get entity renderer
+        // Get the vanilla skin identifier…
+        @SuppressWarnings("rawtypes")
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
-        String entity_icon_path = renderer.getTexture(entity).getPath();
+        Identifier skinId = EntityTextureHelper.getTexture(renderer, entity);
+        if (skinId == null) return;
 
-        // Draw face icon
-        Identifier entity_id = textures.GetEntity(entity_icon_path);
-        if (entity_id == null) {
-            return;
-        }
+        // Extract its path and map to your icon
+        String skinPath = skinId.getPath();  // e.g. "textures/entity/zombie/zombie.png"
+        Identifier iconId = textures.GetEntity(skinPath);
+        if (iconId == null) return;
 
         // Set shader & texture
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
-        RenderSystem.setShaderTexture(0, entity_id);
+        ShaderHelper.setTexturedShader();
+        RenderSystem.setShaderTexture(0, iconId);
 
         // Enable depth test and blending
         RenderSystem.enableBlend();
@@ -224,14 +227,16 @@ public class BubbleRenderer {
 
     private static void drawPlayerIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
         // Get player skin texture
+        @SuppressWarnings("rawtypes")
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
-        Identifier playerTexture = renderer.getTexture(entity);
+        Identifier playerTexture = EntityTextureHelper.getTexture(renderer, entity);
+        if (playerTexture == null) return;
 
         // Check for black and white pixels (using the Mixin-based check)
         boolean customSkinFound = PlayerCustomTexture.hasCustomIcon(playerTexture);
 
         // Set shader & texture
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+        ShaderHelper.setTexturedShader();
         RenderSystem.setShaderTexture(0, playerTexture);
 
         // Enable depth test and blending
