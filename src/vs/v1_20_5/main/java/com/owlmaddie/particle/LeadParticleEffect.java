@@ -38,10 +38,6 @@ public record LeadParticleEffect(float angle) implements ParticleEffect {
                     type -> PACKET_CODEC
             );
 
-    static {
-        Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "lead"), TYPE);
-    }
-
     public void write(PacketByteBuf buf) {
         buf.writeFloat(angle);
     }
