@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /*
- * This class cancels the rendering of labels above player heads. Minecraft 1.20.5+ override for this mixin */
+ * This class cancels the rendering of labels above player heads. Minecraft 1.20.5+ override for this mixin
  * */
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity> {
