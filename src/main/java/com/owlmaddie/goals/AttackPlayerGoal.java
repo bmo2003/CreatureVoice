@@ -3,6 +3,7 @@
 // Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.goals;
 
+import com.owlmaddie.controls.DamageHelper;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.RangedAttackMob;
 import net.minecraft.entity.mob.Angerable;
@@ -94,7 +95,7 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         }
 
         // For passive entities (or hostile in creative mode), apply minimal damage to simulate a 'leap' / 'melee' attack
-        this.targetEntity.damage(this.attackerEntity.getDamageSources().generic(), 1.0F);
+        DamageHelper.applyLeapDamage(attackerEntity, targetEntity, 1.0F);
 
         // Play damage sound
         this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);

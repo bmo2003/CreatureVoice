@@ -474,7 +474,8 @@ public class EntityChatData {
                                     entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 0.5F, 1.0F);
 
                                     // Check if the game rule for mob loot is enabled
-                                    boolean doMobLoot = entity.getWorld().getGameRules().getBoolean(GameRules.DO_MOB_LOOT);
+                                    ServerWorld serverWorld = (ServerWorld) entity.getWorld();
+                                    boolean doMobLoot = serverWorld.getGameRules().getBoolean(GameRules.DO_MOB_LOOT);
 
                                     // If this is the first time the dragon is 'befriended', adjust the XP
                                     int baseXP = 500;
