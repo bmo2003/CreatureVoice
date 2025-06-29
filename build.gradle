@@ -1,7 +1,7 @@
 import org.gradle.util.VersionNumber
 
 plugins {
-	id 'fabric-loom' version '1.8.9'
+	id 'fabric-loom' version '1.10.1'
 	id 'maven-publish'
 }
 
