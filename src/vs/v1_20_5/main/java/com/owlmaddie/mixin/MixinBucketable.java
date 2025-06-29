@@ -35,7 +35,7 @@ public interface MixinBucketable {
         LOGGER.info("Saving original UUID of bucketed entity: " + originalUUID);
 
         // Use Data Components for NBT data
-        DataComponentType<NbtComponent> type = DataComponentTypes.CUSTOM_DATA;
+        DataComponentType<NbtComponent> type = DataComponentTypes.BUCKET_ENTITY_DATA;
         // Get existing or create a new component with an empty NbtCompound
         NbtComponent component = stack.getOrDefault(type, NbtComponent.of(new NbtCompound()));
         // Copy its internal NBT, modify, then reapply
