@@ -170,6 +170,14 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = 17
 }
 
+tasks.named("jar") {
+	// include every .md file from the project root into the root of the JAR
+	from(rootProject.projectDir) {
+		include "*.md"
+		into ""
+	}
+}
+
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
