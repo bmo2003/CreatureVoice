@@ -15,6 +15,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 - Include all markdown files in JAR (LICENSE.md, LICENSE-ASSETS.md, TERMS.md, and so on)
+- New chat UI background (with image buttons + hover)
 
 ### Changed
 - Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
