@@ -17,10 +17,7 @@ import net.minecraft.util.Identifier;
  * for different versions of Minecraft (as API changes happen). Modified for Minecraft 1.21.2.
  */
 public abstract class ScreenHelper extends Screen {
-    protected static final int BG_WIDTH  = 261;
-    protected static final int BG_HEIGHT =  88;
-
-    protected int bgX, bgY;
+    protected int BG_WIDTH, BG_HEIGHT, bgX, bgY;
     private boolean skipNextBackground = false;
     protected static final TextureLoader textures = new TextureLoader();
 

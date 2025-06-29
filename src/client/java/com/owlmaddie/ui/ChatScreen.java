@@ -18,6 +18,10 @@ import org.lwjgl.glfw.GLFW;
  * and handles keyboard entry events.
  */
 public class ChatScreen extends ScreenHelper {
+    // Chat background size
+    private static final int CHAT_BACKGROUND_WIDTH   = 261;
+    private static final int CHAT_BACKGROUND_HEIGHT   = 88;
+
     // text input margins and size
     private static final int TEXT_INPUT_MARGIN_X   = 21;
     private static final int TEXT_INPUT_MARGIN_TOP = 25;
@@ -46,6 +50,10 @@ public class ChatScreen extends ScreenHelper {
     @Override
     protected void init() {
         super.init();
+
+        // Update the super background size
+        BG_WIDTH = CHAT_BACKGROUND_WIDTH;
+        BG_HEIGHT = CHAT_BACKGROUND_HEIGHT;
 
         // center background horizontally, 1/5 down vertically
         bgX = (this.width  - BG_WIDTH)  / 2;

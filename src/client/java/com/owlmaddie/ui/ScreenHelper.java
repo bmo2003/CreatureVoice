@@ -15,9 +15,7 @@ import net.minecraft.util.Identifier;
  * for different versions of Minecraft (as API changes happen).
  */
 public abstract class ScreenHelper extends Screen {
-    protected static final int BG_WIDTH  = 261;
-    protected static final int BG_HEIGHT =  88;
-    protected int bgX, bgY;  // computed in init() of ChatScreen
+    protected int BG_WIDTH, BG_HEIGHT, bgX, bgY;
     protected static final TextureLoader textures = new TextureLoader();
 
     protected ScreenHelper(Text title) {
