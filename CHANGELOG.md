@@ -7,7 +7,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
-- Compatibility with Minecraft 1.20.5, 1.20.6, 1.21, 1.21.1, 1.21.2, 1.21.3
+- Compatibility with Minecraft 1.20.5, 1.20.6, 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4
 - Wither now drops a Nether Star at max friendship (for pacifists)
 - Added Entity Maturity (baby or adult) into system-chat prompt
 - Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
