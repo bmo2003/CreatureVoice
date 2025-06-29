@@ -42,7 +42,7 @@ public class LeadParticleEffect implements ParticleEffect {
         return LEAD_PARTICLE;
     }
 
-    public double getAngle() {
+    public double angle() {
         return angle;
     }
 

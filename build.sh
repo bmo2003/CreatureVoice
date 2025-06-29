@@ -1,58 +1,85 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-declare -a versions=("1.20" "1.20.1" "1.20.2" "1.20.3" "1.20.4")
-declare -a mappings=("1.20+build.1" "1.20.1+build.10" "1.20.2+build.4" "1.20.3+build.1" "1.20.4+build.3")
-declare -a fabric_versions=("0.83.0+1.20" "0.92.1+1.20.1" "0.91.6+1.20.2" "0.91.1+1.20.3" "0.97.0+1.20.4")
+ONLY_VERSION=${ONLY_VERSION:-}
+DRY_RUN=${DRY_RUN:-0}
 
-for i in "${!versions[@]}"; do
-    minecraft_version="${versions[$i]}"
-    yarn_mappings="${mappings[$i]}"
-    fabric_version="${fabric_versions[$i]}"
+# Allow “pattern→empty” instead of “pattern→itself”
+shopt -s nullglob
 
-    if [[ -n "$ONLY_VERSION" && "$minecraft_version" != "$ONLY_VERSION" ]]; then
-        continue
+# Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
+VERSIONS=$(cat <<'EOF'
+1.20    1.20+build.1       0.16.14    1.10-SNAPSHOT   0.83.0+1.20
+1.20.1  1.20.1+build.10    0.15.11    1.10-SNAPSHOT   0.92.1+1.20.1
+1.20.2  1.20.2+build.4     0.15.11    1.10-SNAPSHOT   0.91.6+1.20.2
+1.20.3  1.20.3+build.1     0.15.11    1.10-SNAPSHOT   0.91.1+1.20.3
+1.20.4  1.20.4+build.3     0.15.11    1.10-SNAPSHOT   0.97.0+1.20.4
+1.20.5  1.20.5+build.1     0.16.14    1.10-SNAPSHOT   0.97.8+1.20.5
+1.20.6  1.20.6+build.3     0.16.14    1.10-SNAPSHOT   0.100.8+1.20.6
+1.21    1.21+build.9       0.16.14    1.10-SNAPSHOT   0.102.0+1.21
+1.21.1  1.21.1+build.3     0.16.14    1.10-SNAPSHOT   0.116.3+1.21.1
+1.21.2  1.21.2+build.1     0.16.14    1.10-SNAPSHOT   0.106.1+1.21.2
+1.21.3  1.21.3+build.2     0.16.14    1.10-SNAPSHOT   0.114.1+1.21.3
+1.21.4  1.21.4+build.8     0.16.14    1.10-SNAPSHOT   0.119.3+1.21.4
+EOF
+)
+
+while read -r mc_version yarn_mapping loader_version loom_version fabric_version; do
+  [[ -z "$mc_version" || "$mc_version" =~ ^# ]] && continue
+  [[ -n "$ONLY_VERSION" && "$ONLY_VERSION" != "$mc_version" ]] && continue
+
+  echo "****"
+  echo "Building for MC $mc_version  Fabric API $fabric_version"
+  echo "****"
+
+  if [[ "$DRY_RUN" == "1" ]]; then
+    cat <<EOD
+[DRY RUN] gradle.properties -> \
+minecraft_version=$mc_version, \
+yarn_mappings=$yarn_mapping, \
+loader_version=$loader_version, \
+loom_version=$loom_version, \
+fabric_version=$fabric_version
+[DRY RUN] fabric.mod.json -> "minecraft": "~$mc_version"
+[DRY RUN] run './gradlew build -x test --build-cache --parallel'
+[DRY RUN] download fabric-api-$fabric_version.jar from FabricMC
+EOD
+    echo
+    continue
+  fi
+
+  sed -i \
+    -e "s/^minecraft_version=.*/minecraft_version=$mc_version/" \
+    -e "s/^yarn_mappings=.*/yarn_mappings=$yarn_mapping/" \
+    -e "s/^loader_version=.*/loader_version=$loader_version/" \
+    -e "s/^loom_version=.*/loom_version=$loom_version/" \
+    -e "s/^fabric_version=.*/fabric_version=$fabric_version/" \
+    gradle.properties
+
+  sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$mc_version\"/" \
+    src/main/resources/fabric.mod.json
+
+  ./gradlew build -x test --build-cache --parallel
+  find build/libs -name '*sources*.jar' -delete
+  mv build/libs/creaturechat-*.jar .
+
+  # safe Forge packaging for exactly 1.20.1
+  if [[ "$mc_version" == "1.20.1" ]]; then
+    forge_jars=(creaturechat-*+1.20.1.jar)
+    if (( ${#forge_jars[@]} )); then
+      jar="${forge_jars[0]}"
+      cp "$jar" "${jar%.jar}-forge.jar"
+      touch FORGE
+      zip -r "${jar%.jar}-forge.jar" FORGE
+    else
+      echo "Warning: no jar matched for Forge packaging (creaturechat-*+1.20.1.jar)" >&2
     fi
+  fi
 
-    echo "****"
-    echo "Preparing build for Minecraft $minecraft_version with Fabric $fabric_version"
-    echo "****"
+  # download Fabric API
+  api_jar="fabric-api-${fabric_version}.jar"
+  url="https://github.com/FabricMC/fabric/releases/download/${fabric_version//+/%2B}/${api_jar}"
+  wget -q -O "$api_jar" "$url"
 
-    if [[ "$DRY_RUN" == "1" ]]; then
-        echo "[DRY RUN] Would update gradle.properties:"
-        echo "  minecraft_version=$minecraft_version"
-        echo "  yarn_mappings=$yarn_mappings"
-        echo "  loader_version=0.15.11"
-        echo "  fabric_version=$fabric_version"
-        echo "[DRY RUN] Would edit fabric.mod.json: \"minecraft\": \"~$minecraft_version\""
-        echo "[DRY RUN] Would run: ./gradlew build -x test"
-        echo "[DRY RUN] Would fetch: https://github.com/FabricMC/fabric/releases/download/${fabric_version//+/%2B}/fabric-api-${fabric_version}.jar"
-        echo ""
-        continue
-    fi
-
-    # Modify configs
-    sed -i "s/^minecraft_version=.*/minecraft_version=$minecraft_version/" gradle.properties
-    sed -i "s/^yarn_mappings=.*/yarn_mappings=$yarn_mappings/" gradle.properties
-    sed -i "s/^loader_version=.*/loader_version=0.15.11/" gradle.properties
-    sed -i "s/^fabric_version=.*/fabric_version=$fabric_version/" gradle.properties
-
-    sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$minecraft_version\"/" src/main/resources/fabric.mod.json
-
-    ./gradlew build -x test
-    find build/libs -type f -name '*sources*.jar' -exec rm {} \;
-    mv build/libs/creaturechat-*.jar .
-
-    if [ "$minecraft_version" == "1.20.1" ]; then
-        jar_name=$(ls creaturechat-*+1.20.1.jar)
-        cp "$jar_name" "${jar_name%.jar}-forge.jar"
-        touch FORGE
-        zip -r "${jar_name%.jar}-forge.jar" FORGE
-    fi
-
-    FABRIC_API_JAR="fabric-api-${fabric_version}.jar"
-    DOWNLOAD_URL="https://github.com/FabricMC/fabric/releases/download/${fabric_version//+/%2B}/${FABRIC_API_JAR}"
-    wget -q -O "${FABRIC_API_JAR}" $DOWNLOAD_URL
-
-    echo ""
-done
+  echo
+done <<< "$VERSIONS"

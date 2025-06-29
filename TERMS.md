@@ -43,11 +43,27 @@ affect the terms under which you have purchased or used the CreatureChat™ API 
 - Gameplay Hours Disclaimer: Estimated gameplay hours are based on average usage during our tests. Actual playtime may vary depending on individual play styles and token usage.
 
 ## 8. Intellectual Property & Licenses
-All rights, title, and interest in CreatureChat™ are owned by owlmaddie LLC or its licensors.
-- **Source code:** Licensed to you under GNU GPL v3 (binary and source).
-- **Non-code assets:** Licensed under CC BY-NC 4.0.  
-These licenses let you download, run, modify, and share the mod as permitted.  
-The CreatureChat™ name and logo remain our trademarks; only fair, nominative reference is allowed.
+All rights, title, and interest in CreatureChat™ and its associated assets belong to owlmaddie LLC or its licensors.
+
+**a. Source code**  
+The mod’s source code and any compiled binaries are licensed under GNU GPL v3. You may download, modify, and 
+redistribute under the terms of GPL v3. A copy of the GPL v3 license text is included in `LICENSE.md`. Any 
+distribution of binaries must be accompanied by the complete corresponding source code or a valid written 
+offer to provide it, as required by GPL v3.
+
+**b. Non-code assets**  
+All documentation (e.g. `README.md`, `INSTALL.md`, `AGENTS.md`), graphics, textures, icons, prompts, and other media in the repository 
+are licensed under Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). You may share and adapt 
+these materials for non-commercial purposes only, provided you:
+- Give appropriate credit and link to the license
+- Indicate if changes were made
+- Include a copy of `LICENSE-ASSETS.md` (the full CC text) with your distribution  
+  Commercial use or any use intended for commercial advantage is prohibited without our prior written permission.
+
+**c. Trademarks**  
+“CreatureChat” and its logos are trademarks of owlmaddie LLC. You may refer to the original project by name for fair, 
+nominative purposes only. Any use of the CreatureChat name or logo in a way that suggests endorsement, sponsorship, or 
+affiliation requires prior written consent.
 
 ## 9. No Warranty
 The CreatureChat™ mod and services are provided "as is" without warranties of any kind, either express or implied. 

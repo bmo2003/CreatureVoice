@@ -12,8 +12,6 @@ import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
-import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
@@ -41,45 +39,45 @@ public class ClientPackets {
         String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
         String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getString();
 
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buf = ClientBufferHelper.create();
         buf.writeString(entity.getUuidAsString());
         buf.writeString(userLanguageName);
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_GREETING, buf);
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_GREETING, buf);
     }
 
     public static void sendUpdateLineNumber(Entity entity, Integer lineNumber) {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buf = ClientBufferHelper.create();
         buf.writeString(entity.getUuidAsString());
         buf.writeInt(lineNumber);
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_READ_NEXT, buf);
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_READ_NEXT, buf);
     }
 
     public static void sendOpenChat(Entity entity) {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buf = ClientBufferHelper.create();
         buf.writeString(entity.getUuidAsString());
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_OPEN_CHAT, buf);
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_OPEN_CHAT, buf);
     }
 
     public static void sendCloseChat() {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buf = ClientBufferHelper.create();
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_CLOSE_CHAT, buf);
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_CLOSE_CHAT, buf);
     }
 
     public static void setChatStatus(Entity entity, ChatDataManager.ChatStatus new_status) {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buf = ClientBufferHelper.create();
         buf.writeString(entity.getUuidAsString());
         buf.writeString(new_status.toString());
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_SET_STATUS, buf);
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_SET_STATUS, buf);
     }
 
     public static void sendChat(Entity entity, String message) {
@@ -87,13 +85,13 @@ public class ClientPackets {
         String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
         String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getString();
 
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buf = ClientBufferHelper.create();
         buf.writeString(entity.getUuidAsString());
         buf.writeString(message);
         buf.writeString(userLanguageName);
 
         // Send C2S packet
-        ClientPlayNetworking.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);
     }
 
     // Reading a Map<String, PlayerData> from the buffer
@@ -111,7 +109,7 @@ public class ClientPackets {
 
     public static void register() {
         // Client-side packet handler, message sync
-        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_ENTITY_MESSAGE, (client, handler, buffer, responseSender) -> {
+        ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_ENTITY_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID entityId = UUID.fromString(buffer.readString());
             String message = buffer.readString(32767);
@@ -152,7 +150,7 @@ public class ClientPackets {
         });
 
         // Client-side packet handler, message sync
-        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_PLAYER_MESSAGE, (client, handler, buffer, responseSender) -> {
+        ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_PLAYER_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID senderPlayerId = UUID.fromString(buffer.readString());
             String senderPlayerName = buffer.readString(32767);
@@ -172,7 +170,7 @@ public class ClientPackets {
         });
 
         // Client-side player login: get all chat data
-        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_LOGIN, (client, handler, buffer, responseSender) -> {
+        ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_LOGIN, (client, handler, buffer, responseSender) -> {
             int sequenceNumber = buffer.readInt(); // Sequence number of the current packet
             int totalPackets = buffer.readInt(); // Total number of packets for this data
             byte[] chunk = buffer.readByteArray(); // Read the byte array chunk from the current packet
@@ -210,7 +208,7 @@ public class ClientPackets {
         });
 
         // Client-side packet handler, receive entire whitelist / blacklist, and update BubbleRenderer
-        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_WHITELIST, (client, handler, buffer, responseSender) -> {
+        ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_WHITELIST, (client, handler, buffer, responseSender) -> {
             // Read the whitelist data from the buffer
             int whitelistSize = buffer.readInt();
             List<String> whitelist = new ArrayList<>(whitelistSize);
@@ -232,7 +230,7 @@ public class ClientPackets {
         });
 
         // Client-side packet handler, player status sync
-        ClientPlayNetworking.registerGlobalReceiver(ServerPackets.PACKET_S2C_PLAYER_STATUS, (client, handler, buffer, responseSender) -> {
+        ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_PLAYER_STATUS, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
             UUID playerId = UUID.fromString(buffer.readString());
             boolean isChatOpen = buffer.readBoolean();
