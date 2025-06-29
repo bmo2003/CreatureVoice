@@ -9,41 +9,191 @@ import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The {@code ChatScreen} class is used to display a chat dialog UI for the player and handle keyboard
- * entry events.
+ * The ChatScreen class displays a chat dialog UI for the player
+ * and handles keyboard entry events.
  */
 public class ChatScreen extends Screen {
+    // background texture size
+    private static final int BG_WIDTH  = 261;
+    private static final int BG_HEIGHT = 88;
+
+    // text input margins and size
+    private static final int TEXT_INPUT_MARGIN_X   = 21;
+    private static final int TEXT_INPUT_MARGIN_TOP = 25;
+    private static final int TEXT_INPUT_HEIGHT     = 20;
+
+    // button dimensions and margins
+    private static final int BUTTON_WIDTH    = 101;
+    private static final int BUTTON_HEIGHT   = 21;
+    private static final int BUTTON_MARGIN_X = 10;
+    private static final int BUTTON_MARGIN_Y = 9;
+
+    // computed positions
+    private int bgX, bgY;
+
     private TextFieldWidget textField;
     private ButtonWidget sendButton;
     private ButtonWidget cancelButton;
     private Entity screenEntity;
     private final Text labelText = Text.literal("Enter your message:");
-    private static final int BG_WIDTH = 261;
-    private static final int BG_HEIGHT = 88;
-    protected static final TextureLoader textures = new TextureLoader();
+    private static final TextureLoader textures = new TextureLoader();
 
-    private int bgX;
-    private int bgY;
+    public ChatScreen(Entity entity, PlayerEntity player) {
+        super(Text.literal("Simple Chat"));
+        this.screenEntity = entity;
+        // tell server that chat opened
+        ClientPackets.sendOpenChat(entity);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+
+        // center background horizontally, 1/5 down vertically
+        bgX = (this.width  - BG_WIDTH)  / 2;
+        bgY = (this.height - BG_HEIGHT) / 5;
+
+        // 1) text input
+        int inputX = bgX + TEXT_INPUT_MARGIN_X;
+        int inputY = bgY + TEXT_INPUT_MARGIN_TOP;
+        int inputW = BG_WIDTH - TEXT_INPUT_MARGIN_X * 2;
+        textField = new MultiLineTextField(
+                textRenderer,
+                inputX, inputY,
+                inputW, TEXT_INPUT_HEIGHT,
+                Text.literal(""), 1
+        );
+        textField.setMaxLength(ChatDataManager.MAX_CHAR_IN_USER_MESSAGE);
+        textField.setChangedListener(this::onTextChanged);
+        setFocused(textField);
+        addDrawableChild(textField);
+
+        // 2) image buttons anchored to bottom corners
+        int btnY = bgY + BG_HEIGHT - BUTTON_HEIGHT - BUTTON_MARGIN_Y;
+
+        cancelButton = new ButtonWidget(
+                bgX + BUTTON_MARGIN_X, btnY,
+                BUTTON_WIDTH, BUTTON_HEIGHT,
+                Text.empty(),
+                widget -> close(),
+                widget -> Text.empty()
+        ) {
+            @Override
+            protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
+                Identifier tex = isHovered()
+                        ? textures.GetUI("chat-button-exit-hover")
+                        : textures.GetUI("chat-button-exit");
+                ctx.drawTexture(tex, getX(), getY(), 0, 0, BUTTON_WIDTH, BUTTON_HEIGHT,
+                        BUTTON_WIDTH, BUTTON_HEIGHT);
+            }
+        };
+        addDrawableChild(cancelButton);
+
+        sendButton = new ButtonWidget(
+                bgX + BG_WIDTH - BUTTON_WIDTH - BUTTON_MARGIN_X, btnY,
+                BUTTON_WIDTH, BUTTON_HEIGHT,
+                Text.empty(),
+                widget -> sendChatMessage(),
+                widget -> Text.empty()
+        ) {
+            @Override
+            protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
+                Identifier tex = isHovered()
+                        ? textures.GetUI("chat-button-done-hover")
+                        : textures.GetUI("chat-button-done");
+                ctx.drawTexture(tex, getX(), getY(), 0, 0, BUTTON_WIDTH, BUTTON_HEIGHT,
+                        BUTTON_WIDTH, BUTTON_HEIGHT);
+            }
+        };
+        sendButton.active = false;
+        addDrawableChild(sendButton);
+    }
+
+    private void sendChatMessage() {
+        // Send message to server
+        String message = textField.getText();
+        ClientPackets.sendChat(screenEntity, message);
+        close();
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
+                && textField.isFocused()
+                && !textField.getText().isEmpty()) {
+            sendChatMessage();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private void onTextChanged(String text) {
+        // Enable the button only if the text field is not empty
+        sendButton.active = !text.isEmpty();
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Let the base class draw its background and children first
+        super.render(context, mouseX, mouseY, delta);
+        // draw label above text field
+        int labelW = textRenderer.getWidth(labelText);
+        int labelX = (this.width - labelW) / 2;
+        int labelY = textField.getY() - 15;
+        context.drawTextWithShadow(textRenderer, labelText, labelX, labelY, 0xFFFFFF);
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Draw default gradient or texture from the base game
+        super.renderBackground(context, mouseX, mouseY, delta);
+
+        // Draw the custom background texture centered on screen
+        Identifier bgTex = textures.GetUI("chat-background");
+        if (bgTex != null) {
+            context.drawTexture(bgTex, bgX, bgY, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
+        } else {
+            context.fillGradient(0, 0, this.width, this.height, 0xA3000000, 0xA3000000);
+        }
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return true;
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        ClientPackets.sendCloseChat();
+    }
 
     /**
-     * Simple multi-line text field that wraps text based on the widget width.
+     * A simple multi-line text field that wraps text to maxLines.
      */
     private static class MultiLineTextField extends TextFieldWidget {
         private final int maxLines;
         private final TextRenderer renderer;
 
-        public MultiLineTextField(TextRenderer renderer, int x, int y, int width, int height, Text text, int maxLines) {
+        public MultiLineTextField(TextRenderer renderer,
+                                  int x, int y, int width, int height,
+                                  Text text, int maxLines) {
             super(renderer, x, y, width, height, text);
             this.renderer = renderer;
             this.maxLines = maxLines;
@@ -57,8 +207,8 @@ public class ChatScreen extends Screen {
         }
 
         @Override
-        public void write(String text) {
-            super.write(text);
+        public void write(String str) {
+            super.write(str);
             wrap();
         }
 
@@ -84,134 +234,5 @@ public class ChatScreen extends Screen {
                 setText(joined);
             }
         }
-    }
-
-    public ChatScreen(Entity entity, PlayerEntity player) {
-        super(Text.literal("Simple Chat"));
-        screenEntity = entity;
-
-        // Notify server that chat screen
-        ClientPackets.sendOpenChat(entity);
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        // Calculate background location for positioning elements
-        bgX = (this.width - BG_WIDTH) / 2;
-        bgY = (this.height - BG_HEIGHT) / 5;
-
-        int margin = 20;
-
-        // Text field placed near the top of the background
-        int textFieldWidth = BG_WIDTH - margin * 2;
-        int textFieldHeight = 20; // allow two lines of text
-        int textFieldX = bgX + margin;
-        int textFieldY = bgY + margin;
-
-        // Initialize the text field
-        textField = new MultiLineTextField(textRenderer, textFieldX, textFieldY, textFieldWidth, textFieldHeight, Text.literal("Chat Input"), 1);
-        textField.setMaxLength(ChatDataManager.MAX_CHAR_IN_USER_MESSAGE);
-        textField.setDrawsBackground(true);
-        textField.setText("");
-        textField.setChangedListener(this::onTextChanged);
-        this.addDrawableChild(textField);
-
-        // Set focus to the text field
-        setFocused(textField);  // Set the text field as the focused element
-        textField.setFocused(true); // Request focus for the text field
-
-        // Button dimensions and positions
-        int buttonWidth = 80;
-        int buttonHeight = 20;
-        int buttonsY = bgY + BG_HEIGHT - buttonHeight - margin;
-
-        // Initialize the cancel button
-        cancelButton = new ButtonWidget.Builder(Text.literal("Cancel"), button -> close())
-                .size(buttonWidth, buttonHeight)
-                .position(bgX + margin, buttonsY)
-                .build();
-        this.addDrawableChild(cancelButton);
-
-        // Initialize the send button
-        sendButton = new ButtonWidget.Builder(Text.literal("Send"), button -> sendChatMessage())
-                .size(buttonWidth, buttonHeight)
-                .position(bgX + BG_WIDTH - buttonWidth - margin, buttonsY)
-                .build();
-        sendButton.active = false;
-        this.addDrawableChild(sendButton);
-    }
-
-    private void sendChatMessage() {
-        // Send message to server
-        String message = textField.getText();
-        ClientPackets.sendChat(screenEntity, message);
-        close();
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            if (textField.isFocused() && !textField.getText().isEmpty()) {
-                // Close window on ENTER key press
-                sendChatMessage();
-                return true;
-            }
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers); // Handle other key presses
-    }
-
-    private void onTextChanged(String text) {
-        // Enable the button only if the text field is not empty
-        sendButton.active = !text.isEmpty();
-    }
-
-    @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Let the base class draw its background and children first
-        super.render(context, mouseX, mouseY, delta);
-
-        // Draw the label text above the text field
-        int labelWidth = textRenderer.getWidth(labelText);
-        int labelX = (this.width - labelWidth) / 2; // Centered X position
-        int labelY = textField.getY() - 15; // Positioned above the text field
-        context.drawTextWithShadow(textRenderer, labelText, labelX, labelY, 0xFFFFFF);
-    }
-
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Draw default gradient or texture from the base game
-        super.renderBackground(context, mouseX, mouseY, delta);
-
-        // Draw the custom background texture centered on screen
-        Identifier texture = textures.GetUI("chat-background");
-        int x = (this.width - BG_WIDTH) / 2;
-        int y = (this.height - BG_HEIGHT) / 5;
-        if (texture != null) {
-            context.drawTexture(texture, x, y, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
-        } else {
-            // Fallback: semi-transparent rectangle if texture missing
-            context.fillGradient(0, 0, this.width, this.height, 0xA3000000, 0xA3000000);
-        }
-    }
-
-    @Override
-    public boolean shouldCloseOnEsc() {
-        // Return true if you want the screen to close when the ESC key is pressed
-        return true;
-    }
-
-    @Override
-    public boolean shouldPause() {
-        // Return false to prevent the game from pausing when the screen is open
-        return false;
-    }
-
-    @Override
-    public void removed() {
-        super.removed();
-
-        // Notify server that chat screen
-        ClientPackets.sendCloseChat();
     }
 }
