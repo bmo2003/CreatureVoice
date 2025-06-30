@@ -22,9 +22,12 @@ public class ChatScreen extends ScreenHelper {
     private static final int CHAT_BACKGROUND_WIDTH   = 261;
     private static final int CHAT_BACKGROUND_HEIGHT   = 88;
 
+    // Chat bubble title (enter your message)
+    private static final int CHAT_TITLE_OFFSET = 13;
+
     // text input margins and size
-    private static final int TEXT_INPUT_MARGIN_X   = 21;
-    private static final int TEXT_INPUT_MARGIN_TOP = 25;
+    private static final int TEXT_INPUT_MARGIN_X   = 22;
+    private static final int TEXT_INPUT_MARGIN_TOP = 30;
     private static final int TEXT_INPUT_HEIGHT     = 20;
 
     // button dimensions and margins
@@ -54,6 +57,7 @@ public class ChatScreen extends ScreenHelper {
         // Update the super background size
         BG_WIDTH = CHAT_BACKGROUND_WIDTH;
         BG_HEIGHT = CHAT_BACKGROUND_HEIGHT;
+        TITLE_OFFSET = CHAT_TITLE_OFFSET;
 
         // center background horizontally, 1/5 down vertically
         bgX = (this.width  - BG_WIDTH)  / 2;

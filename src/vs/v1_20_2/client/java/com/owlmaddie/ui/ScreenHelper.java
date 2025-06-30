@@ -16,7 +16,7 @@ import net.minecraft.util.Identifier;
  * for different versions of Minecraft (as API changes happen).
  */
 public abstract class ScreenHelper extends Screen {
-    protected int BG_WIDTH, BG_HEIGHT, bgX, bgY;
+    protected int BG_WIDTH, BG_HEIGHT, bgX, bgY, TITLE_OFFSET;
     protected static final TextureLoader textures = new TextureLoader();
     private boolean skipNextBackground = false;
 
@@ -58,7 +58,7 @@ public abstract class ScreenHelper extends Screen {
         TextRenderer renderer = this.textRenderer;
         int lw = renderer.getWidth(label);
         int lx = (this.width - lw) / 2;
-        int ly = tf.getY() - 15;
+        int ly = tf.getY() - TITLE_OFFSET;
         context.drawTextWithShadow(renderer, label, lx, ly, 0xFFFFFF);
     }
 
