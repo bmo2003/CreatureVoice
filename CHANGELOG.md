@@ -4,43 +4,46 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.0.0] - 2025-06-30
 
 ### Added
 - Compatibility with Minecraft 1.20.5, 1.20.6, 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4
+- New Chat UI (with image buttons + hover + new positioning)
+- Creaking support for spawn and despawn without loosing chat history
+- Added new entity icons (armadillo, bogged, creaking, breeze, and wolves)
 - Wither now drops a Nether Star at max friendship (for pacifists)
 - Added Entity Maturity (baby or adult) into system-chat prompt
-- Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
 - Added many new speaking styles (minimalist, nerdy, stupid, gen-z, old timer, boomer, etc...)
-- Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
+- Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
+- Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 - Include all markdown files in JAR (LICENSE.md, LICENSE-ASSETS.md, TERMS.md, and so on)
-- New chat UI background (with image buttons + hover)
-
-### Changed
-- Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
-- Improved error handling to prevent broken "..." pending chat status. (HTTP and message processing is more protected)
-- Simplified system-chat prompt (less tokens), rounded health & hunger values, and improved variety of examples (less tokens)
-- Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
-- Removed a few variables from the chat context (creative mode, hardcore, difficulty)
-- Replacing isIndirect() usage with a more generic version
-- Replacing teleport() usage with a more generic override (more compatible with later versions of Minecraft)
-- Refactored render methods (vertex, bufferBuilder, Tessellator, getTexture) into QuadBuffer class (for override ability in later Minecraft versions)
-- Refactored squid swimming (helper method, interface)
-- Refactored damage functions (onDamage, and applying damage) to work with later versions of Minecraft.
-- Refactoring "Use Item" methods to support later versions of Minecraft
-- Updated docs & asset licensing to use CC-BY-NC-SA-4.0 and added SPDX headers to all source-code files
-- Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
-- Updated [TERMS](TERMS.md) with new section related to AI generated content, and updated eligibility and licenses sections.
-- Updated Gradle to 8.10 (fabric-loom to 1.8.9)
 
 ### Fixed
 - Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)
 - Vexes no longer take damage when chat data exists
 - Wandering Trader no longer despawns if it has chat data
-- Removed randomized error messages from chat history (so it doesn't break the chat history when an error is shown)
+- Removed randomized error messages from chat history (so it doesn't break the chat history when errors are shown)
 - Reduced death message output in logs to use DEBUG log level
 - Fixed unit tests for friendship (some were being skipped)
+
+### Changed
+- Updated hundreds of entity chat icons (updating color palette and style, new license for non-code: CC-BY-NC-SA-4.0)
+- Simplified system-chat prompt (less tokens), rounded health & hunger values, and improved variety of examples (less tokens)
+- Improved error handling to prevent broken "..." pending chat status. (HTTP and message processing is more protected)
+- Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
+- Removed a few variables from the chat context (creative mode, hardcore, difficulty)
+- Replacing isIndirect() usage with a more generic version
+- Replacing teleport() usage with a more generic override (more compatible with later versions of Minecraft)
+- Refactored render methods (vertex, bufferBuilder, Tessellator, getTexture) into QuadBuffer class
+- Refactored squid swimming (helper method, interface)
+- Refactored damage functions (onDamage, and applying damage)
+- Refactored "Use Item" methods (show item & use item)
+- Updated docs & asset licensing to use CC-BY-NC-SA-4.0 and added SPDX headers to all source-code files
+- Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
+- Updated [TERMS](TERMS.md) with new section related to AI generated content, and updated eligibility and licenses sections.
+- Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
+- Updated Gradle to 8.12 (fabric-loom to 1.10.1)
 
 ## [1.3.0] - 2025-01-14
 
