@@ -8,6 +8,7 @@
 		"MixinLivingEntity",
 		"MixinBucketable",
 		"MixinEntityChatData",
+		"MixinSquidEntity",
 		"MixinWitherEntity",
 		"MixinVexEntity",
 		"MixinWanderingTrader",

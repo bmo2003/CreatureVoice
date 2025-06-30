@@ -10,7 +10,9 @@ This license applies to all **non-source content** in the CreatureChat™ reposi
 
 ---
 
-## License: [Creative Commons Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/)
+## License for Non-Source Content
+**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International**  
+<https://creativecommons.org/licenses/by-nc-sa/4.0/>
 
 You are free to:
 
@@ -20,10 +22,13 @@ You are free to:
 Under the following terms:
 
 ### Attribution
-You must give appropriate credit, link to this license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests endorsement by the original authors.
+You must give appropriate credit (e.g., *"Based on CreatureChat assets by owlmaddie LLC"*), provide a link to this license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests endorsement by the original authors.
 
 ### NonCommercial
-You may not use the material for **commercial purposes**. This includes paid modpacks, monetized distribution, marketplace listings, corporate-owned or sponsored mods, or any use intended for financial gain.
+You may not use the material for **commercial purposes**. This includes paid modpacks, monetized distribution, marketplace listings, corporate-owned or sponsored mods, or any use intended for financial gain, even indirectly (e.g., using assets in a YouTube video with ads, bundling in paid apps, or gating access via Patreon).
+
+### ShareAlike
+If you remix, transform, or build upon the material, you must distribute your contributions under the **same license** as the original.
 
 ---
 
@@ -41,7 +46,7 @@ To request permission for commercial use or branding-related inquiries, please c
 - licensing@openshot.org
 - licensing@owlmaddie.com
 
-Full license text: <https://creativecommons.org/licenses/by-nc/4.0/>
+Full license text: <https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode>
 
 ## Source Code License
 

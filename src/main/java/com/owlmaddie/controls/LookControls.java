@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.controls;
 
 import net.minecraft.entity.mob.*;
@@ -45,17 +45,17 @@ public class LookControls {
 
     private static void handleSquidLook(SquidEntity squid, Vec3d targetPos) {
         Vec3d toPlayer = calculateNormalizedDirection(squid, targetPos);
-        float initialSwimStrength = 0.15f;
-        squid.setSwimmingVector(
-                (float) toPlayer.x * initialSwimStrength,
-                (float) toPlayer.y * initialSwimStrength,
-                (float) toPlayer.z * initialSwimStrength
-        );
+        Vec3d swimVec  = toPlayer.multiply(0.15f);
 
-        double distanceToPlayer = squid.getPos().distanceTo(targetPos);
-        if (distanceToPlayer < 3.5F) {
-            // Stop motion when close
-            squid.setVelocity(0,0,0);
+        // Force the internal swimVec so tickMovement() picks it up
+        ((ISquidEntity)squid).forceSwimVector(swimVec);
+
+        // Drive motion (so server and client both move)
+        squid.setVelocity(swimVec);
+
+        if (squid.getPos().distanceTo(targetPos) < 3.5) {
+            ((ISquidEntity)squid).forceSwimVector(Vec3d.ZERO);
+            squid.setVelocity(0, 0, 0);
         }
     }
 

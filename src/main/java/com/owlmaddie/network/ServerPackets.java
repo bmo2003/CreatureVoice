@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.network;
 
 import com.owlmaddie.chat.ChatDataManager;
@@ -11,7 +11,7 @@ import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
-import com.owlmaddie.particle.LeadParticleEffect;
+import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
@@ -19,13 +19,10 @@ import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.particle.ParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -65,18 +62,18 @@ public class ServerPackets {
     public static final Identifier PACKET_S2C_LOGIN = new Identifier("creaturechat", "packet_s2c_login");
     public static final Identifier PACKET_S2C_WHITELIST = new Identifier("creaturechat", "packet_s2c_whitelist");
     public static final Identifier PACKET_S2C_PLAYER_STATUS = new Identifier("creaturechat", "packet_s2c_player_status");
-    public static final DefaultParticleType HEART_SMALL_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType HEART_BIG_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType FIRE_SMALL_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType FIRE_BIG_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType ATTACK_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType FLEE_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType FOLLOW_FRIEND_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType FOLLOW_ENEMY_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType PROTECT_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType LEAD_FRIEND_PARTICLE = FabricParticleTypes.simple();
-    public static final DefaultParticleType LEAD_ENEMY_PARTICLE = FabricParticleTypes.simple();
-    public static final ParticleType<LeadParticleEffect> LEAD_PARTICLE = FabricParticleTypes.complex(LeadParticleEffect.DESERIALIZER);
+    public static final ParticleType<?> HEART_SMALL_PARTICLE = Particles.HEART_SMALL_PARTICLE;
+    public static final ParticleType<?> HEART_BIG_PARTICLE = Particles.HEART_BIG_PARTICLE;
+    public static final ParticleType<?> FIRE_SMALL_PARTICLE = Particles.FIRE_SMALL_PARTICLE;
+    public static final ParticleType<?> FIRE_BIG_PARTICLE = Particles.FIRE_BIG_PARTICLE;
+    public static final ParticleType<?> ATTACK_PARTICLE = Particles.ATTACK_PARTICLE;
+    public static final ParticleType<?> FLEE_PARTICLE = Particles.FLEE_PARTICLE;
+    public static final ParticleType<?> FOLLOW_FRIEND_PARTICLE = Particles.FOLLOW_FRIEND_PARTICLE;
+    public static final ParticleType<?> FOLLOW_ENEMY_PARTICLE = Particles.FOLLOW_ENEMY_PARTICLE;
+    public static final ParticleType<?> PROTECT_PARTICLE = Particles.PROTECT_PARTICLE;
+    public static final ParticleType<?> LEAD_FRIEND_PARTICLE = Particles.LEAD_FRIEND_PARTICLE;
+    public static final ParticleType<?> LEAD_ENEMY_PARTICLE = Particles.LEAD_ENEMY_PARTICLE;
+    public static final ParticleType<?> LEAD_PARTICLE = Particles.LEAD_PARTICLE;
 
     public static void register() {
         // Register custom particles
@@ -94,7 +91,7 @@ public class ServerPackets {
         Registry.register(Registries.PARTICLE_TYPE, new Identifier("creaturechat", "lead"), LEAD_PARTICLE);
 
         // Handle packet for Greeting
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_GREETING, (server, player, handler, buf, responseSender) -> {
+        PacketHelper.registerReceiver(PACKET_C2S_GREETING, (server, player, buf) -> {
             UUID entityId = UUID.fromString(buf.readString());
             String userLanguage = buf.readString(32767);
 
@@ -111,7 +108,7 @@ public class ServerPackets {
         });
 
         // Handle packet for reading lines of message
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_READ_NEXT, (server, player, handler, buf, responseSender) -> {
+        PacketHelper.registerReceiver(PACKET_C2S_READ_NEXT, (server, player, buf) -> {
             UUID entityId = UUID.fromString(buf.readString());
             int lineNumber = buf.readInt();
 
@@ -131,7 +128,7 @@ public class ServerPackets {
         });
 
         // Handle packet for setting status of chat bubbles
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_SET_STATUS, (server, player, handler, buf, responseSender) -> {
+        PacketHelper.registerReceiver(PACKET_C2S_SET_STATUS, (server, player, buf) -> {
             UUID entityId = UUID.fromString(buf.readString());
             String status_name = buf.readString(32767);
 
@@ -151,7 +148,7 @@ public class ServerPackets {
         });
 
         // Handle packet for Open Chat
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_OPEN_CHAT, (server, player, handler, buf, responseSender) -> {
+        PacketHelper.registerReceiver(PACKET_C2S_OPEN_CHAT, (server, player, buf) -> {
             UUID entityId = UUID.fromString(buf.readString());
 
             // Ensure that the task is synced with the server thread
@@ -169,7 +166,7 @@ public class ServerPackets {
         });
 
         // Handle packet for Close Chat
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_CLOSE_CHAT, (server, player, handler, buf, responseSender) -> {
+        PacketHelper.registerReceiver(PACKET_C2S_CLOSE_CHAT, (server, player, buf) -> {
 
             server.execute(() -> {
                 // Sync player UI status to all clients
@@ -178,7 +175,7 @@ public class ServerPackets {
         });
 
         // Handle packet for new chat message
-        ServerPlayNetworking.registerGlobalReceiver(PACKET_C2S_SEND_CHAT, (server, player, handler, buf, responseSender) -> {
+        PacketHelper.registerReceiver(PACKET_C2S_SEND_CHAT, (server, player, buf) -> {
             UUID entityId = UUID.fromString(buf.readString());
             String message = buf.readString(32767);
             String userLanguage = buf.readString(32767);
@@ -222,7 +219,7 @@ public class ServerPackets {
                 int start = i * chunkSize;
                 int end = Math.min(compressedData.length, start + chunkSize);
 
-                PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+                PacketByteBuf buffer = BufferHelper.create();
                 buffer.writeInt(i); // Packet sequence number
                 buffer.writeInt(totalPackets); // Total number of packets
 
@@ -230,7 +227,7 @@ public class ServerPackets {
                 byte[] chunk = Arrays.copyOfRange(compressedData, start, end);
                 buffer.writeByteArray(chunk);
 
-                ServerPlayNetworking.send(player, PACKET_S2C_LOGIN, buffer);
+                PacketHelper.send(player, PACKET_S2C_LOGIN, buffer);
             }
         });
 
@@ -262,12 +259,11 @@ public class ServerPackets {
                 ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
             }
         });
-
     }
 
     public static void send_whitelist_blacklist(ServerPlayerEntity player) {
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
-        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buffer = BufferHelper.create();
 
         // Write the whitelist data to the buffer
         List<String> whitelist = config.getWhitelist();
@@ -286,11 +282,11 @@ public class ServerPackets {
         if (player != null) {
             // Send packet to specific player
             LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getName().getString());
-            ServerPlayNetworking.send(player, PACKET_S2C_WHITELIST, buffer);
+            PacketHelper.send(player, PACKET_S2C_WHITELIST, buffer);
         } else {
             // Iterate over all players and send the packet
             for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
-                ServerPlayNetworking.send(serverPlayer, PACKET_S2C_WHITELIST, buffer);
+                PacketHelper.send(serverPlayer, PACKET_S2C_WHITELIST, buffer);
             }
         }
     }
@@ -374,7 +370,7 @@ public class ServerPackets {
 
             // Iterate over all players and send the packet
             for (ServerPlayerEntity player : serverInstance.getPlayerManager().getPlayerList()) {
-                PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+                PacketByteBuf buffer = BufferHelper.create();
                 buffer.writeString(chatData.entityId);
                 buffer.writeString(chatData.currentMessage);
                 buffer.writeInt(chatData.currentLineNumber);
@@ -383,7 +379,7 @@ public class ServerPackets {
                 writePlayerDataMap(buffer, chatData.players);
 
                 // Send message to player
-                ServerPlayNetworking.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
+                PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
             }
             break;
         }
@@ -396,7 +392,7 @@ public class ServerPackets {
                 chatData.currentMessage);
 
         // Create the buffer for the packet
-        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buffer = BufferHelper.create();
 
         // Write the sender's UUID and the chat message to the buffer
         buffer.writeString(sender.getUuidAsString());
@@ -405,13 +401,13 @@ public class ServerPackets {
 
         // Iterate over all connected players and send the packet
         for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
-            ServerPlayNetworking.send(serverPlayer, PACKET_S2C_PLAYER_MESSAGE, buffer);
+            PacketHelper.send(serverPlayer, PACKET_S2C_PLAYER_MESSAGE, buffer);
         }
     }
 
     // Send new message to all connected players
     public static void BroadcastPlayerStatus(PlayerEntity player, boolean isChatOpen) {
-        PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+        PacketByteBuf buffer = BufferHelper.create();
 
         // Write the entity's chat updated data
         buffer.writeString(player.getUuidAsString());
@@ -420,7 +416,7 @@ public class ServerPackets {
         // Iterate over all players and send the packet
         for (ServerPlayerEntity serverPlayer : serverInstance.getPlayerManager().getPlayerList()) {
             LOGGER.debug("Server broadcast " + player.getName().getString() + " player status to client: " + serverPlayer.getName().getString() + " | isChatOpen: " + isChatOpen);
-            ServerPlayNetworking.send(serverPlayer, PACKET_S2C_PLAYER_STATUS, buffer);
+            PacketHelper.send(serverPlayer, PACKET_S2C_PLAYER_STATUS, buffer);
         }
     }
 

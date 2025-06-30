@@ -7,12 +7,15 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- Compatibility with Minecraft 1.20.5, 1.20.6, 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4
 - Wither now drops a Nether Star at max friendship (for pacifists)
 - Added Entity Maturity (baby or adult) into system-chat prompt
 - Added LLM Comparison HTML Output (for human eval of different LLMs with CreatureChat)
 - Added many new speaking styles (minimalist, nerdy, stupid, gen-z, old timer, boomer, etc...)
 - Rate limiter for LLM unit tests (to prevent rate limit issues from certain providers when running all tests)
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
+- Include all markdown files in JAR (LICENSE.md, LICENSE-ASSETS.md, TERMS.md, and so on)
+- New chat UI background (with image buttons + hover)
 
 ### Changed
 - Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
@@ -20,9 +23,16 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Simplified system-chat prompt (less tokens), rounded health & hunger values, and improved variety of examples (less tokens)
 - Improved LLM unit tests to check for both a positive and negative behaviors (i.e. FOLLOW and not LEAD, ATTACK and not FLEE, etc...)
 - Removed a few variables from the chat context (creative mode, hardcore, difficulty)
-- Updated docs & asset licensing to use CC BY-NC 4.0 and added SPDX headers to all source-code files
+- Replacing isIndirect() usage with a more generic version
+- Replacing teleport() usage with a more generic override (more compatible with later versions of Minecraft)
+- Refactored render methods (vertex, bufferBuilder, Tessellator, getTexture) into QuadBuffer class (for override ability in later Minecraft versions)
+- Refactored squid swimming (helper method, interface)
+- Refactored damage functions (onDamage, and applying damage) to work with later versions of Minecraft.
+- Refactoring "Use Item" methods to support later versions of Minecraft
+- Updated docs & asset licensing to use CC-BY-NC-SA-4.0 and added SPDX headers to all source-code files
 - Integrated reuse licensing checking into build pipeline, to ensure 100% coverage of copyright and licensing info
 - Updated [TERMS](TERMS.md) with new section related to AI generated content, and updated eligibility and licenses sections.
+- Updated Gradle to 8.10 (fabric-loom to 1.8.9)
 
 ### Fixed
 - Bees no longer forget their chat data when entering/leaving hives (writeNbt & readNbt modified)

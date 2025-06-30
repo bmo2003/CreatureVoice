@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.particle;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.particle.DefaultParticleType;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -18,31 +18,62 @@ import static com.owlmaddie.network.ServerPackets.*;
  * and triggers sound effects based on particle type and count.
  */
 public class ParticleEmitter {
-    public static void emitCreatureParticle(ServerWorld world, Entity entity, DefaultParticleType particleType, double spawnSize, int count) {
-        // Calculate the offset for the particle to appear above and in front of the entity
+    /**
+     * Spawn a burst of creature-chat particles in front of an entity, and play
+     * matching sounds for certain particle types.
+     *
+     * @param world          the server world to spawn particles in
+     * @param entity         the entity to center the emission on
+     * @param particleEffect the particle effect to spawn (e.g., HEART_SMALL_PARTICLE)
+     * @param spawnSize      the spread radius of the particles
+     * @param count          how many particles to spawn
+     */
+    public static void emitCreatureParticle(ServerWorld world,
+                                            Entity entity,
+                                            ParticleEffect particleEffect,
+                                            double spawnSize,
+                                            int count) {
+        // Calculate the offset so the particles appear above and in front of the entity
         float yaw = entity.getHeadYaw();
-        double offsetX = -MathHelper.sin(yaw * ((float) Math.PI / 180F)) * 0.9;
+        double offsetX = -MathHelper.sin(yaw * (float)(Math.PI / 180.0F)) * 0.9;
         double offsetY = entity.getHeight() + 0.5;
-        double offsetZ = MathHelper.cos(yaw * ((float) Math.PI / 180F)) * 0.9;
+        double offsetZ = MathHelper.cos(yaw * (float)(Math.PI / 180.0F)) * 0.9;
 
-        // Final position
         double x = entity.getX() + offsetX;
         double y = entity.getY() + offsetY;
         double z = entity.getZ() + offsetZ;
 
-        // Emit the custom particle on the server
-        world.spawnParticles(particleType, x, y, z, count, spawnSize, spawnSize, spawnSize, 0.1F);
+        // Emit the particles
+        world.spawnParticles(particleEffect,
+                x, y, z,
+                count,
+                spawnSize, spawnSize, spawnSize,
+                0.1);
 
-        // Play sound when lots of hearts are emitted
-        if (particleType.equals(HEART_BIG_PARTICLE) && count > 1) {
-            world.playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.4F, 1.0F);
-        } else if (particleType.equals(FIRE_BIG_PARTICLE) && count > 1) {
-            world.playSound(entity, entity.getBlockPos(), SoundEvents.ITEM_AXE_STRIP, SoundCategory.PLAYERS, 0.8F, 1.0F);
-        } else if (particleType.equals(FOLLOW_FRIEND_PARTICLE) || particleType.equals(FOLLOW_ENEMY_PARTICLE) ||
-                particleType.equals(LEAD_FRIEND_PARTICLE) || particleType.equals(LEAD_ENEMY_PARTICLE)) {
-            world.playSound(entity, entity.getBlockPos(), SoundEvents.BLOCK_AMETHYST_BLOCK_PLACE, SoundCategory.PLAYERS, 0.8F, 1.0F);
-        } else if (particleType.equals(PROTECT_PARTICLE)) {
-            world.playSound(entity, entity.getBlockPos(), SoundEvents.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 0.8F, 1.0F);
+        // Play a sound effect for certain particle types
+        if (particleEffect.equals(HEART_BIG_PARTICLE) && count > 1) {
+            world.playSound(entity, entity.getBlockPos(),
+                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
+                    SoundCategory.PLAYERS,
+                    0.4F, 1.0F);
+        } else if (particleEffect.equals(FIRE_BIG_PARTICLE) && count > 1) {
+            world.playSound(entity, entity.getBlockPos(),
+                    SoundEvents.ITEM_AXE_STRIP,
+                    SoundCategory.PLAYERS,
+                    0.8F, 1.0F);
+        } else if (particleEffect.equals(FOLLOW_FRIEND_PARTICLE)
+                || particleEffect.equals(FOLLOW_ENEMY_PARTICLE)
+                || particleEffect.equals(LEAD_FRIEND_PARTICLE)
+                || particleEffect.equals(LEAD_ENEMY_PARTICLE)) {
+            world.playSound(entity, entity.getBlockPos(),
+                    SoundEvents.BLOCK_AMETHYST_BLOCK_PLACE,
+                    SoundCategory.PLAYERS,
+                    0.8F, 1.0F);
+        } else if (particleEffect.equals(PROTECT_PARTICLE)) {
+            world.playSound(entity, entity.getBlockPos(),
+                    SoundEvents.BLOCK_BEACON_POWER_SELECT,
+                    SoundCategory.PLAYERS,
+                    0.8F, 1.0F);
         }
     }
 }

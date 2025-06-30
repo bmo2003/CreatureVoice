@@ -1,20 +1,22 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.goals;
 
+import com.owlmaddie.controls.DamageHelper;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.RangedAttackMob;
 import net.minecraft.entity.mob.Angerable;
-import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.GolemEntity;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.EnumSet;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
 
@@ -93,14 +95,14 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         }
 
         // For passive entities (or hostile in creative mode), apply minimal damage to simulate a 'leap' / 'melee' attack
-        this.targetEntity.damage(this.attackerEntity.getDamageSources().generic(), 1.0F);
+        DamageHelper.applyLeapDamage(attackerEntity, targetEntity, 1.0F);
 
         // Play damage sound
         this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
 
         // Spawn red particles to simulate 'injury'
         int numParticles = ThreadLocalRandom.current().nextInt(2, 7);  // Random number between 2 (inclusive) and 7 (exclusive)
-        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles(ATTACK_PARTICLE,
+        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles((ParticleEffect) ATTACK_PARTICLE,
                 this.targetEntity.getX(), this.targetEntity.getBodyY(0.5D), this.targetEntity.getZ(),
                 numParticles, 0.5, 0.5, 0.1, 0.4);
     }

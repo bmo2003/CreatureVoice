@@ -1,5 +1,11 @@
-accessWidener	v1	named
+accessWidener v1 named
 
 # Access slime movement
-accessible    class    net/minecraft/entity/mob/SlimeEntity$SlimeMoveControl
-accessible    method    net/minecraft/entity/mob/SlimeEntity$SlimeMoveControl    look   (FZ)V
+accessible class net/minecraft/entity/mob/SlimeEntity$SlimeMoveControl
+accessible method net/minecraft/entity/mob/SlimeEntity$SlimeMoveControl look (FZ)V
+
+# Identifier constructor
+accessible method net/minecraft/util/Identifier <init> (Ljava/lang/String;Ljava/lang/String;)V
+
+# NativeImage getColor
+accessible method net/minecraft/client/texture/NativeImage getColor (II)I

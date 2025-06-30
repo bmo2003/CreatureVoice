@@ -1,5 +1,7 @@
+import org.gradle.util.VersionNumber
+
 plugins {
-	id 'fabric-loom' version '1.6.5'
+	id 'fabric-loom' version '1.10.1'
 	id 'maven-publish'
 }
 
@@ -9,6 +11,108 @@ group = project.maven_group
 base {
 	archivesName = project.archives_base_name
 }
+
+// Version-specific source overrides (based on Minecraft versions)
+afterEvaluate {
+
+	/* ------------------------------------------------------------------ */
+	logger.lifecycle ''
+	logger.lifecycle '======= CreatureChat version-specific sources ======='
+
+	def mcVer  = VersionNumber.parse(project.minecraft_version)
+	def vsRoot = file('src/vs')
+	logger.lifecycle "Minecraft version        : ${project.minecraft_version}"
+	logger.lifecycle "Scanning override root   : ${vsRoot}"
+
+	/** "1_20_5"  → VersionNumber(1.20.5) */
+	def toVer = { raw -> VersionNumber.parse(raw.replace('_', '.')) }
+	def parse = { File dir ->
+		def m = (dir.name =~ /^v(\d+_\d+_\d+)$/)  // vX_Y_Z
+		if (!m) return null
+		[dir: dir, ver: toVer(m[0][1])]
+	}
+
+	// Collect candidate folders
+	def candidates = vsRoot.listFiles()
+			?.findAll { it.directory }
+			?.collect  { parse(it) }
+			?.findAll  { it != null }
+
+	candidates.each { logger.lifecycle " • found ${it.dir.name} | version ${it.ver}" }
+
+	def applicable = candidates
+			.findAll { mcVer >= it.ver }
+			.sort     { it.ver }        // oldest → newest
+
+	if (applicable.empty) {
+		logger.lifecycle "No matching overrides – using base sources."
+		logger.lifecycle '===================================================\n'
+		return
+	}
+
+	logger.lifecycle "Folders applied (oldest → newest): " +
+			applicable.collect { it.dir.name }
+
+	def applied   = [ main: [], client: [] ]
+	def collected = [:].withDefault { [ main: [], client: [] ] }
+
+	/* helper to wire one override root */
+	def applyOverrides = { String setName, File overrideRoot ->
+		if (!overrideRoot.exists()) {
+			logger.lifecycle " • [${setName}] no ${overrideRoot.name} – skipping"
+			return
+		}
+		logger.lifecycle " • [${setName}] adding ${overrideRoot}"
+
+		def baseSrc   = file("src/${setName}/java")
+		def prevRoots = applied[setName].toList()   // <- capture earlier roots
+		sourceSets[setName].java.srcDir overrideRoot
+
+		/* exclude duplicates already in base or earlier overrides */
+		fileTree(dir: overrideRoot, include: '**/*.java').each { File f ->
+			def rel = overrideRoot.toPath().relativize(f.toPath())
+					.toString().replace(File.separator, '/')
+			sourceSets[setName].java.exclude { d ->
+				d.relativePath.pathString == rel && (
+						d.file.absolutePath.startsWith(baseSrc.absolutePath) ||
+								prevRoots.any { p -> d.file.absolutePath.startsWith(p.absolutePath) }
+				)
+			}
+		}
+
+		/* remember kept files */
+		fileTree(dir: overrideRoot, include: '**/*.java')
+				.matching { exclude sourceSets[setName].java.excludes }
+				.files.each { File kept ->
+			def rel = overrideRoot.toPath().relativize(kept.toPath())
+					.toString().replace(File.separator, '/')
+			def folder = overrideRoot.parentFile.parentFile.name
+			collected[folder][setName] << rel
+		}
+
+		applied[setName] << overrideRoot        // now mark this as applied
+	}
+
+	applicable.each { verDir ->
+		logger.lifecycle "Applying overrides from ${verDir.dir.name}"
+		applyOverrides('main',   file("${verDir.dir}/main/java"))
+		if (sourceSets.findByName('client')) {
+			applyOverrides('client', file("${verDir.dir}/client/java"))
+		}
+	}
+
+	collected.each { folder, sets ->
+		logger.lifecycle "Overrides from ${folder}:"
+		['main','client'].each { set ->
+			if (sets[set]) {
+				logger.lifecycle "  (${set})"
+				sets[set].each { path -> logger.lifecycle "    • ${path}" }
+			}
+		}
+	}
+	logger.lifecycle '===================================================\n'
+}
+// ───────────────────────────────────────────────────────────────────────────
 
 repositories {
 	// Add repositories to retrieve artifacts from in here.
@@ -39,13 +143,9 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	
-	// Uncomment the following line to enable the deprecated Fabric API modules. 
-	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
-	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
 	// Test module dependencies
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+	testRuntimeOnly    'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 	testImplementation 'org.apache.commons:commons-lang3:3.12.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
 	testImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
@@ -68,6 +168,14 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 17
+}
+
+tasks.named("jar") {
+	// include every .md file from the project root into the root of the JAR
+	from(rootProject.projectDir) {
+		include "*.md"
+		into ""
+	}
 }
 
 java {

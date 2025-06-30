@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.utils.ClientEntityFinder;
+import com.owlmaddie.utils.UseItemCallbackHelper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
@@ -14,11 +15,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
@@ -39,7 +36,7 @@ public class ClickHandler {
     private static boolean wasClicked = false;
 
     public static void register() {
-        UseItemCallback.EVENT.register(ClickHandler::handleUseItemAction);
+        UseItemCallback.EVENT.register(UseItemCallbackHelper::handleUseItemAction);
 
         // Handle empty hand right-click
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -55,15 +52,7 @@ public class ClickHandler {
         });
     }
 
-    // Handle use-item right-click (non-empty hand)
-    private static TypedActionResult<ItemStack> handleUseItemAction(PlayerEntity player, World world, Hand hand) {
-        if (shouldCancelAction(world)) {
-            return TypedActionResult.fail(player.getStackInHand(hand));
-        }
-        return TypedActionResult.pass(player.getStackInHand(hand));
-    }
-
-    private static boolean shouldCancelAction(World world) {
+    public static boolean shouldCancelAction(World world) {
         if (world.isClient) {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client != null && client.options.useKey.isPressed()) {

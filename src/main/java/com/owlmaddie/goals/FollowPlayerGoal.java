@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.goals;
 
 import com.owlmaddie.controls.LookControls;
@@ -53,7 +53,7 @@ public class FollowPlayerGoal extends PlayerBaseGoal {
             if (this.entity.squaredDistanceTo(this.targetEntity) > 256) {
                 Vec3d targetPos = findTeleportPosition(12);
                 if (targetPos != null) {
-                    this.entity.teleport(targetPos.x, targetPos.y, targetPos.z);
+                    this.entity.teleport(targetPos.x, targetPos.y, targetPos.z, true);
                 }
             }
         } else {

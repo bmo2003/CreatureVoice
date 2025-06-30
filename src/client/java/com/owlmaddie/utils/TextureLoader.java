@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.utils;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.Resource;
 import net.minecraft.util.Identifier;
@@ -21,20 +22,21 @@ public class TextureLoader {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final Set<String> missingTextures = new HashSet<>();
 
-    public TextureLoader() {
-    }
+    public TextureLoader() {}
 
     public Identifier GetUI(String name) {
         String texturePath = "textures/ui/" + name + ".png";
         Identifier textureId = new Identifier("creaturechat", texturePath);
-        Optional<Resource> resource = MinecraftClient.getInstance().getResourceManager().getResource(textureId);
+        Optional<Resource> resource = MinecraftClient
+                .getInstance()
+                .getResourceManager()
+                .getResource(textureId);
 
         if (resource.isPresent()) {
-            // Bind texture, and return Identity
-            MinecraftClient.getInstance().getTextureManager().bindTexture(textureId);
+            // replace bindTexture(...) with RenderSystem
+            RenderSystem.setShaderTexture(0, textureId);
             return textureId;
         } else {
-            // Resource not found
             logMissingTextureOnce(texturePath);
             return null;
         }
@@ -42,26 +44,25 @@ public class TextureLoader {
 
     public Identifier GetEntity(String texturePath) {
         Identifier textureId = new Identifier("creaturechat", texturePath);
-        Optional<Resource> resource = MinecraftClient.getInstance().getResourceManager().getResource(textureId);
+        Optional<Resource> resource = MinecraftClient
+                .getInstance()
+                .getResourceManager()
+                .getResource(textureId);
 
         if (resource.isPresent()) {
-            // Texture found, bind it and return the Identifier
-            MinecraftClient.getInstance().getTextureManager().bindTexture(textureId);
+            RenderSystem.setShaderTexture(0, textureId);
             return textureId;
         } else {
-            // Texture not found, log a message and return the "not_found" texture Identifier
-            Identifier notFoundTextureId = new Identifier("creaturechat", "textures/entity/not_found.png");
-            MinecraftClient.getInstance().getTextureManager().bindTexture(notFoundTextureId);
+            Identifier notFoundId = new Identifier("creaturechat", "textures/entity/not_found.png");
+            RenderSystem.setShaderTexture(0, notFoundId);
             logMissingTextureOnce(texturePath);
-            return notFoundTextureId;
+            return notFoundId;
         }
     }
 
     private void logMissingTextureOnce(String texturePath) {
-        // Check if the missing texture has already been logged
-        if (!missingTextures.contains(texturePath)) {
-            LOGGER.info(texturePath + " was not found");
-            missingTextures.add(texturePath);
+        if (missingTextures.add(texturePath)) {
+            LOGGER.info("{} was not found", texturePath);
         }
     }
 }

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2025 owlmaddie LLC
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Assets CC BY-NC 4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
+// Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.chat;
 
 import com.google.gson.annotations.Expose;
@@ -13,17 +13,18 @@ import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.particle.ParticleEmitter;
-import com.owlmaddie.utils.Randomizer;
-import com.owlmaddie.utils.ServerEntityFinder;
-import com.owlmaddie.utils.VillagerEntityAccessor;
-import com.owlmaddie.utils.WitherEntityAccessor;
+import com.owlmaddie.utils.*;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -164,6 +165,15 @@ public class EntityChatData {
         return "N/A";
     }
 
+    // Get list of status effects for player (handle different Minecraft versions)
+    private static StatusEffect effectOf(StatusEffectInstance inst) {
+        Object raw = inst.getEffectType();        // 1.20.4: StatusEffect
+        if (raw instanceof StatusEffect se) {     // J 17-compatible pattern match
+            return se;
+        }
+        return ((RegistryEntry<StatusEffect>) raw).value();
+    }
+
     // Generate context object
     public Map<String, String> getPlayerContext(ServerPlayerEntity player, String userLanguage, ConfigurationHandler.Config config) {
         // Add PLAYER context information
@@ -188,9 +198,9 @@ public class EntityChatData {
         contextData.put("player_armor_feet", feetArmor.getItem().toString());
 
         // Get active player effects
-        String effectsString = player.getActiveStatusEffects().entrySet().stream()
-                .map(entry -> entry.getKey().getTranslationKey() + " x" + (entry.getValue().getAmplifier() + 1))
-                .collect(Collectors.joining(", "));
+        String effectsString = player.getActiveStatusEffects().values().stream()
+            .map(inst -> effectOf(inst).getTranslationKey() + " x" + (inst.getAmplifier() + 1))
+            .collect(Collectors.joining(", "));
         contextData.put("player_active_effects", effectsString);
 
         // Add custom story section (if any)
@@ -377,9 +387,9 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                             if (playerData.friendship >= 0) {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FOLLOW_FRIEND_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
                             } else {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FOLLOW_ENEMY_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FOLLOW_ENEMY_PARTICLE, 0.5, 1);
                             }
 
                         } else if (behavior.getName().equals("UNFOLLOW")) {
@@ -394,7 +404,7 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
-                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FLEE_PARTICLE, 0.5, 1);
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FLEE_PARTICLE, 0.5, 1);
 
                         } else if (behavior.getName().equals("UNFLEE")) {
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
@@ -407,7 +417,7 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
-                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FLEE_PARTICLE, 0.5, 1);
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FLEE_PARTICLE, 0.5, 1);
 
                         } else if (behavior.getName().equals("PROTECT")) {
                             if (playerData.friendship <= 0) {
@@ -419,7 +429,7 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
-                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, PROTECT_PARTICLE, 0.5, 1);
+                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) PROTECT_PARTICLE, 0.5, 1);
 
                         } else if (behavior.getName().equals("UNPROTECT")) {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
@@ -431,9 +441,9 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
                             if (playerData.friendship >= 0) {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, LEAD_FRIEND_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) LEAD_FRIEND_PARTICLE, 0.5, 1);
                             } else {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, LEAD_ENEMY_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) LEAD_ENEMY_PARTICLE, 0.5, 1);
                             }
                         } else if (behavior.getName().equals("UNLEAD")) {
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
@@ -459,12 +469,13 @@ public class EntityChatData {
                                     EnderDragonEntity dragon = (EnderDragonEntity) entity;
 
                                     // Emit particles & sound
-                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_BIG_PARTICLE, 3, 200);
+                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) HEART_BIG_PARTICLE, 3, 200);
                                     entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.PLAYERS, 0.3F, 1.0F);
                                     entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 0.5F, 1.0F);
 
                                     // Check if the game rule for mob loot is enabled
-                                    boolean doMobLoot = entity.getWorld().getGameRules().getBoolean(GameRules.DO_MOB_LOOT);
+                                    ServerWorld serverWorld = (ServerWorld) entity.getWorld();
+                                    boolean doMobLoot = serverWorld.getGameRules().getBoolean(GameRules.DO_MOB_LOOT);
 
                                     // If this is the first time the dragon is 'befriended', adjust the XP
                                     int baseXP = 500;
@@ -520,7 +531,7 @@ public class EntityChatData {
                                 if (new_friendship == 3 && !tamableEntity.isTamed()) {
                                     tamableEntity.setOwner(player);
                                 } else if (new_friendship == -3 && tamableEntity.isTamed()) {
-                                    tamableEntity.setTamed(false);
+                                    TameableHelper.setTamed((TameableEntity) entity, false);
                                     tamableEntity.setOwnerUuid(null);
                                 }
                             }
@@ -531,17 +542,17 @@ public class EntityChatData {
                                 if (friendDiff > 0) {
                                     // Heart particles
                                     if (new_friendship == 3) {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_BIG_PARTICLE, 0.5, 10);
+                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) HEART_BIG_PARTICLE, 0.5, 10);
                                     } else {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, HEART_SMALL_PARTICLE, 0.1, 1);
+                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) HEART_SMALL_PARTICLE, 0.1, 1);
                                     }
 
                                 } else if (friendDiff < 0) {
                                     // Fire particles
                                     if (new_friendship == -3) {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FIRE_BIG_PARTICLE, 0.5, 10);
+                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FIRE_BIG_PARTICLE, 0.5, 10);
                                     } else {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FIRE_SMALL_PARTICLE, 0.1, 1);
+                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FIRE_SMALL_PARTICLE, 0.1, 1);
                                     }
                                 }
                             }

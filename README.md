@@ -125,7 +125,7 @@ Supports CreatureChat™ by purchasing tokens from the developers:
 
 - [![REUSE Status](https://img.shields.io/badge/REUSE-compliant-brightgreen)](https://reuse.software)
 - **Source code:** [GNU GPL v3](LICENSE.md)
-- **Non-code assets:** [CC BY-NC 4.0](LICENSE-ASSETS.md)
+- **Non-code assets:** [CC-BY-NC-SA-4.0](LICENSE-ASSETS.md)
 
 ### Legal Notices
 
