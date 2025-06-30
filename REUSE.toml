@@ -27,4 +27,4 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 path = [".gitignore", ".gitlab-ci.yml", "**.md", "src/main/resources/data/creaturechat/prompts/**", "src/main/resources/assets/creaturechat/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 owlmaddie LLC"
-SPDX-License-Identifier = "CC-BY-NC-4.0"
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"

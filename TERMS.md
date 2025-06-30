@@ -46,19 +46,19 @@ affect the terms under which you have purchased or used the CreatureChat™ API 
 All rights, title, and interest in CreatureChat™ and its associated assets belong to owlmaddie LLC or its licensors.
 
 **a. Source code**  
-The mod’s source code and any compiled binaries are licensed under GNU GPL v3. You may download, modify, and 
+The mod’s source code is licensed under GNU GPL v3. You may download, modify, and 
 redistribute under the terms of GPL v3. A copy of the GPL v3 license text is included in `LICENSE.md`. Any 
 distribution of binaries must be accompanied by the complete corresponding source code or a valid written 
 offer to provide it, as required by GPL v3.
 
 **b. Non-code assets**  
 All documentation (e.g. `README.md`, `INSTALL.md`, `AGENTS.md`), graphics, textures, icons, prompts, and other media in the repository 
-are licensed under Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). You may share and adapt 
+are licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC-BY-NC-SA-4.0). You may share and adapt 
 these materials for non-commercial purposes only, provided you:
 - Give appropriate credit and link to the license
 - Indicate if changes were made
-- Include a copy of `LICENSE-ASSETS.md` (the full CC text) with your distribution  
-  Commercial use or any use intended for commercial advantage is prohibited without our prior written permission.
+- Include a copy of `LICENSE-ASSETS.md` (the full CC text) with your distribution 
+- **Commercial use** or any use intended for **commercial advantage** is **prohibited** without our prior written permission.
 
 **c. Trademarks**  
 “CreatureChat” and its logos are trademarks of owlmaddie LLC. You may refer to the original project by name for fair, 
