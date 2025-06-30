@@ -16,6 +16,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Check friendship direction (+ or -) in LLM unit tests (to verify friendship is output correctly)
 - Include all markdown files in JAR (LICENSE.md, LICENSE-ASSETS.md, TERMS.md, and so on)
 - New chat UI background (with image buttons + hover)
+- Added support for Creaking puppet to spawn and despawn without loosing chat history.
 
 ### Changed
 - Broadcasting and receiving chat messages now ignores if the UUID is valid (to keep data synced)
