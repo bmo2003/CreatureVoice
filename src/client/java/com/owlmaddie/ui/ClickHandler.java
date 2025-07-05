@@ -90,10 +90,6 @@ public class ClickHandler {
             // Define a bounding box that accurately represents the text bubble
             Vec3d[] corners = getBillboardCorners(bubbleData.position, camera.getPos(), bubbleData.height, bubbleData.width, bubbleData.yaw, bubbleData.pitch);
 
-            // DEBUG CODE
-            //drawCorners(player.getWorld(), corners);
-            //drawRay(startRay, lookVec, player.getWorld());
-
             // Cast ray and determine intersection with chat bubble
             Optional<Vec3d> hitResult = rayIntersectsPolygon(startRay, lookVec, corners);
             if (hitResult.isPresent()) {
@@ -194,27 +190,6 @@ public class ClickHandler {
                 yawRotated.y * cosPitch - yawRotated.z * sinPitch,
                 yawRotated.y * sinPitch + yawRotated.z * cosPitch
         );
-    }
-
-    public static void drawCorners(World world, Vec3d[] corners) {
-        // Iterate over the corners to place glow particles
-        for (Vec3d corner : corners) {
-            world.addParticle(
-                    ParticleTypes.GLOW,  // Using glow particles
-                    corner.x, corner.y, corner.z,  // Coordinates of the particle
-                    0.0, 0.0, 0.0  // No motion
-            );
-        }
-    }
-
-    public static void drawRay(Vec3d origin, Vec3d direction, World world) {
-        Vec3d point = origin;
-        double step = 0.5;
-        int count = 100;  // Draw the ray for 100 steps
-        for (int i = 0; i < count; i++) {
-            point = point.add(direction.multiply(step));
-            world.addParticle(ParticleTypes.END_ROD, point.x, point.y, point.z, 0, 0, 0);
-        }
     }
 
     public static Optional<Vec3d> rayIntersectsPolygon(Vec3d rayOrigin, Vec3d rayDirection, Vec3d[] vertices) {

@@ -4,6 +4,7 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.utils.NbtCompoundHelper;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Bucketable;
@@ -41,7 +42,7 @@ public interface MixinBucketable {
                 DataComponentTypes.BUCKET_ENTITY_DATA,
                 NbtComponent.of(new NbtCompound()));
         NbtCompound tag = comp.copyNbt();
-        tag.putUuid("CCUUID", oldId);
+        NbtCompoundHelper.putUuid(tag, "CCUUID", oldId);
 
         stack.set(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.of(tag));
 
@@ -57,10 +58,9 @@ public interface MixinBucketable {
     private static void creaturechat$restoreChat(MobEntity entity,
                                                  NbtCompound nbt,
                                                  CallbackInfo ci) {
+        if (!NbtCompoundHelper.containsUuid(nbt, "CCUUID")) return;
 
-        if (!nbt.containsUuid("CCUUID")) return;
-
-        UUID oldId = nbt.getUuid("CCUUID");
+        UUID oldId = NbtCompoundHelper.getUuid(nbt, "CCUUID");
         UUID newId = entity.getUuid();
 
         ChatDataManager.getServerInstance()

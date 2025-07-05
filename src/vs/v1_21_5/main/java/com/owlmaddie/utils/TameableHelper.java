@@ -3,23 +3,25 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.utils;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.TameableEntity;
 
 /**
- * Default helper for calling setTamed on TameableEntity.
- * Modified for Minecraft 1.20.5+ compatibility.
+ * 1.21.5+ override: new TameableEntity API
  */
 public final class TameableHelper {
     private TameableHelper() {}
 
-    /** wrap the two-arg setTamed API, false to match old behavior */
+    /** wrap the new two-arg setTamed(boolean, boolean) */
     public static void setTamed(TameableEntity entity, boolean tamed) {
+        // second arg = sendEvent (or persistent flag)—choose false to match old behavior
         entity.setTamed(tamed, false);
     }
 
-    /** clear both tamed state and owner‐UUID on pre-1.21.5 */
+    /** clear both tamed state and owner reference */
     public static void clearOwner(TameableEntity entity) {
         entity.setTamed(false, false);
-        entity.setOwnerUuid(null);
+        // disambiguate the overload by casting null to LivingEntity
+        entity.setOwner((LivingEntity) null);
     }
 }

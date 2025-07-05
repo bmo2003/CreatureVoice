@@ -14,6 +14,7 @@ import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.*;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
@@ -30,7 +31,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.village.VillageGossipType;
 import net.minecraft.world.GameRules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -188,10 +188,10 @@ public class EntityChatData {
         contextData.put("player_is_on_ground", player.isOnGround() ? "yes" : "no");
         contextData.put("player_language", userLanguage);
 
-        ItemStack feetArmor = player.getInventory().armor.get(0);
-        ItemStack legsArmor = player.getInventory().armor.get(1);
-        ItemStack chestArmor = player.getInventory().armor.get(2);
-        ItemStack headArmor = player.getInventory().armor.get(3);
+        ItemStack headArmor = ArmorHelper.getArmor(player, EquipmentSlot.HEAD);
+        ItemStack chestArmor = ArmorHelper.getArmor(player, EquipmentSlot.CHEST);
+        ItemStack legsArmor = ArmorHelper.getArmor(player, EquipmentSlot.LEGS);
+        ItemStack feetArmor = ArmorHelper.getArmor(player, EquipmentSlot.FEET);
         contextData.put("player_armor_head", headArmor.getItem().toString());
         contextData.put("player_armor_chest", chestArmor.getItem().toString());
         contextData.put("player_armor_legs", legsArmor.getItem().toString());
@@ -503,27 +503,36 @@ public class EntityChatData {
                                 VillagerEntityAccessor villager = (VillagerEntityAccessor) entity;
                                 switch (new_friendship) {
                                     case 3:
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_POSITIVE, 20);
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MAJOR_POSITIVE, 20);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MINOR_POSITIVE, 25);
                                         break;
                                     case 2:
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MINOR_POSITIVE, 25);
                                         break;
                                     case 1:
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_POSITIVE, 10);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MINOR_POSITIVE, 10);
                                         break;
                                     case -1:
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 10);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MINOR_NEGATIVE, 10);
                                         break;
                                     case -2:
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MINOR_NEGATIVE, 25);
                                         break;
                                     case -3:
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MAJOR_NEGATIVE, 20);
-                                        villager.getGossip().startGossip(player.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MAJOR_NEGATIVE, 20);
+                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                                GossipTypeHelper.MINOR_NEGATIVE, 25);
                                         break;
                                 }
                             }
+
 
                             // Tame best friends and un-tame worst enemies
                             if (entity instanceof TameableEntity && playerData.friendship != new_friendship) {
@@ -532,7 +541,7 @@ public class EntityChatData {
                                     tamableEntity.setOwner(player);
                                 } else if (new_friendship == -3 && tamableEntity.isTamed()) {
                                     TameableHelper.setTamed((TameableEntity) entity, false);
-                                    tamableEntity.setOwnerUuid(null);
+                                    TameableHelper.clearOwner(tamableEntity);
                                 }
                             }
 

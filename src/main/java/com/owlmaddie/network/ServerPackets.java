@@ -432,7 +432,7 @@ public class ServerPackets {
         MutableText text = Text.literal(message)
                 .formatted(Formatting.RED)
                 .styled(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+                        .withClickEvent(ClickEventHelper.openUrl(url))
                         .withUnderline(true));
         player.sendMessage(text, false);
     }

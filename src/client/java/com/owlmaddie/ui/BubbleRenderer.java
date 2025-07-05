@@ -3,10 +3,10 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.ui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.render.BlendHelper;
 import com.owlmaddie.render.EntityTextureHelper;
 import com.owlmaddie.render.QuadBuffer;
 import com.owlmaddie.render.ShaderHelper;
@@ -63,10 +63,10 @@ public class BubbleRenderer {
         ShaderHelper.setTexturedShader();
 
         // Enable depth test and blending
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
+        BlendHelper.enableBlend();
+        BlendHelper.defaultBlendFunc();
+        BlendHelper.enableDepthTest();
+        BlendHelper.depthMask(true);
 
         // Get the buffer instance
         QuadBuffer buffer = QuadBuffer.INSTANCE;
@@ -75,25 +75,25 @@ public class BubbleRenderer {
         // Draw UI text background (based on friendship)
         // Draw TOP
         if (friendship == -3 && !base_name.endsWith("-player")) {
-            RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-enemy"));
+            TextureLoader.bind(0, textures.GetUI(base_name + "-enemy"));
         } else if (friendship == 3 && !base_name.endsWith("-player")) {
-            RenderSystem.setShaderTexture(0, textures.GetUI(base_name + "-friend"));
+            TextureLoader.bind(0, textures.GetUI(base_name + "-friend"));
         } else {
-            RenderSystem.setShaderTexture(0, textures.GetUI(base_name));
+            TextureLoader.bind(0, textures.GetUI(base_name));
         }
         drawTexturePart(matrices, buffer, x - 50, y, z, 228, 40);
 
         // Draw MIDDLE
-        RenderSystem.setShaderTexture(0, textures.GetUI("text-middle"));
+        TextureLoader.bind(0, textures.GetUI("text-middle"));
         drawTexturePart(matrices, buffer, x, y + 40, z, width, height);
 
         // Draw BOTTOM
-        RenderSystem.setShaderTexture(0, textures.GetUI("text-bottom"));
+        TextureLoader.bind(0, textures.GetUI("text-bottom"));
         drawTexturePart(matrices, buffer, x, y + 40 + height, z, width, 5);
 
         // Disable blending and depth test
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
+        BlendHelper.disableBlend();
+        BlendHelper.disableDepthTest();
     }
 
     private static void drawTexturePart(MatrixStack matrices, QuadBuffer buffer, float x, float y, float z, float width, float height) {
@@ -101,7 +101,7 @@ public class BubbleRenderer {
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 
         // Begin drawing quads with the correct vertex format
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+        buffer.begin();
 
         buffer.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay);  // bottom left
         buffer.vertex(matrix4f, x + width, y + height, z).color(255, 255, 255, 255).texture(1, 1).light(light).overlay(overlay);   // bottom right
@@ -116,13 +116,13 @@ public class BubbleRenderer {
 
         // Set shader & texture
         ShaderHelper.setTexturedShader();
-        RenderSystem.setShaderTexture(0, button_texture);
+        TextureLoader.bind(0, button_texture);
 
         // Enable depth test and blending
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
+        BlendHelper.enableBlend();
+        BlendHelper.defaultBlendFunc();
+        BlendHelper.enableDepthTest();
+        BlendHelper.depthMask(true);
 
         // Get the buffer instance
         QuadBuffer buffer = QuadBuffer.INSTANCE;
@@ -131,7 +131,7 @@ public class BubbleRenderer {
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 
         // Begin drawing quads with the correct vertex format
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+        buffer.begin();
 
         buffer.vertex(matrix4f, x, y + height, 0.0F).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay); // bottom left
         buffer.vertex(matrix4f, x + width, y + height, 0.0F).color(255, 255, 255, 255).texture(1, 1).light(light).overlay(overlay); // bottom right
@@ -140,8 +140,8 @@ public class BubbleRenderer {
         buffer.draw();
 
         // Disable blending and depth test
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
+        BlendHelper.disableBlend();
+        BlendHelper.disableDepthTest();
     }
 
     private static void drawFriendshipStatus(MatrixStack matrices, float x, float y, float width, float height, int friendship) {
@@ -153,13 +153,13 @@ public class BubbleRenderer {
 
         // Set texture
         Identifier button_texture = textures.GetUI(ui_icon_name);
-        RenderSystem.setShaderTexture(0, button_texture);
+        TextureLoader.bind(0, button_texture);
 
         // Enable depth test and blending
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
+        BlendHelper.enableBlend();
+        BlendHelper.defaultBlendFunc();
+        BlendHelper.enableDepthTest();
+        BlendHelper.depthMask(true);
 
         // Get the buffer instance
         QuadBuffer buffer = QuadBuffer.INSTANCE;
@@ -168,7 +168,7 @@ public class BubbleRenderer {
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 
         // Begin drawing quads with the correct vertex format
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+        buffer.begin();
 
         float z = -0.01F;
         buffer.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay);  // bottom left
@@ -178,8 +178,8 @@ public class BubbleRenderer {
         buffer.draw();
 
         // Disable blending and depth test
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
+        BlendHelper.disableBlend();
+        BlendHelper.disableDepthTest();
     }
 
     private static void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
@@ -196,13 +196,13 @@ public class BubbleRenderer {
 
         // Set shader & texture
         ShaderHelper.setTexturedShader();
-        RenderSystem.setShaderTexture(0, iconId);
+        TextureLoader.bind(0, iconId);
 
         // Enable depth test and blending
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
+        BlendHelper.enableBlend();
+        BlendHelper.defaultBlendFunc();
+        BlendHelper.enableDepthTest();
+        BlendHelper.depthMask(true);
 
         // Get the buffer instance
         QuadBuffer buffer = QuadBuffer.INSTANCE;
@@ -211,7 +211,7 @@ public class BubbleRenderer {
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 
         // Begin drawing quads with the correct vertex format
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+        buffer.begin();
 
         float z = -0.01F;
         buffer.vertex(matrix4f, x, y + height, z).color(255, 255, 255, 255).texture(0, 1).light(light).overlay(overlay);  // bottom left
@@ -221,8 +221,8 @@ public class BubbleRenderer {
         buffer.draw();
 
         // Disable blending and depth test
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
+        BlendHelper.disableBlend();
+        BlendHelper.disableDepthTest();
     }
 
     private static void drawPlayerIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
@@ -237,17 +237,17 @@ public class BubbleRenderer {
 
         // Set shader & texture
         ShaderHelper.setTexturedShader();
-        RenderSystem.setShaderTexture(0, playerTexture);
+        TextureLoader.bind(0, playerTexture);
 
         // Enable depth test and blending
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
+        BlendHelper.enableBlend();
+        BlendHelper.defaultBlendFunc();
+        BlendHelper.enableDepthTest();
+        BlendHelper.depthMask(true);
 
         // Get the buffer instance
         QuadBuffer buffer = QuadBuffer.INSTANCE;
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
+        buffer.begin();
 
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
         float z = -0.01F;
@@ -334,8 +334,8 @@ public class BubbleRenderer {
         buffer.draw();
 
         // Disable blending and depth test
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
+        BlendHelper.disableBlend();
+        BlendHelper.disableDepthTest();
     }
 
     private static void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
@@ -454,11 +454,7 @@ public class BubbleRenderer {
 
             // Interpolate entity position (smooth motion)
             double paddingAboveEntity = 0.4D;
-            Vec3d interpolatedEntityPos = new Vec3d(
-                    MathHelper.lerp(partialTicks, entity.prevX, entity.getPos().x),
-                    MathHelper.lerp(partialTicks, entity.prevY, entity.getPos().y),
-                    MathHelper.lerp(partialTicks, entity.prevZ, entity.getPos().z)
-            );
+            Vec3d interpolatedEntityPos = EntityRenderPosition.getInterpolatedPosition(entity, partialTicks);
 
             // Determine the chat bubble position
             Vec3d bubblePosition;
@@ -468,11 +464,7 @@ public class BubbleRenderer {
                 EnderDragonPart head = dragon.head;
 
                 // Interpolate the head position
-                Vec3d headPos = new Vec3d(
-                        MathHelper.lerp(partialTicks, head.prevX, head.getX()),
-                        MathHelper.lerp(partialTicks, head.prevY, head.getY()),
-                        MathHelper.lerp(partialTicks, head.prevZ, head.getZ())
-                );
+                Vec3d headPos = EntityRenderPosition.getInterpolatedPosition(head, partialTicks);
 
                 // Just use the head's interpolated position directly
                 bubblePosition = headPos.add(0, entityHeight + paddingAboveEntity, 0);

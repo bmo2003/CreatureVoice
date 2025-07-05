@@ -17,6 +17,7 @@ import java.util.Set;
 /**
  * The {@code TextureLoader} class registers and returns texture identifiers for resources
  * contained for this mod. UI and Entity icons. Missing textures are logged once.
+ * Pre-1.21.5: RenderSystem.setShaderTexture(int, Identifier) is used.
  */
 public class TextureLoader {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
@@ -64,5 +65,12 @@ public class TextureLoader {
         if (missingTextures.add(texturePath)) {
             LOGGER.info("{} was not found", texturePath);
         }
+    }
+
+    /**
+     * Binds the given Identifier to the specified texture unit.
+     */
+    public static void bind(int unit, Identifier textureId) {
+        RenderSystem.setShaderTexture(unit, textureId);
     }
 }

@@ -3,7 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.ui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.owlmaddie.render.BlendHelper;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.RenderLayer;
@@ -28,8 +28,8 @@ public class ButtonHelper {
             @Override
             protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
                 // turn on alpha blending
-                RenderSystem.enableBlend();
-                RenderSystem.defaultBlendFunc();
+                BlendHelper.enableBlend();
+                BlendHelper.defaultBlendFunc();
 
                 // choose the correct texture
                 Identifier tex = isHovered() ? hoverTex : normalTex;
@@ -45,7 +45,7 @@ public class ButtonHelper {
                 );
 
                 // restore default blending
-                RenderSystem.disableBlend();
+                BlendHelper.disableBlend();
             }
         };
     }

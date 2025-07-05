@@ -20,19 +20,23 @@ public final class QuadBuffer {
 
     private QuadBuffer() {}
 
-    // Accepts 0‒1 float channels, matches vanilla VertexConsumer.color(float…)
-    public QuadBuffer color(float r, float g, float b, float a) {
-        buf.color(r, g, b, a);
-        return this;
+    // begin
+    public QuadBuffer begin() {
+        return begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
     }
 
-    // begin
     public QuadBuffer begin(VertexFormat.DrawMode mode) {
         return begin(mode, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
     }
 
     public QuadBuffer begin(VertexFormat.DrawMode mode, VertexFormat fmt) {
         buf = Tessellator.getInstance().begin(mode, fmt);
+        return this;
+    }
+
+    // Accepts 0‒1 float channels, matches vanilla VertexConsumer.color(float…)
+    public QuadBuffer color(float r, float g, float b, float a) {
+        buf.color(r, g, b, a);
         return this;
     }
 

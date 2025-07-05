@@ -11,7 +11,14 @@ import net.minecraft.entity.passive.TameableEntity;
 public final class TameableHelper {
     private TameableHelper() {}
 
+    /** wrap the old single-arg setTamed API */
     public static void setTamed(TameableEntity entity, boolean tamed) {
         entity.setTamed(tamed);
+    }
+
+    /** clear tamed state and owner-UUID */
+    public static void clearOwner(TameableEntity entity) {
+        entity.setTamed(false);
+        entity.setOwnerUuid(null);
     }
 }
