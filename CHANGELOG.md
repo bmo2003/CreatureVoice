@@ -8,7 +8,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Changed
 - Large refactor to support Minecraft 1.21.5 (work-in-progress, in game rendering still broken)
-
+- Moving to official mojang mappings, due to missing blaze3d yarn mappings in 1.21.5/1.21.6 (huge refactor)
 
 ## [2.0.0] - 2025-06-30
 
