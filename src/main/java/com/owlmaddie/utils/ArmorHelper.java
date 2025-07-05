@@ -3,15 +3,15 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.utils;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * <1.21.5: pull out the 4-element armor list by index.
  */
 public class ArmorHelper {
-    public static ItemStack getArmor(PlayerEntity player, EquipmentSlot slot) {
+    public static ItemStack getArmor(Player player, EquipmentSlot slot) {
         switch (slot) {
             case HEAD:  return player.getInventory().armor.get(3);
             case CHEST: return player.getInventory().armor.get(2);

@@ -14,24 +14,6 @@ import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.*;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.ExperienceOrbEntity;
-import net.minecraft.entity.boss.WitherEntity;
-import net.minecraft.entity.boss.dragon.EnderDragonEntity;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.GameRules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +21,24 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 
 import static com.owlmaddie.network.ServerPackets.*;
 
@@ -166,26 +166,26 @@ public class EntityChatData {
     }
 
     // Get list of status effects for player (handle different Minecraft versions)
-    private static StatusEffect effectOf(StatusEffectInstance inst) {
-        Object raw = inst.getEffectType();        // 1.20.4: StatusEffect
-        if (raw instanceof StatusEffect se) {     // J 17-compatible pattern match
+    private static MobEffect effectOf(MobEffectInstance inst) {
+        Object raw = inst.getEffect();        // 1.20.4: StatusEffect
+        if (raw instanceof MobEffect se) {     // J 17-compatible pattern match
             return se;
         }
-        return ((RegistryEntry<StatusEffect>) raw).value();
+        return ((Holder<MobEffect>) raw).value();
     }
 
     // Generate context object
-    public Map<String, String> getPlayerContext(ServerPlayerEntity player, String userLanguage, ConfigurationHandler.Config config) {
+    public Map<String, String> getPlayerContext(ServerPlayer player, String userLanguage, ConfigurationHandler.Config config) {
         // Add PLAYER context information
         Map<String, String> contextData = new HashMap<>();
         contextData.put("player_name", player.getDisplayName().getString());
         contextData.put("player_health", Math.round(player.getHealth()) + "/" + Math.round(player.getMaxHealth()));
-        contextData.put("player_hunger", String.valueOf(player.getHungerManager().getFoodLevel()));
-        contextData.put("player_held_item", String.valueOf(player.getMainHandStack().getItem().toString()));
-        contextData.put("player_biome", player.getWorld().getBiome(player.getBlockPos()).getKey().get().getValue().getPath());
+        contextData.put("player_hunger", String.valueOf(player.getFoodData().getFoodLevel()));
+        contextData.put("player_held_item", String.valueOf(player.getMainHandItem().getItem().toString()));
+        contextData.put("player_biome", player.level().getBiome(player.blockPosition()).unwrapKey().get().location().getPath());
         contextData.put("player_is_creative", player.isCreative() ? "yes" : "no");
         contextData.put("player_is_swimming", player.isSwimming() ? "yes" : "no");
-        contextData.put("player_is_on_ground", player.isOnGround() ? "yes" : "no");
+        contextData.put("player_is_on_ground", player.onGround() ? "yes" : "no");
         contextData.put("player_language", userLanguage);
 
         ItemStack headArmor = ArmorHelper.getArmor(player, EquipmentSlot.HEAD);
@@ -198,8 +198,8 @@ public class EntityChatData {
         contextData.put("player_armor_feet", feetArmor.getItem().toString());
 
         // Get active player effects
-        String effectsString = player.getActiveStatusEffects().values().stream()
-            .map(inst -> effectOf(inst).getTranslationKey() + " x" + (inst.getAmplifier() + 1))
+        String effectsString = player.getActiveEffectsMap().values().stream()
+            .map(inst -> effectOf(inst).getDescriptionId() + " x" + (inst.getAmplifier() + 1))
             .collect(Collectors.joining(", "));
         contextData.put("player_active_effects", effectsString);
 
@@ -212,16 +212,16 @@ public class EntityChatData {
 
 
         // Get World time (as 24 hour value)
-        int hours = (int) ((player.getWorld().getTimeOfDay() / 1000 + 6) % 24); // Minecraft day starts at 6 AM
-        int minutes = (int) (((player.getWorld().getTimeOfDay() % 1000) / 1000.0) * 60);
+        int hours = (int) ((player.level().getDayTime() / 1000 + 6) % 24); // Minecraft day starts at 6 AM
+        int minutes = (int) (((player.level().getDayTime() % 1000) / 1000.0) * 60);
         contextData.put("world_time", String.format("%02d:%02d", hours, minutes));
-        contextData.put("world_is_raining", player.getWorld().isRaining() ? "yes" : "no");
-        contextData.put("world_is_thundering", player.getWorld().isThundering() ? "yes" : "no");
-        contextData.put("world_difficulty", player.getWorld().getDifficulty().getName());
-        contextData.put("world_is_hardcore", player.getWorld().getLevelProperties().isHardcore() ? "yes" : "no");
+        contextData.put("world_is_raining", player.level().isRaining() ? "yes" : "no");
+        contextData.put("world_is_thundering", player.level().isThundering() ? "yes" : "no");
+        contextData.put("world_difficulty", player.level().getDifficulty().getKey());
+        contextData.put("world_is_hardcore", player.level().getLevelData().isHardcore() ? "yes" : "no");
 
         // Get moon phase
-        String moonPhaseDescription = switch (player.getWorld().getMoonPhase()) {
+        String moonPhaseDescription = switch (player.level().getMoonPhase()) {
             case 0 -> "Full Moon";
             case 1 -> "Waning Gibbous";
             case 2 -> "Last Quarter";
@@ -235,13 +235,13 @@ public class EntityChatData {
         contextData.put("world_moon_phase", moonPhaseDescription);
 
         // Get Entity details
-        MobEntity entity = (MobEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+        Mob entity = (Mob) ServerEntityFinder.getEntityByUUID(player.serverLevel(), UUID.fromString(entityId));
         if (entity.getCustomName() == null) {
             contextData.put("entity_name", "");
         } else {
             contextData.put("entity_name", entity.getCustomName().getString());
         }
-        contextData.put("entity_type", entity.getType().getName().getString());
+        contextData.put("entity_type", entity.getType().getDescription().getString());
         contextData.put("entity_health", Math.round(entity.getHealth()) + "/" + Math.round(entity.getMaxHealth()));
         contextData.put("entity_personality", getCharacterProp("Personality"));
         contextData.put("entity_speaking_style", getCharacterProp("Speaking Style / Tone"));
@@ -252,7 +252,7 @@ public class EntityChatData {
         contextData.put("entity_class", getCharacterProp("Class"));
         contextData.put("entity_skills", getCharacterProp("Skills"));
         contextData.put("entity_background", getCharacterProp("Background"));
-        if (entity.age < 0) {
+        if (entity.tickCount < 0) {
             contextData.put("entity_maturity", "Baby");
         } else {
             contextData.put("entity_maturity", "Adult");
@@ -269,7 +269,7 @@ public class EntityChatData {
     }
 
     // Generate a new character
-    public void generateCharacter(String userLanguage, ServerPlayerEntity player, String userMessage, boolean is_auto_message) {
+    public void generateCharacter(String userLanguage, ServerPlayer player, String userMessage, boolean is_auto_message) {
         String systemPrompt = "system-character";
         if (is_auto_message) {
             // Increment an auto-generated message
@@ -331,7 +331,7 @@ public class EntityChatData {
     }
 
     // Generate greeting
-    public void generateMessage(String userLanguage, ServerPlayerEntity player, String userMessage, boolean is_auto_message) {
+    public void generateMessage(String userLanguage, ServerPlayer player, String userMessage, boolean is_auto_message) {
         String systemPrompt = "system-chat";
         if (is_auto_message) {
             // Increment an auto-generated message
@@ -365,13 +365,13 @@ public class EntityChatData {
                 if (output_message != null) {
                     // Chat Message: Parse message for behaviors
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
-                    MobEntity entity = (MobEntity) ServerEntityFinder.getEntityByUUID(player.getServerWorld(), UUID.fromString(entityId));
+                    Mob entity = (Mob) ServerEntityFinder.getEntityByUUID(player.serverLevel(), UUID.fromString(entityId));
 
                     // Determine entity's default speed
                     // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class
                     float entitySpeed = SpeedControls.getMaxSpeed(entity);
-                    float entitySpeedMedium = MathHelper.clamp(entitySpeed * 1.15F, 0.5f, 1.15f);
-                    float entitySpeedFast = MathHelper.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
+                    float entitySpeedMedium = Mth.clamp(entitySpeed * 1.15F, 0.5f, 1.15f);
+                    float entitySpeedFast = Mth.clamp(entitySpeed * 1.3F, 0.5f, 1.3f);
 
                     // Apply behaviors (if any)
                     for (Behavior behavior : result.getBehaviors()) {
@@ -387,9 +387,9 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                             if (playerData.friendship >= 0) {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
                             } else {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FOLLOW_ENEMY_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_ENEMY_PARTICLE, 0.5, 1);
                             }
 
                         } else if (behavior.getName().equals("UNFOLLOW")) {
@@ -404,7 +404,7 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
-                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FLEE_PARTICLE, 0.5, 1);
+                            ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
 
                         } else if (behavior.getName().equals("UNFLEE")) {
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
@@ -417,7 +417,7 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
-                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FLEE_PARTICLE, 0.5, 1);
+                            ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
 
                         } else if (behavior.getName().equals("PROTECT")) {
                             if (playerData.friendship <= 0) {
@@ -429,7 +429,7 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
-                            ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) PROTECT_PARTICLE, 0.5, 1);
+                            ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) PROTECT_PARTICLE, 0.5, 1);
 
                         } else if (behavior.getName().equals("UNPROTECT")) {
                             EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
@@ -441,9 +441,9 @@ public class EntityChatData {
                             EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                             EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
                             if (playerData.friendship >= 0) {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) LEAD_FRIEND_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) LEAD_FRIEND_PARTICLE, 0.5, 1);
                             } else {
-                                ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) LEAD_ENEMY_PARTICLE, 0.5, 1);
+                                ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) LEAD_ENEMY_PARTICLE, 0.5, 1);
                             }
                         } else if (behavior.getName().equals("UNLEAD")) {
                             EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
@@ -457,77 +457,77 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
 
-                                if (entity instanceof WitherEntity && new_friendship == 3) {
+                                if (entity instanceof WitherBoss && new_friendship == 3) {
                                     // Best friend a Nether and get a NETHER_STAR
-                                    WitherEntity wither = (WitherEntity) entity;
-                                    ((WitherEntityAccessor) wither).callDropEquipment(entity.getWorld().getDamageSources().generic(), 1, true);
-                                    entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_WITHER_DEATH, SoundCategory.PLAYERS, 0.3F, 1.0F);
+                                    WitherBoss wither = (WitherBoss) entity;
+                                    ((WitherEntityAccessor) wither).callDropEquipment(entity.level().damageSources().generic(), 1, true);
+                                    entity.level().playSound(entity, entity.blockPosition(), SoundEvents.WITHER_DEATH, SoundSource.PLAYERS, 0.3F, 1.0F);
                                 }
 
-                                if (entity instanceof EnderDragonEntity && new_friendship == 3) {
+                                if (entity instanceof EnderDragon && new_friendship == 3) {
                                     // Trigger end of game (friendship always wins!)
-                                    EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                                    EnderDragon dragon = (EnderDragon) entity;
 
                                     // Emit particles & sound
-                                    ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) HEART_BIG_PARTICLE, 3, 200);
-                                    entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.PLAYERS, 0.3F, 1.0F);
-                                    entity.getWorld().playSound(entity, entity.getBlockPos(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 0.5F, 1.0F);
+                                    ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) HEART_BIG_PARTICLE, 3, 200);
+                                    entity.level().playSound(entity, entity.blockPosition(), SoundEvents.ENDER_DRAGON_DEATH, SoundSource.PLAYERS, 0.3F, 1.0F);
+                                    entity.level().playSound(entity, entity.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 0.5F, 1.0F);
 
                                     // Check if the game rule for mob loot is enabled
-                                    ServerWorld serverWorld = (ServerWorld) entity.getWorld();
-                                    boolean doMobLoot = serverWorld.getGameRules().getBoolean(GameRules.DO_MOB_LOOT);
+                                    ServerLevel serverWorld = (ServerLevel) entity.level();
+                                    boolean doMobLoot = serverWorld.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT);
 
                                     // If this is the first time the dragon is 'befriended', adjust the XP
                                     int baseXP = 500;
-                                    if (dragon.getFight() != null && !dragon.getFight().hasPreviouslyKilled()) {
+                                    if (dragon.getDragonFight() != null && !dragon.getDragonFight().hasPreviouslyKilledDragon()) {
                                         baseXP = 12000;
                                     }
 
                                     // If the world is a server world and mob loot is enabled, spawn XP orbs
-                                    if (entity.getWorld() instanceof ServerWorld && doMobLoot) {
+                                    if (entity.level() instanceof ServerLevel && doMobLoot) {
                                         // Loop to spawn XP orbs
                                         for (int j = 1; j <= 11; j++) {
                                             float xpFraction = (j == 11) ? 0.2F : 0.08F;
-                                            int xpAmount = MathHelper.floor((float) baseXP * xpFraction);
-                                            ExperienceOrbEntity.spawn((ServerWorld) entity.getWorld(), entity.getPos(), xpAmount);
+                                            int xpAmount = Mth.floor((float) baseXP * xpFraction);
+                                            ExperienceOrb.award((ServerLevel) entity.level(), entity.position(), xpAmount);
                                         }
                                     }
 
                                     // Mark fight as over
-                                    dragon.getFight().dragonKilled(dragon);
+                                    dragon.getDragonFight().setDragonKilled(dragon);
                                 }
                             }
 
                             // Merchant deals (if friendship changes with a Villager
-                            if (entity instanceof VillagerEntity && playerData.friendship != new_friendship) {
+                            if (entity instanceof Villager && playerData.friendship != new_friendship) {
                                 VillagerEntityAccessor villager = (VillagerEntityAccessor) entity;
                                 switch (new_friendship) {
                                     case 3:
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MAJOR_POSITIVE, 20);
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MINOR_POSITIVE, 25);
                                         break;
                                     case 2:
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MINOR_POSITIVE, 25);
                                         break;
                                     case 1:
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MINOR_POSITIVE, 10);
                                         break;
                                     case -1:
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MINOR_NEGATIVE, 10);
                                         break;
                                     case -2:
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MINOR_NEGATIVE, 25);
                                         break;
                                     case -3:
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MAJOR_NEGATIVE, 20);
-                                        GossipTypeHelper.startGossip(villager, player.getUuid(),
+                                        GossipTypeHelper.startGossip(villager, player.getUUID(),
                                                 GossipTypeHelper.MINOR_NEGATIVE, 25);
                                         break;
                                 }
@@ -535,12 +535,12 @@ public class EntityChatData {
 
 
                             // Tame best friends and un-tame worst enemies
-                            if (entity instanceof TameableEntity && playerData.friendship != new_friendship) {
-                                TameableEntity tamableEntity = (TameableEntity) entity;
-                                if (new_friendship == 3 && !tamableEntity.isTamed()) {
-                                    tamableEntity.setOwner(player);
-                                } else if (new_friendship == -3 && tamableEntity.isTamed()) {
-                                    TameableHelper.setTamed((TameableEntity) entity, false);
+                            if (entity instanceof TamableAnimal && playerData.friendship != new_friendship) {
+                                TamableAnimal tamableEntity = (TamableAnimal) entity;
+                                if (new_friendship == 3 && !tamableEntity.isTame()) {
+                                    tamableEntity.tame(player);
+                                } else if (new_friendship == -3 && tamableEntity.isTame()) {
+                                    TameableHelper.setTamed((TamableAnimal) entity, false);
                                     TameableHelper.clearOwner(tamableEntity);
                                 }
                             }
@@ -551,17 +551,17 @@ public class EntityChatData {
                                 if (friendDiff > 0) {
                                     // Heart particles
                                     if (new_friendship == 3) {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) HEART_BIG_PARTICLE, 0.5, 10);
+                                        ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) HEART_BIG_PARTICLE, 0.5, 10);
                                     } else {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) HEART_SMALL_PARTICLE, 0.1, 1);
+                                        ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) HEART_SMALL_PARTICLE, 0.1, 1);
                                     }
 
                                 } else if (friendDiff < 0) {
                                     // Fire particles
                                     if (new_friendship == -3) {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FIRE_BIG_PARTICLE, 0.5, 10);
+                                        ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FIRE_BIG_PARTICLE, 0.5, 10);
                                     } else {
-                                        ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, (ParticleEffect) FIRE_SMALL_PARTICLE, 0.1, 1);
+                                        ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FIRE_SMALL_PARTICLE, 0.1, 1);
                                     }
                                 }
                             }
@@ -616,7 +616,7 @@ public class EntityChatData {
     }
 
     // Add a message to the history and update the current message
-    public void addMessage(String message, ChatDataManager.ChatSender sender, ServerPlayerEntity player, String systemPrompt) {
+    public void addMessage(String message, ChatDataManager.ChatSender sender, ServerPlayer player, String systemPrompt) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 

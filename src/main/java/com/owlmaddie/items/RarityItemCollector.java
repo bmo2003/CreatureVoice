@@ -3,13 +3,12 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.items;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Rarity;
-
 import java.util.*;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
 
 /**
  * The {@code RarityItemCollector} class is used to find items & entities by rarity
@@ -19,13 +18,13 @@ public class RarityItemCollector {
     public static List<String> getItemsByRarity(Rarity rarity, int quantity) {
         List<String> itemsOfSpecificRarity = new ArrayList<>();
 
-        for (Item item : Registries.ITEM) {
+        for (Item item : BuiltInRegistries.ITEM) {
             ItemStack stack = new ItemStack(item);
             if (stack.getRarity().equals(rarity) &&
-                    !item.getName().toString().contains("spawn_egg") &&
-                    !item.getName().toString().contains("jukebox") &&
-                    !item.getName().toString().contains("slab")) {
-                itemsOfSpecificRarity.add(item.getTranslationKey());
+                    !item.getDescription().toString().contains("spawn_egg") &&
+                    !item.getDescription().toString().contains("jukebox") &&
+                    !item.getDescription().toString().contains("slab")) {
+                itemsOfSpecificRarity.add(item.getDescriptionId());
             }
         }
 
@@ -62,9 +61,9 @@ public class RarityItemCollector {
         Set<String> excludedMonsters = new HashSet<>(Arrays.asList("ender_dragon", "phantom", "bat"));
 
         // Iterate through entities
-        for (EntityType entityType : Registries.ENTITY_TYPE) {
-            String entityName = entityType.getUntranslatedName();
-            String spawnGroup = entityType.getSpawnGroup().asString();
+        for (EntityType entityType : BuiltInRegistries.ENTITY_TYPE) {
+            String entityName = entityType.toShortString();
+            String spawnGroup = entityType.getCategory().getSerializedName();
 
             if (!excludedMonsters.contains(entityName)) {
                 if (commonEntities.contains(spawnGroup) || commonEntities.contains(entityName)) {

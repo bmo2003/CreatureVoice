@@ -7,7 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,7 @@ public class ConfigurationHandler {
     private final Path defaultConfigPath;
 
     public ConfigurationHandler(MinecraftServer server) {
-        this.serverConfigPath = server.getSavePath(WorldSavePath.ROOT).resolve("creaturechat.json");
+        this.serverConfigPath = server.getWorldPath(LevelResource.ROOT).resolve("creaturechat.json");
         this.defaultConfigPath = Paths.get(".", "creaturechat.json"); // Assumes the default location is the server root or a similar logical default
     }
 

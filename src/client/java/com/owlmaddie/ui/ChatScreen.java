@@ -6,11 +6,11 @@ package com.owlmaddie.ui;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.utils.TextureLoader;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -36,15 +36,15 @@ public class ChatScreen extends ScreenHelper {
     private static final int BUTTON_MARGIN_X = 10;
     private static final int BUTTON_MARGIN_Y = 9;
 
-    private TextFieldWidget textField;
-    private ButtonWidget sendButton;
-    private ButtonWidget cancelButton;
+    private EditBox textField;
+    private Button sendButton;
+    private Button cancelButton;
     private Entity screenEntity;
-    private final Text labelText = Text.literal("Enter your message:");
+    private final Component labelText = Component.literal("Enter your message:");
     private static final TextureLoader textures = new TextureLoader();
 
-    public ChatScreen(Entity entity, PlayerEntity player) {
-        super(Text.literal("Simple Chat"));
+    public ChatScreen(Entity entity, Player player) {
+        super(Component.literal("Simple Chat"));
         this.screenEntity = entity;
         // tell server that chat opened
         ClientPackets.sendOpenChat(entity);
@@ -67,16 +67,16 @@ public class ChatScreen extends ScreenHelper {
         int inputX = bgX + TEXT_INPUT_MARGIN_X;
         int inputY = bgY + TEXT_INPUT_MARGIN_TOP;
         int inputW = BG_WIDTH - TEXT_INPUT_MARGIN_X * 2;
-        textField = new TextFieldWidget(
-                textRenderer,
+        textField = new EditBox(
+                font,
                 inputX, inputY,
                 inputW, TEXT_INPUT_HEIGHT,
-                Text.literal("")
+                Component.literal("")
         );
         textField.setMaxLength(ChatDataManager.MAX_CHAR_IN_USER_MESSAGE);
-        textField.setChangedListener(this::onTextChanged);
+        textField.setResponder(this::onTextChanged);
         setFocused(textField);
-        addDrawableChild(textField);
+        addRenderableWidget(textField);
 
         // 2) image buttons anchored to bottom corners
         int btnY = bgY + BG_HEIGHT - BUTTON_HEIGHT - BUTTON_MARGIN_Y;
@@ -89,10 +89,10 @@ public class ChatScreen extends ScreenHelper {
                 BUTTON_HEIGHT,                    // height
                 textures.GetUI("chat-button-exit"),        // normal texture
                 textures.GetUI("chat-button-exit-hover"),  // hover texture
-                widget -> close(),                // onPress
-                widget -> Text.empty()            // narrationSupplier
+                widget -> onClose(),                // onPress
+                widget -> Component.empty()            // narrationSupplier
         );
-        addDrawableChild(cancelButton);
+        addRenderableWidget(cancelButton);
 
         // SEND / DONE
         sendButton = ButtonHelper.createImageButton(
@@ -103,24 +103,24 @@ public class ChatScreen extends ScreenHelper {
                 textures.GetUI("chat-button-done"),               // normal texture
                 textures.GetUI("chat-button-done-hover"),         // hover texture
                 widget -> sendChatMessage(),                      // onPress
-                widget -> Text.empty()                            // narrationSupplier
+                widget -> Component.empty()                            // narrationSupplier
         );
         sendButton.active = false;
-        addDrawableChild(sendButton);
+        addRenderableWidget(sendButton);
     }
 
     private void sendChatMessage() {
         // Send message to server
-        String message = textField.getText();
+        String message = textField.getValue();
         ClientPackets.sendChat(screenEntity, message);
-        close();
+        onClose();
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
                 && textField.isFocused()
-                && !textField.getText().isEmpty()) {
+                && !textField.getValue().isEmpty()) {
             sendChatMessage();
             return true;
         }
@@ -138,7 +138,7 @@ public class ChatScreen extends ScreenHelper {
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 
@@ -149,12 +149,12 @@ public class ChatScreen extends ScreenHelper {
     }
 
     @Override
-    protected TextFieldWidget getTextField() {
+    protected EditBox getTextField() {
         return this.textField;
     }
 
     @Override
-    protected Text getLabelText() {
+    protected Component getLabelText() {
         return this.labelText;
     }
 }

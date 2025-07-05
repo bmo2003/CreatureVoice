@@ -4,8 +4,8 @@
 package com.owlmaddie.goals;
 
 import com.owlmaddie.mixin.MixinMobEntityAccessor;
-import net.minecraft.entity.ai.goal.GoalSelector;
-import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
 
 /**
  * The {@code GoalUtils} class uses reflection to extend the MobEntity class
@@ -13,7 +13,7 @@ import net.minecraft.entity.mob.MobEntity;
  */
 public class GoalUtils {
 
-    public static GoalSelector getGoalSelector(MobEntity mobEntity) {
+    public static GoalSelector getGoalSelector(Mob mobEntity) {
         MixinMobEntityAccessor mixingEntity = (MixinMobEntityAccessor)mobEntity;
         return mixingEntity.getGoalSelector();
     }

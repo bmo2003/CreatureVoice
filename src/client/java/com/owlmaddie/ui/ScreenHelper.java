@@ -4,11 +4,11 @@
 package com.owlmaddie.ui;
 
 import com.owlmaddie.utils.TextureLoader;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Provides a Screen class which renders a chat-background, and can be modified
@@ -18,25 +18,25 @@ public abstract class ScreenHelper extends Screen {
     protected int BG_WIDTH, BG_HEIGHT, bgX, bgY, TITLE_OFFSET;
     protected static final TextureLoader textures = new TextureLoader();
 
-    protected ScreenHelper(Text title) {
+    protected ScreenHelper(Component title) {
         super(title);
     }
 
     /** Subclass must return its TextFieldWidget instance here */
-    protected abstract TextFieldWidget getTextField();
+    protected abstract EditBox getTextField();
 
     /** Subclass must return its label Text here */
-    protected abstract Text getLabelText();
+    protected abstract Component getLabelText();
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Full-screen vanilla gradient
         renderBackground(context);
 
         // Chat-box texture
-        Identifier bgTex = textures.GetUI("chat-background");
+        ResourceLocation bgTex = textures.GetUI("chat-background");
         if (bgTex != null) {
-            context.drawTexture(
+            context.blit(
                     bgTex,
                     bgX, bgY,        // on-screen pos
                     0,  0,           // texture origin
@@ -49,16 +49,16 @@ public abstract class ScreenHelper extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         // Label (using inherited textRenderer)
-        TextFieldWidget tf = getTextField();
-        Text label = getLabelText();
-        int lw = this.textRenderer.getWidth(label);
+        EditBox tf = getTextField();
+        Component label = getLabelText();
+        int lw = this.font.width(label);
         int lx = (this.width - lw) / 2;
         int ly = tf.getY() - TITLE_OFFSET;
-        context.drawTextWithShadow(this.textRenderer, label, lx, ly, 0xFFFFFF);
+        context.drawString(this.font, label, lx, ly, 0xFFFFFF);
     }
 
     @Override
-    public void renderBackground(DrawContext context) {
+    public void renderBackground(GuiGraphics context) {
         // call the vanilla full-screen gradient
         super.renderBackground(context);
     }

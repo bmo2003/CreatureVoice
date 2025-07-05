@@ -3,6 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.ui;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
@@ -13,24 +14,25 @@ import com.owlmaddie.render.ShaderHelper;
 import com.owlmaddie.skin.PlayerCustomTexture;
 import com.owlmaddie.utils.*;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.font.TextRenderer.TextLayerType;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.boss.dragon.EnderDragonEntity;
-import net.minecraft.entity.boss.dragon.EnderDragonPart;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Font.DisplayMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.boss.EnderDragonPart;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.slf4j.Logger;
@@ -52,13 +54,13 @@ public class BubbleRenderer {
     public static int animationFrame = 0;
     public static long lastTick = 0;
     public static int light = 15728880;
-    public static int overlay = OverlayTexture.DEFAULT_UV;
+    public static int overlay = OverlayTexture.NO_OVERLAY;
     public static List<String> whitelist = new ArrayList<>();
     public static List<String> blacklist = new ArrayList<>();
     private static int queryEntityDataCount = 0;
     private static List<Entity> relevantEntities;
 
-    public static void drawTextBubbleBackground(String base_name, MatrixStack matrices, float x, float y, float width, float height, int friendship) {
+    public static void drawTextBubbleBackground(String base_name, PoseStack matrices, float x, float y, float width, float height, int friendship) {
         // Set shader & texture
         ShaderHelper.setTexturedShader();
 
@@ -96,9 +98,9 @@ public class BubbleRenderer {
         BlendHelper.disableDepthTest();
     }
 
-    private static void drawTexturePart(MatrixStack matrices, QuadBuffer buffer, float x, float y, float z, float width, float height) {
+    private static void drawTexturePart(PoseStack matrices, QuadBuffer buffer, float x, float y, float z, float width, float height) {
         // Define the vertices with color, texture, light, and overlay
-        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+        Matrix4f matrix4f = matrices.last().pose();
 
         // Begin drawing quads with the correct vertex format
         buffer.begin();
@@ -110,9 +112,9 @@ public class BubbleRenderer {
         buffer.draw();
     }
 
-    private static void drawIcon(String ui_icon_name, MatrixStack matrices, float x, float y, float width, float height) {
+    private static void drawIcon(String ui_icon_name, PoseStack matrices, float x, float y, float width, float height) {
         // Draw button icon
-        Identifier button_texture = textures.GetUI(ui_icon_name);
+        ResourceLocation button_texture = textures.GetUI(ui_icon_name);
 
         // Set shader & texture
         ShaderHelper.setTexturedShader();
@@ -128,7 +130,7 @@ public class BubbleRenderer {
         QuadBuffer buffer = QuadBuffer.INSTANCE;
 
         // Get the current matrix position
-        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+        Matrix4f matrix4f = matrices.last().pose();
 
         // Begin drawing quads with the correct vertex format
         buffer.begin();
@@ -144,7 +146,7 @@ public class BubbleRenderer {
         BlendHelper.disableDepthTest();
     }
 
-    private static void drawFriendshipStatus(MatrixStack matrices, float x, float y, float width, float height, int friendship) {
+    private static void drawFriendshipStatus(PoseStack matrices, float x, float y, float width, float height, int friendship) {
         // dynamically calculate friendship ui image name
         String ui_icon_name = "friendship" + friendship;
 
@@ -152,7 +154,7 @@ public class BubbleRenderer {
         ShaderHelper.setTexturedShader();
 
         // Set texture
-        Identifier button_texture = textures.GetUI(ui_icon_name);
+        ResourceLocation button_texture = textures.GetUI(ui_icon_name);
         TextureLoader.bind(0, button_texture);
 
         // Enable depth test and blending
@@ -165,7 +167,7 @@ public class BubbleRenderer {
         QuadBuffer buffer = QuadBuffer.INSTANCE;
 
         // Get the current matrix position
-        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+        Matrix4f matrix4f = matrices.last().pose();
 
         // Begin drawing quads with the correct vertex format
         buffer.begin();
@@ -182,16 +184,16 @@ public class BubbleRenderer {
         BlendHelper.disableDepthTest();
     }
 
-    private static void drawEntityIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+    private static void drawEntityIcon(PoseStack matrices, Entity entity, float x, float y, float width, float height) {
         // Get the vanilla skin identifier…
         @SuppressWarnings("rawtypes")
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
-        Identifier skinId = EntityTextureHelper.getTexture(renderer, entity);
+        ResourceLocation skinId = EntityTextureHelper.getTexture(renderer, entity);
         if (skinId == null) return;
 
         // Extract its path and map to your icon
         String skinPath = skinId.getPath();  // e.g. "textures/entity/zombie/zombie.png"
-        Identifier iconId = textures.GetEntity(skinPath);
+        ResourceLocation iconId = textures.GetEntity(skinPath);
         if (iconId == null) return;
 
         // Set shader & texture
@@ -208,7 +210,7 @@ public class BubbleRenderer {
         QuadBuffer buffer = QuadBuffer.INSTANCE;
 
         // Get the current matrix position
-        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+        Matrix4f matrix4f = matrices.last().pose();
 
         // Begin drawing quads with the correct vertex format
         buffer.begin();
@@ -225,11 +227,11 @@ public class BubbleRenderer {
         BlendHelper.disableDepthTest();
     }
 
-    private static void drawPlayerIcon(MatrixStack matrices, Entity entity, float x, float y, float width, float height) {
+    private static void drawPlayerIcon(PoseStack matrices, Entity entity, float x, float y, float width, float height) {
         // Get player skin texture
         @SuppressWarnings("rawtypes")
         EntityRenderer renderer = EntityRendererAccessor.getEntityRenderer(entity);
-        Identifier playerTexture = EntityTextureHelper.getTexture(renderer, entity);
+        ResourceLocation playerTexture = EntityTextureHelper.getTexture(renderer, entity);
         if (playerTexture == null) return;
 
         // Check for black and white pixels (using the Mixin-based check)
@@ -249,7 +251,7 @@ public class BubbleRenderer {
         QuadBuffer buffer = QuadBuffer.INSTANCE;
         buffer.begin();
 
-        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+        Matrix4f matrix4f = matrices.last().pose();
         float z = -0.01F;
 
         if (customSkinFound) {
@@ -339,16 +341,16 @@ public class BubbleRenderer {
     }
 
     private static void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
-                                 VertexConsumerProvider immediate, float lineSpacing, int fullBright, float yOffset) {
-        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
+                                 MultiBufferSource immediate, float lineSpacing, int fullBright, float yOffset) {
+        Font fontRenderer = Minecraft.getInstance().font;
         int currentLineIndex = 0; // We'll use this to track which line we're on
 
         for (String lineText : lines) {
             // Only draw lines that are within the specified range
             if (currentLineIndex >= starting_line && currentLineIndex < ending_line) {
-                fontRenderer.draw(lineText, -fontRenderer.getWidth(lineText) / 2f, yOffset, 0xffffff,
-                        false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
-                yOffset += fontRenderer.fontHeight + lineSpacing;
+                fontRenderer.drawInBatch(lineText, -fontRenderer.width(lineText) / 2f, yOffset, 0xffffff,
+                        false, matrix, immediate, DisplayMode.NORMAL, 0, fullBright);
+                yOffset += fontRenderer.lineHeight + lineSpacing;
             }
             currentLineIndex++;
 
@@ -358,18 +360,18 @@ public class BubbleRenderer {
         }
     }
 
-    private static void drawEntityName(Entity entity, Matrix4f matrix, VertexConsumerProvider immediate,
+    private static void drawEntityName(Entity entity, Matrix4f matrix, MultiBufferSource immediate,
                                 int fullBright, float yOffset, boolean truncate) {
-        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;
 
         // Get Name of entity
         String nameText = "";
-        if (entity instanceof MobEntity) {
+        if (entity instanceof Mob) {
             // Custom Name Tag (MobEntity)
             if (entity.getCustomName() != null) {
                 nameText = entity.getCustomName().getString();
             }
-        } else if (entity instanceof PlayerEntity) {
+        } else if (entity instanceof Player) {
             // Player Name
             nameText = entity.getName().getString();
         }
@@ -379,8 +381,8 @@ public class BubbleRenderer {
             nameText = nameText.substring(0, 14) + "...";
         }
 
-        fontRenderer.draw(nameText, -fontRenderer.getWidth(nameText) / 2f, yOffset, 0xffffff,
-                false, matrix, immediate, TextLayerType.NORMAL, 0, fullBright);
+        fontRenderer.drawInBatch(nameText, -fontRenderer.width(nameText) / 2f, yOffset, 0xffffff,
+                false, matrix, immediate, DisplayMode.NORMAL, 0, fullBright);
     }
 
     public static void drawTextAboveEntities(WorldRenderContext context, long tick, float partialTicks) {
@@ -393,22 +395,22 @@ public class BubbleRenderer {
 
         // Get camera
         Camera camera = context.camera();
-        Entity cameraEntity = camera.getFocusedEntity();
+        Entity cameraEntity = camera.getEntity();
         if (cameraEntity == null) return;
-        World world = cameraEntity.getEntityWorld();
+        Level world = cameraEntity.getCommandSenderWorld();
 
         // Calculate radius of entities
-        Vec3d pos = cameraEntity.getPos();
-        Box area = new Box(pos.x - renderDistance, pos.y - renderDistance, pos.z - renderDistance,
+        Vec3 pos = cameraEntity.position();
+        AABB area = new AABB(pos.x - renderDistance, pos.y - renderDistance, pos.z - renderDistance,
                 pos.x + renderDistance, pos.y + renderDistance, pos.z + renderDistance);
 
         // Init font render, matrix, and vertex producer
-        TextRenderer fontRenderer = MinecraftClient.getInstance().textRenderer;
-        MatrixStack matrices = context.matrixStack();
-        VertexConsumerProvider immediate = context.consumers();
+        Font fontRenderer = Minecraft.getInstance().font;
+        PoseStack matrices = context.matrixStack();
+        MultiBufferSource immediate = context.consumers();
 
         // Get camera position
-        Vec3d interpolatedCameraPos = new Vec3d(camera.getPos().x, camera.getPos().y, camera.getPos().z);
+        Vec3 interpolatedCameraPos = new Vec3(camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
 
         // Increment query counter
         queryEntityDataCount++;
@@ -417,20 +419,20 @@ public class BubbleRenderer {
         // the list every 3rd call to this render function
         if (queryEntityDataCount % 3 == 0 || relevantEntities == null) {
             // Get all entities
-            List<Entity> nearbyEntities = world.getOtherEntities(null, area);
+            List<Entity> nearbyEntities = world.getEntities(null, area);
 
             // Filter to include only MobEntity & PlayerEntity but exclude any camera 1st person entity and any entities with passengers
             relevantEntities = nearbyEntities.stream()
-                    .filter(entity -> (entity instanceof MobEntity || entity instanceof PlayerEntity))
-                    .filter(entity -> !entity.hasPassengers())
-                    .filter(entity -> !(entity.equals(cameraEntity) && !camera.isThirdPerson()))
+                    .filter(entity -> (entity instanceof Mob || entity instanceof Player))
+                    .filter(entity -> !entity.isVehicle())
+                    .filter(entity -> !(entity.equals(cameraEntity) && !camera.isDetached()))
                     .filter(entity -> !(entity.equals(cameraEntity) && entity.isSpectator()))
                     .filter(entity -> {
                         // Always include PlayerEntity
-                        if (entity instanceof PlayerEntity) {
+                        if (entity instanceof Player) {
                             return true;
                         }
-                        Identifier entityId = Registries.ENTITY_TYPE.getId(entity.getType());
+                        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
                         String entityIdString = entityId.toString();
                         // Check blacklist first
                         if (blacklist.contains(entityIdString)) {
@@ -447,34 +449,34 @@ public class BubbleRenderer {
         for (Entity entity : relevantEntities) {
 
             // Push a new matrix onto the stack.
-            matrices.push();
+            matrices.pushPose();
 
             // Get entity height (adjust for specific classes)
             float entityHeight = EntityHeights.getAdjustedEntityHeight(entity);
 
             // Interpolate entity position (smooth motion)
             double paddingAboveEntity = 0.4D;
-            Vec3d interpolatedEntityPos = EntityRenderPosition.getInterpolatedPosition(entity, partialTicks);
+            Vec3 interpolatedEntityPos = EntityRenderPosition.getInterpolatedPosition(entity, partialTicks);
 
             // Determine the chat bubble position
-            Vec3d bubblePosition;
-            if (entity instanceof EnderDragonEntity) {
+            Vec3 bubblePosition;
+            if (entity instanceof EnderDragon) {
                 // Ender dragons a unique, and we must use the Head for position
-                EnderDragonEntity dragon = (EnderDragonEntity) entity;
+                EnderDragon dragon = (EnderDragon) entity;
                 EnderDragonPart head = dragon.head;
 
                 // Interpolate the head position
-                Vec3d headPos = EntityRenderPosition.getInterpolatedPosition(head, partialTicks);
+                Vec3 headPos = EntityRenderPosition.getInterpolatedPosition(head, partialTicks);
 
                 // Just use the head's interpolated position directly
                 bubblePosition = headPos.add(0, entityHeight + paddingAboveEntity, 0);
             } else {
                 // Calculate the forward offset based on the entity's yaw
-                float entityYawRadians = (float) Math.toRadians(entity.getYaw(partialTicks));
-                Vec3d forwardOffset = new Vec3d(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians));
+                float entityYawRadians = (float) Math.toRadians(entity.getViewYRot(partialTicks));
+                Vec3 forwardOffset = new Vec3(-Math.sin(entityYawRadians), 0.0, Math.cos(entityYawRadians));
 
                 // Calculate the forward offset based on the entity's yaw, scaled to 80% towards the front edge
-                Vec3d scaledForwardOffset = forwardOffset.multiply(entity.getWidth() / 2.0 * 0.8);
+                Vec3 scaledForwardOffset = forwardOffset.scale(entity.getBbWidth() / 2.0 * 0.8);
 
                 // Calculate the position of the chat bubble: above the head and 80% towards the front
                 bubblePosition = interpolatedEntityPos.add(scaledForwardOffset)
@@ -487,19 +489,19 @@ public class BubbleRenderer {
                     bubblePosition.z - interpolatedCameraPos.z);
 
             // Calculate the difference vector (from entity + padding above to camera)
-            Vec3d difference = interpolatedCameraPos.subtract(new Vec3d(interpolatedEntityPos.x, interpolatedEntityPos.y + entityHeight + paddingAboveEntity, interpolatedEntityPos.z));
+            Vec3 difference = interpolatedCameraPos.subtract(new Vec3(interpolatedEntityPos.x, interpolatedEntityPos.y + entityHeight + paddingAboveEntity, interpolatedEntityPos.z));
 
             // Calculate the yaw angle
             double yaw = -(Math.atan2(difference.z, difference.x) + Math.PI / 2D);
 
             // Convert yaw to Quaternion
             float halfYaw = (float) yaw * 0.5f;
-            double sinHalfYaw = MathHelper.sin(halfYaw);
-            double cosHalfYaw = MathHelper.cos(halfYaw);
+            double sinHalfYaw = Mth.sin(halfYaw);
+            double cosHalfYaw = Mth.cos(halfYaw);
             Quaternionf yawRotation = new Quaternionf(0, sinHalfYaw, 0, cosHalfYaw);
 
             // Apply the yaw rotation to the matrix stack
-            matrices.multiply(yawRotation);
+            matrices.mulPose(yawRotation);
 
             // Obtain the horizontal distance to the entity
             double horizontalDistance = Math.sqrt(difference.x * difference.x + difference.z * difference.z);
@@ -508,33 +510,33 @@ public class BubbleRenderer {
 
             // Convert pitch to Quaternion
             float halfPitch = (float) pitch * 0.5f;
-            double sinHalfPitch = MathHelper.sin(halfPitch);
-            double cosHalfPitch = MathHelper.cos(halfPitch);
+            double sinHalfPitch = Mth.sin(halfPitch);
+            double cosHalfPitch = Mth.cos(halfPitch);
             Quaternionf pitchRotation = new Quaternionf(sinHalfPitch, 0, 0, cosHalfPitch);
 
             // Apply the pitch rotation to the matrix stack
-            matrices.multiply(pitchRotation);
+            matrices.mulPose(pitchRotation);
 
             // Get position matrix
-            Matrix4f matrix = matrices.peek().getPositionMatrix();
+            Matrix4f matrix = matrices.last().pose();
 
             // Get the player
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            LocalPlayer player = Minecraft.getInstance().player;
 
             // Get chat message (if any)
             EntityChatData chatData = null;
             PlayerData playerData = null;
-            if (entity instanceof MobEntity) {
-                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getUuidAsString());
+            if (entity instanceof Mob) {
+                chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getStringUUID());
                 if (chatData != null) {
                     playerData = chatData.getPlayerData(player.getDisplayName().getString());
                 }
-            } else if (entity instanceof PlayerEntity) {
-                chatData = PlayerMessageManager.getMessage(entity.getUuid());
+            } else if (entity instanceof Player) {
+                chatData = PlayerMessageManager.getMessage(entity.getUUID());
                 playerData = new PlayerData(); // no friendship needed for player messages
             }
 
-            float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.fontHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
+            float minTextHeight = (ChatDataManager.DISPLAY_NUM_LINES * (fontRenderer.lineHeight + lineSpacing)) + (DISPLAY_PADDING * 2);
             float scaledTextHeight = 0;
 
             if (chatData != null) {
@@ -548,11 +550,11 @@ public class BubbleRenderer {
                 linesDisplayed = ending_line - starting_line;
 
                 // Calculate size of text scaled to world
-                scaledTextHeight = linesDisplayed * (fontRenderer.fontHeight + lineSpacing);
+                scaledTextHeight = linesDisplayed * (fontRenderer.lineHeight + lineSpacing);
                 scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
 
                 // Update Bubble Data for Click Handling using UUID (account for scaling)
-                BubbleLocationManager.updateBubbleData(entity.getUuid(), bubblePosition,
+                BubbleLocationManager.updateBubbleData(entity.getUUID(), bubblePosition,
                         128F / (1 / 0.02F), (scaledTextHeight + 25F) / (1 / 0.02F), yaw, pitch);
 
                 // Scale down before rendering textures (otherwise font is huge)
@@ -629,12 +631,12 @@ public class BubbleRenderer {
                     drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
                 }
 
-            } else if (entity instanceof PlayerEntity) {
+            } else if (entity instanceof Player) {
                 // Scale down before rendering textures (otherwise font is huge)
                 matrices.scale(-0.02F, -0.02F, 0.02F);
 
                 boolean showPendingIcon = false;
-                if (PlayerMessageManager.isChatUIOpen(entity.getUuid())) {
+                if (PlayerMessageManager.isChatUIOpen(entity.getUUID())) {
                     showPendingIcon = true;
                     scaledTextHeight += minTextHeight; // raise height of player name and icon
                 } else {
@@ -645,8 +647,8 @@ public class BubbleRenderer {
                 matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
 
                 // Draw Player Name (if not self and HUD is visible)
-                if (!entity.equals(cameraEntity) && !MinecraftClient.getInstance().options.hudHidden) {
-                    drawEntityName(entity, matrices.peek().getPositionMatrix(), immediate, fullBright, 24F + DISPLAY_PADDING, true);
+                if (!entity.equals(cameraEntity) && !Minecraft.getInstance().options.hideGui) {
+                    drawEntityName(entity, matrices.last().pose(), immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                     if (showPendingIcon) {
                         // Draw 'pending' button (when Chat UI is open)
@@ -665,12 +667,12 @@ public class BubbleRenderer {
             }
 
             // Pop the matrix to return to the original state.
-            matrices.pop();
+            matrices.popPose();
         }
 
         // Get list of Entity UUIDs with chat bubbles rendered
         List<UUID> activeEntityUUIDs = relevantEntities.stream()
-                .map(Entity::getUuid)
+                .map(Entity::getUUID)
                 .collect(Collectors.toList());
 
         // Purge entities that were not rendered

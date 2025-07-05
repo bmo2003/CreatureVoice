@@ -9,18 +9,18 @@ import com.owlmaddie.controls.LookControls;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.particle.LeadParticleEffect;
 import com.owlmaddie.utils.RandomTargetFinder;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
 import java.util.Random;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * The {@code LeadPlayerGoal} class instructs a Mob Entity to lead the player to a random location, consisting
@@ -28,38 +28,38 @@ import java.util.Random;
  */
 public class LeadPlayerGoal extends PlayerBaseGoal {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-    private final MobEntity entity;
+    private final Mob entity;
     private final double speed;
     private final Random random = new Random();
     private int currentWaypoint = 0;
     private int totalWaypoints;
-    private Vec3d currentTarget = null;
+    private Vec3 currentTarget = null;
     private boolean foundWaypoint = false;
     private int ticksSinceLastWaypoint = 0;
 
-    public LeadPlayerGoal(ServerPlayerEntity player, MobEntity entity, double speed) {
+    public LeadPlayerGoal(ServerPlayer player, Mob entity, double speed) {
         super(player);
         this.entity = entity;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         this.totalWaypoints = random.nextInt(14) + 6;
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && !foundWaypoint && this.entity.squaredDistanceTo(this.targetEntity) <= 16 * 16 && !foundWaypoint;
+    public boolean canUse() {
+        return super.canUse() && !foundWaypoint && this.entity.distanceToSqr(this.targetEntity) <= 16 * 16 && !foundWaypoint;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return super.canStart() && !foundWaypoint && this.entity.squaredDistanceTo(this.targetEntity) <= 16 * 16 && !foundWaypoint;
+    public boolean canContinueToUse() {
+        return super.canUse() && !foundWaypoint && this.entity.distanceToSqr(this.targetEntity) <= 16 * 16 && !foundWaypoint;
     }
 
     @Override
     public void tick() {
         ticksSinceLastWaypoint++;
 
-        if (this.entity.squaredDistanceTo(this.targetEntity) > 16 * 16) {
+        if (this.entity.distanceToSqr(this.targetEntity) > 16 * 16) {
             this.entity.getNavigation().stop();
             return;
         }
@@ -74,16 +74,16 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                 String arrivedMessage = "<You have arrived at your destination>";
 
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-                EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getUuidAsString());
+                EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getStringUUID());
                 if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                    ServerPackets.generate_chat("N/A", chatData, (ServerPlayerEntity) this.targetEntity, this.entity, arrivedMessage, true);
+                    ServerPackets.generate_chat("N/A", chatData, (ServerPlayer) this.targetEntity, this.entity, arrivedMessage, true);
                 }
             });
 
             // Stop navigation
             this.entity.getNavigation().stop();
 
-        } else if (this.currentTarget == null || this.entity.squaredDistanceTo(this.currentTarget) < 2 * 2 || ticksSinceLastWaypoint >= 20 * 10) {
+        } else if (this.currentTarget == null || this.entity.distanceToSqr(this.currentTarget) < 2 * 2 || ticksSinceLastWaypoint >= 20 * 10) {
             // Set next waypoint
             setNewTarget();
             moveToTarget();
@@ -96,12 +96,12 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
 
     private void moveToTarget() {
         if (this.currentTarget != null) {
-            if (this.entity instanceof PathAwareEntity) {
-                 if (!this.entity.getNavigation().isFollowingPath()) {
-                     Path path = this.entity.getNavigation().findPathTo(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
+            if (this.entity instanceof PathfinderMob) {
+                 if (!this.entity.getNavigation().isInProgress()) {
+                     Path path = this.entity.getNavigation().createPath(this.currentTarget.x, this.currentTarget.y, this.currentTarget.z, 1);
                      if (path != null) {
                          LOGGER.debug("Start moving along path");
-                         this.entity.getNavigation().startMovingAlong(path, this.speed);
+                         this.entity.getNavigation().moveTo(path, this.speed);
                      }
                  }
             } else {
@@ -109,20 +109,20 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
                 LookControls.lookAtPosition(this.currentTarget, this.entity);
 
                 // Move towards the target for non-path aware entities
-                Vec3d entityPos = this.entity.getPos();
-                Vec3d moveDirection = this.currentTarget.subtract(entityPos).normalize();
+                Vec3 entityPos = this.entity.position();
+                Vec3 moveDirection = this.currentTarget.subtract(entityPos).normalize();
 
                 // Calculate current speed from the entity's current velocity
-                double currentSpeed = this.entity.getVelocity().horizontalLength();
+                double currentSpeed = this.entity.getDeltaMovement().horizontalDistance();
 
                 // Gradually adjust speed towards the target speed
-                currentSpeed = MathHelper.stepTowards((float) currentSpeed, (float) this.speed, (float) (0.005 * (this.speed / Math.max(currentSpeed, 0.1))));
+                currentSpeed = Mth.approach((float) currentSpeed, (float) this.speed, (float) (0.005 * (this.speed / Math.max(currentSpeed, 0.1))));
 
                 // Apply movement with the adjusted speed towards the target
-                Vec3d newVelocity = new Vec3d(moveDirection.x * currentSpeed, moveDirection.y * currentSpeed, moveDirection.z * currentSpeed);
+                Vec3 newVelocity = new Vec3(moveDirection.x * currentSpeed, moveDirection.y * currentSpeed, moveDirection.z * currentSpeed);
 
-                this.entity.setVelocity(newVelocity);
-                this.entity.velocityModified = true;
+                this.entity.setDeltaMovement(newVelocity);
+                this.entity.hurtMarked = true;
             }
         }
     }
@@ -133,26 +133,26 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         LOGGER.info("Waypoint " + currentWaypoint + " / " + this.totalWaypoints);
         this.currentTarget = RandomTargetFinder.findRandomTarget(this.entity, 30, 24, 36);
         if (this.currentTarget != null) {
-            emitParticlesAlongRaycast(this.entity.getPos(), this.currentTarget);
+            emitParticlesAlongRaycast(this.entity.position(), this.currentTarget);
         }
 
         // Stop following current path (if any)
         this.entity.getNavigation().stop();
     }
 
-    private void emitParticleAt(Vec3d position, double angle) {
-        if (this.entity.getWorld() instanceof ServerWorld) {
-            ServerWorld serverWorld = (ServerWorld) this.entity.getWorld();
+    private void emitParticleAt(Vec3 position, double angle) {
+        if (this.entity.level() instanceof ServerLevel) {
+            ServerLevel serverWorld = (ServerLevel) this.entity.level();
 
             // Pass the angle using the "speed" argument, with deltaX, deltaY, deltaZ set to 0
             LeadParticleEffect effect = new LeadParticleEffect((float)angle);
-            serverWorld.spawnParticles(effect, position.x, position.y + 0.05, position.z, 1, 0, 0, 0, 0);
+            serverWorld.sendParticles(effect, position.x, position.y + 0.05, position.z, 1, 0, 0, 0, 0);
         }
     }
 
-    private void emitParticlesAlongRaycast(Vec3d start, Vec3d end) {
+    private void emitParticlesAlongRaycast(Vec3 start, Vec3 end) {
         // Calculate the direction vector from the entity (start) to the target (end)
-        Vec3d direction = end.subtract(start);
+        Vec3 direction = end.subtract(start);
 
         // Calculate the angle in the XZ-plane using atan2 (this is in radians)
         double angleRadians = Math.atan2(direction.z, direction.x);
@@ -174,7 +174,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         double startRange = Math.min(5, distance);;
         double endRange = Math.min(startRange + 10, distance);
         for (double d = startRange; d <= endRange; d += 5) {
-            Vec3d pos = start.add(direction.normalize().multiply(d));
+            Vec3 pos = start.add(direction.normalize().scale(d));
             emitParticleAt(pos, Math.toRadians(minecraftYaw));  // Convert back to radians for rendering
         }
     }

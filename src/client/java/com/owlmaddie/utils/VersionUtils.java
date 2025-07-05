@@ -10,7 +10,7 @@ import net.minecraft.SharedConstants;
  */
 public class VersionUtils {
     public static boolean isOlderThan(String targetVersion) {
-        String currentVersion = SharedConstants.getGameVersion().getName();
+        String currentVersion = SharedConstants.getCurrentVersion().getName();
         return currentVersion.compareTo(targetVersion) < 0;
     }
 }

@@ -7,16 +7,16 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,26 +25,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
  */
-@Mixin(MobEntity.class)
+@Mixin(Mob.class)
 public class MixinMobEntity {
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
-    private void onItemGiven(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+    private void onItemGiven(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         // Only process interactions on the server side
-        if (player.getWorld().isClient()) {
+        if (player.level().isClientSide()) {
             return;
         }
 
         // Only process interactions for the main hand
-        if (hand != Hand.MAIN_HAND) {
+        if (hand != InteractionHand.MAIN_HAND) {
             return;
         }
 
-        ItemStack itemStack = player.getStackInHand(hand);
-        MobEntity thisEntity = (MobEntity) (Object) this;
+        ItemStack itemStack = player.getItemInHand(hand);
+        Mob thisEntity = (Mob) (Object) this;
 
         // Don't interact with Villagers (avoid issues with trade UI) OR Tameable (i.e. sit / no-sit)
-        if (thisEntity instanceof VillagerEntity || thisEntity instanceof TameableEntity) {
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
             return;
         }
 
@@ -67,20 +67,20 @@ public class MixinMobEntity {
 
         // Get chat data for entity
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getUuidAsString());
+        EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getStringUUID());
         PlayerData playerData = entityData.getPlayerData(player.getDisplayName().getString());
 
         // Check if the player successfully interacts with an item
-        if (player instanceof ServerPlayerEntity) {
+        if (player instanceof ServerPlayer) {
             // Player has item in hand
             if (!itemStack.isEmpty()) {
-                ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
-                String itemName = itemStack.getItem().getName().getString();
+                ServerPlayer serverPlayer = (ServerPlayer) player;
+                String itemName = itemStack.getItem().getDescription().getString();
                 int itemCount = itemStack.getCount();
 
                 // Decide verb
                 String action_verb = " shows ";
-                if (cir.getReturnValue().isAccepted()) {
+                if (cir.getReturnValue().consumesAction()) {
                     action_verb = " gives ";
                 }
 

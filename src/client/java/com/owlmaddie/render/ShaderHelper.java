@@ -4,13 +4,13 @@
 package com.owlmaddie.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.render.GameRenderer;   // 1.20.x path
+import net.minecraft.client.renderer.GameRenderer;
 
 /** Binds the GUI textured-quad shader (1.20.x mappings). */
 public final class ShaderHelper {
     private ShaderHelper() {}
 
     public static void setTexturedShader() {
-        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+        RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapShader);
     }
 }

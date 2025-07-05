@@ -3,7 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.network;
 
-import net.minecraft.text.ClickEvent;  // old abstract class
+import net.minecraft.network.chat.ClickEvent;
 
 public class ClickEventHelper {
     /** old API: construct the legacy ClickEvent */

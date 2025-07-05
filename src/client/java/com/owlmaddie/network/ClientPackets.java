@@ -12,12 +12,6 @@ import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.sound.SoundEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +19,12 @@ import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * The {@code ClientPackets} class provides methods to send packets to/from the server for generating greetings,
@@ -36,20 +36,20 @@ public class ClientPackets {
 
     public static void sendGenerateGreeting(Entity entity) {
         // Get user language
-        String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
-        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getString();
+        String userLanguageCode = Minecraft.getInstance().getLanguageManager().getSelected();
+        String userLanguageName = Minecraft.getInstance().getLanguageManager().getLanguage(userLanguageCode).toComponent().getString();
 
-        PacketByteBuf buf = ClientBufferHelper.create();
-        buf.writeString(entity.getUuidAsString());
-        buf.writeString(userLanguageName);
+        FriendlyByteBuf buf = ClientBufferHelper.create();
+        buf.writeUtf(entity.getStringUUID());
+        buf.writeUtf(userLanguageName);
 
         // Send C2S packet
         ClientPacketHelper.send(ServerPackets.PACKET_C2S_GREETING, buf);
     }
 
     public static void sendUpdateLineNumber(Entity entity, Integer lineNumber) {
-        PacketByteBuf buf = ClientBufferHelper.create();
-        buf.writeString(entity.getUuidAsString());
+        FriendlyByteBuf buf = ClientBufferHelper.create();
+        buf.writeUtf(entity.getStringUUID());
         buf.writeInt(lineNumber);
 
         // Send C2S packet
@@ -57,24 +57,24 @@ public class ClientPackets {
     }
 
     public static void sendOpenChat(Entity entity) {
-        PacketByteBuf buf = ClientBufferHelper.create();
-        buf.writeString(entity.getUuidAsString());
+        FriendlyByteBuf buf = ClientBufferHelper.create();
+        buf.writeUtf(entity.getStringUUID());
 
         // Send C2S packet
         ClientPacketHelper.send(ServerPackets.PACKET_C2S_OPEN_CHAT, buf);
     }
 
     public static void sendCloseChat() {
-        PacketByteBuf buf = ClientBufferHelper.create();
+        FriendlyByteBuf buf = ClientBufferHelper.create();
 
         // Send C2S packet
         ClientPacketHelper.send(ServerPackets.PACKET_C2S_CLOSE_CHAT, buf);
     }
 
     public static void setChatStatus(Entity entity, ChatDataManager.ChatStatus new_status) {
-        PacketByteBuf buf = ClientBufferHelper.create();
-        buf.writeString(entity.getUuidAsString());
-        buf.writeString(new_status.toString());
+        FriendlyByteBuf buf = ClientBufferHelper.create();
+        buf.writeUtf(entity.getStringUUID());
+        buf.writeUtf(new_status.toString());
 
         // Send C2S packet
         ClientPacketHelper.send(ServerPackets.PACKET_C2S_SET_STATUS, buf);
@@ -82,24 +82,24 @@ public class ClientPackets {
 
     public static void sendChat(Entity entity, String message) {
         // Get user language
-        String userLanguageCode = MinecraftClient.getInstance().getLanguageManager().getLanguage();
-        String userLanguageName = MinecraftClient.getInstance().getLanguageManager().getLanguage(userLanguageCode).getDisplayText().getString();
+        String userLanguageCode = Minecraft.getInstance().getLanguageManager().getSelected();
+        String userLanguageName = Minecraft.getInstance().getLanguageManager().getLanguage(userLanguageCode).toComponent().getString();
 
-        PacketByteBuf buf = ClientBufferHelper.create();
-        buf.writeString(entity.getUuidAsString());
-        buf.writeString(message);
-        buf.writeString(userLanguageName);
+        FriendlyByteBuf buf = ClientBufferHelper.create();
+        buf.writeUtf(entity.getStringUUID());
+        buf.writeUtf(message);
+        buf.writeUtf(userLanguageName);
 
         // Send C2S packet
         ClientPacketHelper.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);
     }
 
     // Reading a Map<String, PlayerData> from the buffer
-    public static Map<String, PlayerData> readPlayerDataMap(PacketByteBuf buffer) {
+    public static Map<String, PlayerData> readPlayerDataMap(FriendlyByteBuf buffer) {
         int size = buffer.readInt(); // Read the size of the map
         Map<String, PlayerData> map = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            String key = buffer.readString(); // Read the key (playerName)
+            String key = buffer.readUtf(); // Read the key (playerName)
             PlayerData data = new PlayerData();
             data.friendship = buffer.readInt(); // Read PlayerData field(s)
             map.put(key, data); // Add to the map
@@ -111,19 +111,19 @@ public class ClientPackets {
         // Client-side packet handler, message sync
         ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_ENTITY_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
-            UUID entityId = UUID.fromString(buffer.readString());
-            String message = buffer.readString(32767);
+            UUID entityId = UUID.fromString(buffer.readUtf());
+            String message = buffer.readUtf(32767);
             int line = buffer.readInt();
-            String status_name = buffer.readString(32767);
+            String status_name = buffer.readUtf(32767);
             ChatDataManager.ChatStatus status = ChatDataManager.ChatStatus.valueOf(status_name);
-            String sender_name = buffer.readString(32767);
+            String sender_name = buffer.readUtf(32767);
             ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
             Map<String, PlayerData> players = readPlayerDataMap(buffer);
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
                 // Ensure client.player is initialized
-                if (client.player == null || client.world == null) {
+                if (client.player == null || client.level == null) {
                     LOGGER.warn("Client not fully initialized. Dropping message for entity '{}'.", entityId);
                     return;
                 }
@@ -142,7 +142,7 @@ public class ClientPackets {
                 chatData.players = players;
 
                 // Play sound with volume based on distance (from player or entity)
-                MobEntity entity = ClientEntityFinder.getEntityByUUID(client.world, entityId);
+                Mob entity = ClientEntityFinder.getEntityByUUID(client.level, entityId);
                 if (entity != null) {
                     playNearbyUISound(client, entity, 0.2f);
                 }
@@ -152,14 +152,14 @@ public class ClientPackets {
         // Client-side packet handler, message sync
         ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_PLAYER_MESSAGE, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
-            UUID senderPlayerId = UUID.fromString(buffer.readString());
-            String senderPlayerName = buffer.readString(32767);
-            String message = buffer.readString(32767);
+            UUID senderPlayerId = UUID.fromString(buffer.readUtf());
+            String senderPlayerName = buffer.readUtf(32767);
+            String message = buffer.readUtf(32767);
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
                 // Ensure client.player is initialized
-                if (client.player == null || client.world == null) {
+                if (client.player == null || client.level == null) {
                     LOGGER.warn("Client not fully initialized. Dropping message for sender '{}'.", senderPlayerId);
                     return;
                 }
@@ -213,14 +213,14 @@ public class ClientPackets {
             int whitelistSize = buffer.readInt();
             List<String> whitelist = new ArrayList<>(whitelistSize);
             for (int i = 0; i < whitelistSize; i++) {
-                whitelist.add(buffer.readString(32767));
+                whitelist.add(buffer.readUtf(32767));
             }
 
             // Read the blacklist data from the buffer
             int blacklistSize = buffer.readInt();
             List<String> blacklist = new ArrayList<>(blacklistSize);
             for (int i = 0; i < blacklistSize; i++) {
-                blacklist.add(buffer.readString(32767));
+                blacklist.add(buffer.readUtf(32767));
             }
 
             client.execute(() -> {
@@ -232,11 +232,11 @@ public class ClientPackets {
         // Client-side packet handler, player status sync
         ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_PLAYER_STATUS, (client, handler, buffer, responseSender) -> {
             // Read the data from the server packet
-            UUID playerId = UUID.fromString(buffer.readString());
+            UUID playerId = UUID.fromString(buffer.readUtf());
             boolean isChatOpen = buffer.readBoolean();
 
             // Get player instance
-            PlayerEntity player = ClientEntityFinder.getPlayerEntityFromUUID(playerId);
+            Player player = ClientEntityFinder.getPlayerEntityFromUUID(playerId);
 
             // Update the player status data manager on the client-side
             client.execute(() -> {
@@ -255,11 +255,11 @@ public class ClientPackets {
         });
     }
 
-    private static void playNearbyUISound(MinecraftClient client, Entity player, float maxVolume) {
+    private static void playNearbyUISound(Minecraft client, Entity player, float maxVolume) {
         // Play sound with volume based on distance
         int distance_squared = 144;
         if (client.player != null) {
-            double distance = client.player.squaredDistanceTo(player.getX(), player.getY(), player.getZ());
+            double distance = client.player.distanceToSqr(player.getX(), player.getY(), player.getZ());
             if (distance <= distance_squared) {
                 // Decrease volume based on distance
                 float volume = maxVolume - (float)distance / distance_squared * maxVolume;

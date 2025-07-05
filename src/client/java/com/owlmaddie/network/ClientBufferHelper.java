@@ -4,7 +4,7 @@
 package com.owlmaddie.network;
 
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Central place to create/unwrap buffers.
@@ -17,12 +17,12 @@ public final class ClientBufferHelper {
     private ClientBufferHelper() {}
 
     /** Writable buffer, no preset capacity. */
-    public static PacketByteBuf create() {
-        return new PacketByteBuf(Unpooled.buffer());
+    public static FriendlyByteBuf create() {
+        return new FriendlyByteBuf(Unpooled.buffer());
     }
 
     /** Writable buffer with an initial capacity hint. */
-    public static PacketByteBuf create(int initialCapacity) {
-        return new PacketByteBuf(Unpooled.buffer(initialCapacity));
+    public static FriendlyByteBuf create(int initialCapacity) {
+        return new FriendlyByteBuf(Unpooled.buffer(initialCapacity));
     }
 }

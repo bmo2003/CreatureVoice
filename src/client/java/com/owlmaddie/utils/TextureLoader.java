@@ -4,15 +4,15 @@
 package com.owlmaddie.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.Resource;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 
 /**
  * The {@code TextureLoader} class registers and returns texture identifiers for resources
@@ -25,10 +25,10 @@ public class TextureLoader {
 
     public TextureLoader() {}
 
-    public Identifier GetUI(String name) {
+    public ResourceLocation GetUI(String name) {
         String texturePath = "textures/ui/" + name + ".png";
-        Identifier textureId = new Identifier("creaturechat", texturePath);
-        Optional<Resource> resource = MinecraftClient
+        ResourceLocation textureId = new ResourceLocation("creaturechat", texturePath);
+        Optional<Resource> resource = Minecraft
                 .getInstance()
                 .getResourceManager()
                 .getResource(textureId);
@@ -43,9 +43,9 @@ public class TextureLoader {
         }
     }
 
-    public Identifier GetEntity(String texturePath) {
-        Identifier textureId = new Identifier("creaturechat", texturePath);
-        Optional<Resource> resource = MinecraftClient
+    public ResourceLocation GetEntity(String texturePath) {
+        ResourceLocation textureId = new ResourceLocation("creaturechat", texturePath);
+        Optional<Resource> resource = Minecraft
                 .getInstance()
                 .getResourceManager()
                 .getResource(textureId);
@@ -54,7 +54,7 @@ public class TextureLoader {
             RenderSystem.setShaderTexture(0, textureId);
             return textureId;
         } else {
-            Identifier notFoundId = new Identifier("creaturechat", "textures/entity/not_found.png");
+            ResourceLocation notFoundId = new ResourceLocation("creaturechat", "textures/entity/not_found.png");
             RenderSystem.setShaderTexture(0, notFoundId);
             logMissingTextureOnce(texturePath);
             return notFoundId;
@@ -70,7 +70,7 @@ public class TextureLoader {
     /**
      * Binds the given Identifier to the specified texture unit.
      */
-    public static void bind(int unit, Identifier textureId) {
+    public static void bind(int unit, ResourceLocation textureId) {
         RenderSystem.setShaderTexture(unit, textureId);
     }
 }
