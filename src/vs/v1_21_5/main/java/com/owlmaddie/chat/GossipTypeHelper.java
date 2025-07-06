@@ -18,6 +18,6 @@ public class GossipTypeHelper {
 
     public static void startGossip(VillagerEntityAccessor villager, UUID playerId,
                                    GossipType type, int amount) {
-        villager.getGossip().startGossip(playerId, type, amount);
+        villager.getGossip().add(playerId, type, amount);
     }
 }

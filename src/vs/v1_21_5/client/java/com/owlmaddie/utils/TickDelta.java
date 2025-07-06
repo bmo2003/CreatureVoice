@@ -12,6 +12,6 @@ public final class TickDelta {
      * 1.21.5+: RenderTickCounter.getTickProgress(false) replaces getTickDelta(false)
      */
     public static float get(WorldRenderContext ctx) {
-        return ctx.tickCounter().getTickProgress(false);
+        return ctx.tickCounter().getGameTimeDeltaPartialTick(false);
     }
 }
