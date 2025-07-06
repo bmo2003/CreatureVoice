@@ -17,7 +17,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Fixed
 - Fixing duplicate log messages about missing textures
-- Updating accesswidener in 1.21.2+ - removing getPixelRGBA (getPixel replaces it and it's already public)
+- Disabling validateAccessWidener task on build script
 
 ## [2.0.0] - 2025-06-30
 

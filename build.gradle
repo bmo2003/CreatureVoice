@@ -32,12 +32,11 @@ afterEvaluate {
 		[dir: dir, ver: toVer(m[0][1])]
 	}
 
-	// Collect and sort candidate folders by version
+	// Collect candidate folders
 	def candidates = vsRoot.listFiles()
 			?.findAll { it.directory }
 			?.collect  { parse(it) }
 			?.findAll  { it != null }
-			?.sort     { a, b -> a.ver <=> b.ver }  // <<< added this line
 
 	candidates.each { logger.lifecycle " • found ${it.dir.name} | version ${it.ver}" }
 
@@ -54,9 +53,8 @@ afterEvaluate {
 	logger.lifecycle "Folders applied (oldest → newest): " +
 			applicable.collect { it.dir.name }
 
-	def appliedJava      = [ main: [], client: [] ]
-	def appliedResources = [ main: [], client: [] ]
-	def collected        = [:].withDefault { [ main: [], client: [] ] }
+	def applied   = [ main: [], client: [] ]
+	def collected = [:].withDefault { [ main: [], client: [] ] }
 
 	/* helper to wire one override root */
 	def applyOverrides = { String setName, File overrideRoot ->
@@ -67,7 +65,7 @@ afterEvaluate {
 		logger.lifecycle " • [${setName}] adding ${overrideRoot}"
 
 		def baseSrc   = file("src/${setName}/java")
-		def prevRoots = appliedJava[setName].toList()
+		def prevRoots = applied[setName].toList()   // <- capture earlier roots
 		sourceSets[setName].java.srcDir overrideRoot
 
 		/* exclude duplicates already in base or earlier overrides */
@@ -86,58 +84,20 @@ afterEvaluate {
 		fileTree(dir: overrideRoot, include: '**/*.java')
 				.matching { exclude sourceSets[setName].java.excludes }
 				.files.each { File kept ->
-			def rel    = overrideRoot.toPath().relativize(kept.toPath())
+			def rel = overrideRoot.toPath().relativize(kept.toPath())
 					.toString().replace(File.separator, '/')
 			def folder = overrideRoot.parentFile.parentFile.name
 			collected[folder][setName] << rel
 		}
 
-		appliedJava[setName] << overrideRoot
+		applied[setName] << overrideRoot        // now mark this as applied
 	}
 
-	def applyResourceOverrides = { String setName, File versionDir ->
-		File resDir = new File(versionDir, "${setName}/resources")
-		if (!resDir.exists()) {
-			logger.lifecycle " • [${setName} resources] no ${resDir.name} – skipping"
-			return
-		}
-		logger.lifecycle " • [${setName} resources] adding ${resDir}"
-
-		def baseRes   = file("src/${setName}/resources")
-		def prevRoots = appliedResources[setName].toList()
-		sourceSets[setName].resources.srcDir resDir
-
-		fileTree(dir: resDir, include: '**/*').each { File f ->
-			def rel = resDir.toPath().relativize(f.toPath())
-					.toString().replace(File.separator, '/')
-			sourceSets[setName].resources.exclude { d ->
-				d.relativePath.pathString == rel && (
-						(baseRes.exists() && d.file.absolutePath.startsWith(baseRes.absolutePath)) ||
-								prevRoots.any { p -> d.file.absolutePath.startsWith(p.absolutePath) }
-				)
-			}
-		}
-
-		// log each overridden resource file
-		fileTree(dir: resDir, include: '**/*').each { File f ->
-			def rel = resDir.toPath().relativize(f.toPath())
-					.toString().replace(File.separator, '/')
-			logger.lifecycle "    • ${rel}"
-		}
-
-		appliedResources[setName] << resDir
-	}
-
-	applicable.each { verDirEntry ->
-		def verDir = verDirEntry.dir
-		logger.lifecycle "Applying overrides from ${verDir.name}"
-
-		applyOverrides('main',   file("${verDir}/main/java"))
-		applyResourceOverrides('main', verDir)
-
+	applicable.each { verDir ->
+		logger.lifecycle "Applying overrides from ${verDir.dir.name}"
+		applyOverrides('main',   file("${verDir.dir}/main/java"))
 		if (sourceSets.findByName('client')) {
-			applyOverrides('client', file("${verDir}/client/java"))
-			applyResourceOverrides('client', verDir)
+			applyOverrides('client', file("${verDir.dir}/client/java"))
 		}
 	}
 
@@ -164,7 +124,7 @@ repositories {
 
 loom {
 	accessWidenerPath = file("src/main/resources/creaturechat.accesswidener")
-    splitEnvironmentSourceSets()
+	splitEnvironmentSourceSets()
 
 	mods {
 		"creaturechat" {

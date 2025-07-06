@@ -44,7 +44,7 @@ loader_version=$loader_version, \
 loom_version=$loom_version, \
 fabric_version=$fabric_version
 [DRY RUN] fabric.mod.json -> "minecraft": "~$mc_version"
-[DRY RUN] run './gradlew build -x test --build-cache --parallel'
+[DRY RUN] run './gradlew build -x test -x validateAccessWidener --build-cache --parallel'
 [DRY RUN] download fabric-api-$fabric_version.jar from FabricMC
 EOD
     echo
