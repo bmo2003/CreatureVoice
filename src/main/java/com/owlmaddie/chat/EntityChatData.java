@@ -235,7 +235,7 @@ public class EntityChatData {
         contextData.put("world_moon_phase", moonPhaseDescription);
 
         // Get Entity details
-        Mob entity = (Mob) ServerEntityFinder.getEntityByUUID(player.serverLevel(), UUID.fromString(entityId));
+        Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel)player.level(), UUID.fromString(entityId));
         if (entity.getCustomName() == null) {
             contextData.put("entity_name", "");
         } else {
@@ -365,7 +365,7 @@ public class EntityChatData {
                 if (output_message != null) {
                     // Chat Message: Parse message for behaviors
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
-                    Mob entity = (Mob) ServerEntityFinder.getEntityByUUID(player.serverLevel(), UUID.fromString(entityId));
+                    Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel)player.level(), UUID.fromString(entityId));
 
                     // Determine entity's default speed
                     // Some Entities (i.e. Axolotl) set this incorrectly... so adjusting in the SpeedControls class

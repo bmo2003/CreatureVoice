@@ -3,10 +3,11 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.controls;
 
+import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.FlyingMob;
+import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.monster.Ghast;
@@ -34,7 +35,7 @@ public class LookControls {
             handleSquidLook((Squid) entity, targetPos);
         } else if (entity instanceof Ghast) {
             handleFlyingEntity(entity, targetPos, 10F);
-        } else if (entity instanceof FlyingMob || entity instanceof Vex) {
+        } else if (entity instanceof FlyingAnimal || entity instanceof Vex || entity instanceof Phantom) {
             handleFlyingEntity(entity, targetPos, 4F);
         } else {
             // Make the entity look at the player

@@ -348,7 +348,7 @@ public class BubbleRenderer {
         for (String lineText : lines) {
             // Only draw lines that are within the specified range
             if (currentLineIndex >= starting_line && currentLineIndex < ending_line) {
-                fontRenderer.drawInBatch(lineText, -fontRenderer.width(lineText) / 2f, yOffset, 0xffffff,
+                fontRenderer.drawInBatch(lineText, -fontRenderer.width(lineText) / 2f, yOffset, 0xffffffff,
                         false, matrix, immediate, DisplayMode.NORMAL, 0, fullBright);
                 yOffset += fontRenderer.lineHeight + lineSpacing;
             }
@@ -381,7 +381,7 @@ public class BubbleRenderer {
             nameText = nameText.substring(0, 14) + "...";
         }
 
-        fontRenderer.drawInBatch(nameText, -fontRenderer.width(nameText) / 2f, yOffset, 0xffffff,
+        fontRenderer.drawInBatch(nameText, -fontRenderer.width(nameText) / 2f, yOffset, 0xffffffff,
                 false, matrix, immediate, DisplayMode.NORMAL, 0, fullBright);
     }
 
@@ -397,7 +397,7 @@ public class BubbleRenderer {
         Camera camera = context.camera();
         Entity cameraEntity = camera.getEntity();
         if (cameraEntity == null) return;
-        Level world = cameraEntity.getCommandSenderWorld();
+        Level world = cameraEntity.level();
 
         // Calculate radius of entities
         Vec3 pos = cameraEntity.position();

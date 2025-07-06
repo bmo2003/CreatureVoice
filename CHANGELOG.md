@@ -9,6 +9,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ### Changed
 - Large refactor to support Minecraft 1.21.5 and 1.21.6 (rendering changes)
 - Moving to official mojang mappings, due to missing blaze3d yarn mappings in 1.21.5/1.21.6 (huge refactor)
+- Updating font color to 0xffffffff (required by 1.21.6 - interpreted as ARGB)
+- Updating serverLevel() => level(), which is more compatible across versions
+- Changing FlyingMob to FlyingAnimal, and manually including Phantom
 
 ## [2.0.0] - 2025-06-30
 
