@@ -6,12 +6,11 @@ package com.owlmaddie.network;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,11 +22,11 @@ public final class ClientPacketHelper {
     private ClientPacketHelper() {}   // no instantiation
 
     // Id-and-codec cache
-    private static final Map<Identifier, CustomPayload.Id<LegacyPayload>> IDS =
+    private static final Map<ResourceLocation, CustomPacketPayload.Type<LegacyPayload>> IDS =
             new ConcurrentHashMap<>();
 
     // obtain (and lazily register) the payload id for this channel
-    private static CustomPayload.Id<LegacyPayload> idOf(Identifier ch) {
+    private static CustomPacketPayload.Type<LegacyPayload> idOf(ResourceLocation ch) {
         return IDS.computeIfAbsent(ch, key -> {
             var pid   = LegacyPayload.idFor(key);
             var codec = LegacyPayload.codec(pid);
@@ -47,24 +46,24 @@ public final class ClientPacketHelper {
     // Functional interfaces matching the old PlayChannelHandler
     @FunctionalInterface
     public interface ClientHandler {
-        void receive(MinecraftClient client,
-                     ClientPlayNetworkHandler handler,
-                     PacketByteBuf buffer,
+        void receive(Minecraft client,
+                     ClientPacketListener handler,
+                     FriendlyByteBuf buffer,
                      PacketSender responseSender);
     }
 
     // Send helpers
-    public static void send(Identifier channel, PacketByteBuf buf) {
+    public static void send(ResourceLocation channel, FriendlyByteBuf buf) {
         ClientPlayNetworking.send(new LegacyPayload(idOf(channel), buf));
     }
 
     // Receive helpers
-    public static void registerReceiver(Identifier channel, ClientHandler h) {
+    public static void registerReceiver(ResourceLocation channel, ClientHandler h) {
         ClientPlayNetworking.registerGlobalReceiver(idOf(channel),
                 (LegacyPayload p, ClientPlayNetworking.Context ctx) -> {
                     ctx.client().execute(() -> h.receive(
                             ctx.client(),
-                            ctx.client().getNetworkHandler(),
+                            ctx.client().getConnection(),
                             p.data(),
                             ctx.responseSender()));
                 });

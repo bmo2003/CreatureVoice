@@ -5,24 +5,24 @@ package com.owlmaddie.utils;
 
 import com.owlmaddie.ui.ClickHandler;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 public class UseItemCallbackHelper {
     /**
      * Fabric 1.21.2+ handler using ActionResult
      */
-    public static ActionResult handleUseItemAction(
-            PlayerEntity player,
-            World world,
-            Hand hand
+    public static InteractionResult handleUseItemAction(
+            Player player,
+            Level world,
+            InteractionHand hand
     ) {
         // fully qualified call into your ClickHandler
         if (ClickHandler.shouldCancelAction(world)) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 }

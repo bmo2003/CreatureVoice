@@ -4,20 +4,20 @@
 package com.owlmaddie.chat;
 
 import com.owlmaddie.utils.VillagerEntityAccessor;
-import net.minecraft.village.VillagerGossipType;
 import java.util.UUID;
+import net.minecraft.world.entity.ai.gossip.GossipType;
 
 /**
  * Override for 1.21.5 — uses the renamed VillagerGossipType.
  */
 public class GossipTypeHelper {
-    public static final VillagerGossipType MAJOR_POSITIVE   = VillagerGossipType.MAJOR_POSITIVE;
-    public static final VillagerGossipType MINOR_POSITIVE   = VillagerGossipType.MINOR_POSITIVE;
-    public static final VillagerGossipType MINOR_NEGATIVE   = VillagerGossipType.MINOR_NEGATIVE;
-    public static final VillagerGossipType MAJOR_NEGATIVE   = VillagerGossipType.MAJOR_NEGATIVE;
+    public static final GossipType MAJOR_POSITIVE   = GossipType.MAJOR_POSITIVE;
+    public static final GossipType MINOR_POSITIVE   = GossipType.MINOR_POSITIVE;
+    public static final GossipType MINOR_NEGATIVE   = GossipType.MINOR_NEGATIVE;
+    public static final GossipType MAJOR_NEGATIVE   = GossipType.MAJOR_NEGATIVE;
 
     public static void startGossip(VillagerEntityAccessor villager, UUID playerId,
-                                   VillagerGossipType type, int amount) {
+                                   GossipType type, int amount) {
         villager.getGossip().startGossip(playerId, type, amount);
     }
 }

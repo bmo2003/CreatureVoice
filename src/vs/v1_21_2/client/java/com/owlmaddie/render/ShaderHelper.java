@@ -4,11 +4,11 @@
 package com.owlmaddie.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.ShaderProgramKeys;   // table of built-in keys
+import net.minecraft.client.renderer.CoreShaders;
 
 /** Binds the GUI textured-quad shader (1.21.2+). */
 public final class ShaderHelper {
     public static void setTexturedShader() {
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR_TEX_LIGHTMAP);
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR_TEX_LIGHTMAP);
     }
 }

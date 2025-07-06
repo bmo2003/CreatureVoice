@@ -3,10 +3,10 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.utils;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.world.entity.Entity;
 
 /**
  * The {@code EntityRendererAccessor} class returns the EntityRenderer class for a specific Entity.
@@ -15,7 +15,7 @@ import net.minecraft.entity.Entity;
  */
 public class EntityRendererAccessor {
     public static EntityRenderer<?, ?> getEntityRenderer(Entity entity) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
         return dispatcher.getRenderer(entity);
     }

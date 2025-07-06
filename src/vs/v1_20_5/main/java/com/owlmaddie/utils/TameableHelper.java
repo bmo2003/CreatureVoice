@@ -3,7 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.utils;
 
-import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.world.entity.TamableAnimal;
 
 /**
  * Default helper for calling setTamed on TameableEntity.
@@ -13,13 +13,13 @@ public final class TameableHelper {
     private TameableHelper() {}
 
     /** wrap the two-arg setTamed API, false to match old behavior */
-    public static void setTamed(TameableEntity entity, boolean tamed) {
-        entity.setTamed(tamed, false);
+    public static void setTamed(TamableAnimal entity, boolean tamed) {
+        entity.setTame(tamed, false);
     }
 
     /** clear both tamed state and owner‐UUID on pre-1.21.5 */
-    public static void clearOwner(TameableEntity entity) {
-        entity.setTamed(false, false);
-        entity.setOwnerUuid(null);
+    public static void clearOwner(TamableAnimal entity) {
+        entity.setTame(false, false);
+        entity.setOwnerUUID(null);
     }
 }

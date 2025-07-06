@@ -4,8 +4,8 @@
 package com.owlmaddie.network;
 
 import java.net.URI;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.ClickEvent.OpenUrl;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.ClickEvent.OpenUrl;
 
 public class ClickEventHelper {
     /** new API: use the OpenUrl record */

@@ -7,17 +7,17 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -33,12 +33,12 @@ public class MixinLivingEntity {
 
     private EntityChatData getChatData(LivingEntity entity) {
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
-        return chatDataManager.getOrCreateChatData(entity.getUuidAsString());
+        return chatDataManager.getOrCreateChatData(entity.getStringUUID());
     }
 
     @Inject(method = "canTarget(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)
     private void modifyCanTarget(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
-        if (target instanceof PlayerEntity) {
+        if (target instanceof Player) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
             EntityChatData entityData = getChatData(thisEntity);
             PlayerData playerData = entityData.getPlayerData(target.getDisplayName().getString());
@@ -50,7 +50,7 @@ public class MixinLivingEntity {
     }
 
     @Inject(method = "damage(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/damage/DamageSource;F)Z", at = @At("RETURN"), require = 0)
-    private void onDamage(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    private void onDamage(ServerLevel world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         this.handleOnDamage(source, amount, cir);
     }
 
@@ -60,26 +60,26 @@ public class MixinLivingEntity {
     private void handleOnDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValue()) return;
 
-        Entity attacker = source.getAttacker();
+        Entity attacker = source.getEntity();
         LivingEntity self = (LivingEntity)(Object)this;
 
-        if (attacker instanceof PlayerEntity player
-                && self instanceof MobEntity mob
-                && !mob.isDead()) {
-            ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+        if (attacker instanceof Player player
+                && self instanceof Mob mob
+                && !mob.isDeadOrDying()) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             EntityChatData data = ChatDataManager
                     .getServerInstance()
-                    .getOrCreateChatData(mob.getUuidAsString());
+                    .getOrCreateChatData(mob.getStringUUID());
 
             if (!data.characterSheet.isEmpty()
                     && data.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
 
-                ItemStack weapon = serverPlayer.getMainHandStack();
+                ItemStack weapon = serverPlayer.getMainHandItem();
                 String weaponName = weapon.isEmpty()
                         ? "with fists"
                         : "with " + weapon.getItem().toString();
 
-                boolean indirect = source.getSource() != attacker;
+                boolean indirect = source.getDirectEntity() != attacker;
                 String directness = indirect ? "indirectly" : "directly";
 
                 String msg = "<" + player.getName().getString()
@@ -93,15 +93,15 @@ public class MixinLivingEntity {
     @Inject(method = "onDeath", at = @At("HEAD"))
     private void onDeath(DamageSource source, CallbackInfo info) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        World world = entity.getWorld();
+        Level world = entity.level();
 
-        if (!world.isClient() && entity.hasCustomName()) {
+        if (!world.isClientSide() && entity.hasCustomName()) {
             // Skip tamed entities and players
-            if (entity instanceof TameableEntity && ((TameableEntity) entity).isTamed()) {
+            if (entity instanceof TamableAnimal && ((TamableAnimal) entity).isTame()) {
                 return;
             }
 
-            if (entity instanceof PlayerEntity) {
+            if (entity instanceof Player) {
                 return;
             }
 
@@ -109,7 +109,7 @@ public class MixinLivingEntity {
             EntityChatData chatData = getChatData(entity);
             if (chatData != null && !chatData.characterSheet.isEmpty()) {
                 // Get the original death message
-                Text deathMessage = entity.getDamageTracker().getDeathMessage();
+                Component deathMessage = entity.getCombatTracker().getDeathMessage();
                 // Broadcast the death message to all players in the world
                 ServerPackets.BroadcastMessage(deathMessage);
             }

@@ -4,11 +4,11 @@
 package com.owlmaddie.ui;
 
 import com.owlmaddie.render.BlendHelper;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Create an image‐only button that swaps between normal/hover textures.
@@ -16,27 +16,27 @@ import net.minecraft.util.Identifier;
  */
 public class ButtonHelper {
 
-    public static ButtonWidget createImageButton(
+    public static Button createImageButton(
             int x, int y,
             int width, int height,
-            Identifier normalTex,
-            Identifier hoverTex,
-            ButtonWidget.PressAction onPress,
-            ButtonWidget.NarrationSupplier narrate
+            ResourceLocation normalTex,
+            ResourceLocation hoverTex,
+            Button.OnPress onPress,
+            Button.CreateNarration narrate
     ) {
-        return new ButtonWidget(x, y, width, height, Text.empty(), onPress, narrate) {
+        return new Button(x, y, width, height, Component.empty(), onPress, narrate) {
             @Override
-            protected void renderWidget(DrawContext ctx, int mouseX, int mouseY, float delta) {
+            protected void renderWidget(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
                 // turn on alpha blending
                 BlendHelper.enableBlend();
                 BlendHelper.defaultBlendFunc();
 
                 // choose the correct texture
-                Identifier tex = isHovered() ? hoverTex : normalTex;
+                ResourceLocation tex = isHovered() ? hoverTex : normalTex;
 
                 // draw from the GUI atlas, sampling just this sprite’s region
-                ctx.drawTexture(
-                        RenderLayer::getGuiTextured,  // supplies the atlas layer for this sprite
+                ctx.blit(
+                        RenderType::guiTextured,  // supplies the atlas layer for this sprite
                         tex,                          // your sprite ID
                         getX(), getY(),               // on-screen position
                         0f, 0f,                       // u,v origin

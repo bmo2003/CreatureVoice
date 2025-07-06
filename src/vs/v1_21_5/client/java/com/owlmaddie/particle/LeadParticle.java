@@ -3,61 +3,61 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.particle;
 
-import net.minecraft.client.particle.ParticleTextureSheet;
-import net.minecraft.client.particle.SpriteBillboardParticle;
-import net.minecraft.client.particle.SpriteProvider;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 /**
  * 1.21.5 override: use prevX/prevY/prevZ instead of the removed prevPosX/prevPosY/prevPosZ fields.
  */
-public class LeadParticle extends SpriteBillboardParticle {
-    private final SpriteProvider spriteProvider;
+public class LeadParticle extends TextureSheetParticle {
+    private final SpriteSet spriteProvider;
 
-    public LeadParticle(ClientWorld world,
+    public LeadParticle(ClientLevel world,
                         double x, double y, double z,
                         double velocityX, double velocityY, double velocityZ,
-                        SpriteProvider spriteProvider,
+                        SpriteSet spriteProvider,
                         double angle) {
         super(world, x, y, z, velocityX, velocityY, velocityZ);
-        this.velocityX = 0;
-        this.velocityY = 0;
-        this.velocityZ = 0;
+        this.xd = 0;
+        this.yd = 0;
+        this.zd = 0;
 
         this.spriteProvider = spriteProvider;
-        this.angle = (float) angle;
+        this.roll = (float) angle;
         this.scale(4.5F);
-        this.setMaxAge(40);
-        this.setSpriteForAge(spriteProvider);
+        this.setLifetime(40);
+        this.setSpriteFromAge(spriteProvider);
     }
 
     @Override
     public void tick() {
         super.tick();
-        this.setSpriteForAge(spriteProvider);
+        this.setSpriteFromAge(spriteProvider);
     }
 
     @Override
-    public int getBrightness(float tint) {
+    public int getLightColor(float tint) {
         return 0xF000F0;
     }
 
     @Override
-    public ParticleTextureSheet getType() {
-        return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
+    public ParticleRenderType getRenderType() {
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @Override
     public void render(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
-        Vec3d cameraPos = camera.getPos();
+        Vec3 cameraPos = camera.getPosition();
         // ← use prevX/Y/Z instead of prevPosX/Y/Z
-        float px = (float)(this.x - cameraPos.getX());
-        float py = (float)(this.y - cameraPos.getY());
-        float pz = (float)(this.z - cameraPos.getZ());
+        float px = (float)(this.x - cameraPos.x());
+        float py = (float)(this.y - cameraPos.y());
+        float pz = (float)(this.z - cameraPos.z());
 
         Vector3f[] verts = {
                 new Vector3f(-1, 0, -1),
@@ -66,26 +66,26 @@ public class LeadParticle extends SpriteBillboardParticle {
                 new Vector3f( 1, 0, -1)
         };
 
-        float size = this.getSize(tickDelta);
+        float size = this.getQuadSize(tickDelta);
         for (Vector3f v : verts) {
-            v.mul(size).rotateY(angle).add(px, py, pz);
+            v.mul(size).rotateY(roll).add(px, py, pz);
         }
 
-        float minU = this.getMinU(), maxU = this.getMaxU();
-        float minV = this.getMinV(), maxV = this.getMaxV();
-        int light = this.getBrightness(tickDelta);
+        float minU = this.getU0(), maxU = this.getU1();
+        float minV = this.getV0(), maxV = this.getV1();
+        int light = this.getLightColor(tickDelta);
 
-        vertexConsumer.vertex(verts[0].x(), verts[0].y(), verts[0].z())
-                .texture(maxU, maxV).color(red, green, blue, alpha)
-                .light(light).overlay(0);
-        vertexConsumer.vertex(verts[1].x(), verts[1].y(), verts[1].z())
-                .texture(maxU, minV).color(red, green, blue, alpha)
-                .light(light).overlay(0);
-        vertexConsumer.vertex(verts[2].x(), verts[2].y(), verts[2].z())
-                .texture(minU, minV).color(red, green, blue, alpha)
-                .light(light).overlay(0);
-        vertexConsumer.vertex(verts[3].x(), verts[3].y(), verts[3].z())
-                .texture(minU, maxV).color(red, green, blue, alpha)
-                .light(light).overlay(0);
+        vertexConsumer.addVertex(verts[0].x(), verts[0].y(), verts[0].z())
+                .setUv(maxU, maxV).setColor(rCol, gCol, bCol, alpha)
+                .setLight(light).setOverlay(0);
+        vertexConsumer.addVertex(verts[1].x(), verts[1].y(), verts[1].z())
+                .setUv(maxU, minV).setColor(rCol, gCol, bCol, alpha)
+                .setLight(light).setOverlay(0);
+        vertexConsumer.addVertex(verts[2].x(), verts[2].y(), verts[2].z())
+                .setUv(minU, minV).setColor(rCol, gCol, bCol, alpha)
+                .setLight(light).setOverlay(0);
+        vertexConsumer.addVertex(verts[3].x(), verts[3].y(), verts[3].z())
+                .setUv(minU, maxV).setColor(rCol, gCol, bCol, alpha)
+                .setLight(light).setOverlay(0);
     }
 }

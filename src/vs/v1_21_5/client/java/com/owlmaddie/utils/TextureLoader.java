@@ -5,19 +5,19 @@ package com.owlmaddie.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.client.texture.ResourceTexture;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.SimpleTexture;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
  * The {@code TextureLoader} class registers and returns texture identifiers for resources
@@ -28,7 +28,7 @@ public class TextureLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final Set<String> missing = new HashSet<>();
     public static GpuTexture lastTexture = null;
-    public static Identifier lastTextureId = null;
+    public static ResourceLocation lastTextureId = null;
 
     public TextureLoader() {}
 
@@ -36,27 +36,27 @@ public class TextureLoader {
      * Load and bind a UI texture (assets/creaturechat/textures/ui/{name}.png).
      * Returns the Identifier if found, or null if missing.
      */
-    public Identifier GetUI(String name) {
-        return load(new Identifier("creaturechat", "textures/ui/" + name + ".png"));
+    public ResourceLocation GetUI(String name) {
+        return load(new ResourceLocation("creaturechat", "textures/ui/" + name + ".png"));
     }
 
     /**
      * Load and bind an entity texture (assets/creaturechat/{texturePath}).
      * Returns the Identifier if found, or falls back to not_found.png.
      */
-    public Identifier GetEntity(String texturePath) {
-        Identifier id = new Identifier("creaturechat", texturePath);
-        ResourceManager rm = MinecraftClient.getInstance().getResourceManager();
+    public ResourceLocation GetEntity(String texturePath) {
+        ResourceLocation id = new ResourceLocation("creaturechat", texturePath);
+        ResourceManager rm = Minecraft.getInstance().getResourceManager();
         if (rm.getResource(id).isPresent()) {
             return load(id);
         } else {
             LOGGER.info("Texture not found: {}", texturePath);
-            return load(new Identifier("creaturechat", "textures/entity/not_found.png"));
+            return load(new ResourceLocation("creaturechat", "textures/entity/not_found.png"));
         }
     }
 
-    private Identifier load(Identifier id) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    private ResourceLocation load(ResourceLocation id) {
+        Minecraft client = Minecraft.getInstance();
         ResourceManager rm = client.getResourceManager();
         Optional<Resource> res = rm.getResource(id);
 
@@ -74,18 +74,18 @@ public class TextureLoader {
      * Bind any already-registered texture at the given unit,
      * or register+bind it if it's not yet in the TextureManager.
      */
-    public static void bind(int unit, Identifier id) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    public static void bind(int unit, ResourceLocation id) {
+        Minecraft client = Minecraft.getInstance();
         TextureManager tm = client.getTextureManager();
         AbstractTexture tex = tm.getTexture(id);
         if (tex == null) {
             // register a ResourceTexture so the manager will load it from assets
-            tex = new ResourceTexture(id);
-            tm.registerTexture(id, tex);
+            tex = new SimpleTexture(id);
+            tm.register(id, tex);
         }
 
         // Store last GpuTexture
-        GpuTexture gpu = tex.getGlTexture();
+        GpuTexture gpu = tex.getTexture();
         lastTexture = gpu;
         lastTextureId = id;
 
