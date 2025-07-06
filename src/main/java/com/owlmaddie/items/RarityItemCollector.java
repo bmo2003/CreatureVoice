@@ -21,9 +21,9 @@ public class RarityItemCollector {
         for (Item item : BuiltInRegistries.ITEM) {
             ItemStack stack = new ItemStack(item);
             if (stack.getRarity().equals(rarity) &&
-                    !item.getDescription().toString().contains("spawn_egg") &&
-                    !item.getDescription().toString().contains("jukebox") &&
-                    !item.getDescription().toString().contains("slab")) {
+                    !item.getName(stack).toString().contains("spawn_egg") &&
+                    !item.getName(stack).toString().contains("jukebox") &&
+                    !item.getName(stack).toString().contains("slab")) {
                 itemsOfSpecificRarity.add(item.getDescriptionId());
             }
         }

@@ -19,17 +19,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin {
     @Inject(
-            method = "renderLabelIfPresent(Lnet/minecraft/client/render/entity/state/EntityRenderState;"
-                    + "Lnet/minecraft/text/Text;"
-                    + "Lnet/minecraft/client/util/math/MatrixStack;"
-                    + "Lnet/minecraft/client/render/VertexConsumerProvider;"
+            method = "renderNameTag("
+                    + "Lnet/minecraft/client/renderer/entity/state/EntityRenderState;"
+                    + "Lnet/minecraft/network/chat/Component;"
+                    + "Lcom/mojang/blaze3d/vertex/PoseStack;"
+                    + "Lnet/minecraft/client/renderer/MultiBufferSource;"
                     + "I)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void cancelRenderLabel(EntityRenderState renderState,
-                                   Component text, PoseStack matrices,
-                                   MultiBufferSource vcp, int light,
+    private void cancelRenderLabel(EntityRenderState state,
+                                   Component text,
+                                   PoseStack matrices,
+                                   MultiBufferSource buffer,
+                                   int light,
                                    CallbackInfo ci) {
         ci.cancel();
     }

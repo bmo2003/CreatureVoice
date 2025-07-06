@@ -79,13 +79,18 @@ public class CreatureChatCommands {
     }
 
     private static List<ResourceLocation> getLivingEntityIds() {
-        List<ResourceLocation> livingEntityIds = BuiltInRegistries.ENTITY_TYPE.keySet().stream()
-                .filter(id -> {
-                    EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(id);
-                    return entityType != null && (entityType.getCategory() != MobCategory.MISC  || isIncludedEntity(entityType));
-                })
+        return BuiltInRegistries.ENTITY_TYPE
+                .keySet()
+                .stream()
+                .filter(id ->
+                        // getOptional(...) returns Optional<EntityType<?>> on all versions
+                        BuiltInRegistries.ENTITY_TYPE
+                                .getOptional(id)
+                                .map(type -> type.getCategory() != MobCategory.MISC
+                                        || isIncludedEntity(type))
+                                .orElse(false)
+                )
                 .collect(Collectors.toList());
-        return livingEntityIds;
     }
 
     private static boolean isIncludedEntity(EntityType<?> entityType) {

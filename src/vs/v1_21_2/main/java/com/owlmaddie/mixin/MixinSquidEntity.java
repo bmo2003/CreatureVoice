@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(Squid.class)
 public abstract class MixinSquidEntity implements ISquidEntity {
     // shadow the private field
-    @Shadow private Vec3 swimVec;
+    @Shadow private Vec3 movementVector;
 
     @Override
     public void forceSwimVector(Vec3 vec) {
-        this.swimVec = vec;
+        this.movementVector = vec;
     }
 }

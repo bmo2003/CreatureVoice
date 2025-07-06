@@ -15,7 +15,7 @@ import org.joml.Vector3f;
 
 /**
  * The {@code LeadParticle} class renders a static LEAD behavior particle (i.e. animated arrow pointing in the direction of lead). It
- * uses a SpriteProvider for animation.
+ * uses a SpriteProvider for animation. Modified for 1.21.2.
  */
 public class LeadParticle extends TextureSheetParticle {
     private final SpriteSet spriteProvider;
@@ -79,17 +79,17 @@ public class LeadParticle extends TextureSheetParticle {
         float maxV = this.getV1();
         int light = this.getLightColor(tickDelta);
 
-        vertexConsumer.vertex(vertices[0].x(), vertices[0].y(), vertices[0].z())
-                .uv(maxU, maxV).color(this.rCol, this.gCol, this.bCol, this.alpha)
-                .uv2(light).overlayCoords(0);
-        vertexConsumer.vertex(vertices[1].x(), vertices[1].y(), vertices[1].z())
-                .uv(maxU, minV).color(this.rCol, this.gCol, this.bCol, this.alpha)
-                .uv2(light).overlayCoords(0);
-        vertexConsumer.vertex(vertices[2].x(), vertices[2].y(), vertices[2].z())
-                .uv(minU, minV).color(this.rCol, this.gCol, this.bCol, this.alpha)
-                .uv2(light).overlayCoords(0);
-        vertexConsumer.vertex(vertices[3].x(), vertices[3].y(), vertices[3].z())
-                .uv(minU, maxV).color(this.rCol, this.gCol, this.bCol, this.alpha)
-                .uv2(light).overlayCoords(0);
+        vertexConsumer.addVertex(vertices[0].x(), vertices[0].y(), vertices[0].z())
+                .setUv(maxU, maxV).setColor(this.rCol, this.gCol, this.bCol, this.alpha)
+                .setLight(light).setOverlay(0);
+        vertexConsumer.addVertex(vertices[1].x(), vertices[1].y(), vertices[1].z())
+                .setUv(maxU, minV).setColor(this.rCol, this.gCol, this.bCol, this.alpha)
+                .setLight(light).setOverlay(0);
+        vertexConsumer.addVertex(vertices[2].x(), vertices[2].y(), vertices[2].z())
+                .setUv(minU, minV).setColor(this.rCol, this.gCol, this.bCol, this.alpha)
+                .setLight(light).setOverlay(0);
+        vertexConsumer.addVertex(vertices[3].x(), vertices[3].y(), vertices[3].z())
+                .setUv(minU, maxV).setColor(this.rCol, this.gCol, this.bCol, this.alpha)
+                .setLight(light).setOverlay(0);
     }
 }

@@ -75,7 +75,7 @@ public class MixinMobEntity {
             // Player has item in hand
             if (!itemStack.isEmpty()) {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
-                String itemName = itemStack.getItem().getDescription().getString();
+                String itemName = itemStack.getItem().getName(itemStack).getString();
                 int itemCount = itemStack.getCount();
 
                 // Decide verb

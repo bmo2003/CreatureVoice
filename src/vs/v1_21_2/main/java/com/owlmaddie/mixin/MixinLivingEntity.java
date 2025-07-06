@@ -36,8 +36,12 @@ public class MixinLivingEntity {
         return chatDataManager.getOrCreateChatData(entity.getStringUUID());
     }
 
-    @Inject(method = "canTarget(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)
-    private void modifyCanTarget(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(
+            method = "canAttack(Lnet/minecraft/world/entity/LivingEntity;)Z",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void modifyCanAttack(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
         if (target instanceof Player) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
             EntityChatData entityData = getChatData(thisEntity);
@@ -49,8 +53,14 @@ public class MixinLivingEntity {
         }
     }
 
-    @Inject(method = "damage(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/damage/DamageSource;F)Z", at = @At("RETURN"), require = 0)
-    private void onDamage(ServerLevel world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(
+            method = "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z",
+            at     = @At("RETURN")
+    )
+    private void onHurt(ServerLevel world,
+                        DamageSource source,
+                        float amount,
+                        CallbackInfoReturnable<Boolean> cir) {
         this.handleOnDamage(source, amount, cir);
     }
 
@@ -90,8 +100,13 @@ public class MixinLivingEntity {
         }
     }
 
-    @Inject(method = "onDeath", at = @At("HEAD"))
-    private void onDeath(DamageSource source, CallbackInfo info) {
+    @Inject(
+            method = "getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F",
+            at     = @At("RETURN")
+    )
+    private void afterArmor(DamageSource source,
+                            float rawDamage,
+                            CallbackInfoReturnable<Float> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
         Level world = entity.level();
 
