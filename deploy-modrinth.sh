@@ -47,6 +47,9 @@ for FILE in creaturechat*.jar; do
     if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
       LOADERS='["forge"]'
       DEPENDENCIES='[{"project_id": "u58R1TMW", "dependency_type": "required"}, {"project_id": "Aqlf1Shp", "dependency_type": "required"}]'
+    elif [[ "$FILE_BASENAME" == *"-neoforge.jar" ]]; then
+      LOADERS='["neoforge"]'
+      DEPENDENCIES='[{"project_id": "u58R1TMW", "dependency_type": "required"}, {"project_id": "Aqlf1Shp", "dependency_type": "required"}]'
     else
       LOADERS='["fabric"]'
       DEPENDENCIES='[{"project_id": "P7dR8mSH", "dependency_type": "required"}]'

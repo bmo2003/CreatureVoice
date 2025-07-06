@@ -13,9 +13,11 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Updated serverLevel() => level(), which is more compatible across versions
 - Changing FlyingMob to FlyingAnimal, and manually including Phantom
 - Updated build script to include 1.21.5, 1.21.6, and 1.21.7, and a neoforge option for 1.21.1
+- Improving the version-specific build system to include resources (like accesswidener)
 
 ### Fixed
 - Fixing duplicate log messages about missing textures
+- Updating accesswidener in 1.21.2+ - removing getPixelRGBA (getPixel replaces it and it's already public)
 
 ## [2.0.0] - 2025-06-30
 
