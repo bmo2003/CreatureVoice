@@ -50,7 +50,9 @@ public class TextureLoader {
         if (rm.getResource(id).isPresent()) {
             return load(id);
         } else {
-            LOGGER.info("Texture not found: {}", texturePath);
+            if (missing.add(texturePath)) {
+                LOGGER.info("Missing texture: {}", texturePath);
+            }
             return load(new ResourceLocation("creaturechat", "textures/entity/not_found.png"));
         }
     }

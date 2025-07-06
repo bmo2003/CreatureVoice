@@ -13,6 +13,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Updating serverLevel() => level(), which is more compatible across versions
 - Changing FlyingMob to FlyingAnimal, and manually including Phantom
 
+### Fixed
+- Fixing duplicate log messages about missing textures
+
 ## [2.0.0] - 2025-06-30
 
 ### Added

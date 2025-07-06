@@ -21,7 +21,7 @@ import net.minecraft.server.packs.resources.Resource;
  */
 public class TextureLoader {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-    private static final Set<String> missingTextures = new HashSet<>();
+    private static final Set<String> missing = new HashSet<>();
 
     public TextureLoader() {}
 
@@ -62,7 +62,7 @@ public class TextureLoader {
     }
 
     private void logMissingTextureOnce(String texturePath) {
-        if (missingTextures.add(texturePath)) {
+        if (missing.add(texturePath)) {
             LOGGER.info("{} was not found", texturePath);
         }
     }
