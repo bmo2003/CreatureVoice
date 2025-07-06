@@ -5,6 +5,7 @@ package com.owlmaddie.mixin;
 
 import com.mojang.datafixers.util.Either;
 import com.owlmaddie.chat.ChatDataManager;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -23,19 +24,19 @@ import net.minecraft.world.level.block.entity.CreakingHeartBlockEntity;
 * */
 @Mixin(CreakingHeartBlockEntity.class)
 public class MixinCreakingHeartBlockEntity {
-    @Shadow private Either<Creaking, UUID> creakingPuppet;
+    @Shadow @Nullable private Either<Creaking, UUID> creakingInfo;
     @Unique private UUID creaturechatCachedId;
 
     /**
      * Cache the old puppet UUID when the heart kills its puppet (night despawn)
      */
     @Inject(
-            method = "killPuppet(Lnet/minecraft/entity/damage/DamageSource;)V",
-            at = @At("HEAD")
+            method = "removeProtector(Lnet/minecraft/world/damagesource/DamageSource;)V",
+            at     = @At("HEAD")
     )
-    private void cacheOnKill(DamageSource source, CallbackInfo ci) {
-        if (creakingPuppet != null) {
-            creaturechatCachedId = creakingPuppet.map(e -> e.getUUID(), u -> u);
+    private void cacheOnKill(@Nullable DamageSource source, CallbackInfo ci) {
+        if (creakingInfo != null) {
+            creaturechatCachedId = creakingInfo.map(e -> e.getUUID(), u -> u);
             LoggerFactory.getLogger("creaturechat").info("[Creaking-Cache] cached puppetUUID={}", creaturechatCachedId);
         } else {
             LoggerFactory.getLogger("creaturechat").warn("[Creaking-Cache] no puppet to cache");
@@ -46,8 +47,8 @@ public class MixinCreakingHeartBlockEntity {
      * Restore chat mapping when a new puppet is set (spawn at dawn)
      */
     @Inject(
-            method = "setCreakingPuppet(Lnet/minecraft/entity/mob/CreakingEntity;)V",
-            at = @At("TAIL")
+            method = "setCreakingInfo(Lnet/minecraft/world/entity/monster/creaking/Creaking;)V",
+            at     = @At("TAIL")
     )
     private void restoreOnSpawn(Creaking puppet, CallbackInfo ci) {
         if (creaturechatCachedId != null) {

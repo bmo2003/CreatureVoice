@@ -17,10 +17,10 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(DynamicTexture.class)
 public abstract class MixinPlayerSkinTexture implements IPlayerSkinTexture {
     /** The private field that holds the loaded image */
-    @Shadow private NativeImage image;
+    @Shadow private NativeImage pixels;
 
     @Override
     public NativeImage getLoadedImage() {
-        return this.image;
+        return this.pixels;
     }
 }
