@@ -15,7 +15,7 @@ import org.joml.Vector3f;
 
 /**
  * The {@code LeadParticle} class renders a static LEAD behavior particle (i.e. animated arrow pointing in the direction of lead). It
- * uses a SpriteProvider for animation. Modified for 1.21.2.
+ * uses a SpriteProvider for animation. Modified for 1.21+.
  */
 public class LeadParticle extends TextureSheetParticle {
     private final SpriteSet spriteProvider;
