@@ -34,7 +34,7 @@ for FILE in creaturechat*.jar; do
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
-    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\)*\.jar/\1/p')
+    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\|-neoforge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION+$MINECRAFT_VERSION"
 
     # Verify that OUR_VERSION and MINECRAFT_VERSION are not empty and OUR_VERSION matches VERSION
