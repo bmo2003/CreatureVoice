@@ -8,7 +8,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - Support for Minecraft 1.21.5, 1.21.6, and 1.21.7
-- NeoForge loader support for 1.21, 1.21.1
+- NeoForge loader support for 1.21.1
 
 ### Changed
 - Large refactor to support Minecraft 1.21.5+ (large NBT, rendering, and API changes)
