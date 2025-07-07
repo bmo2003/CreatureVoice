@@ -20,6 +20,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ### Fixed
 - Fixing duplicate log messages about missing textures
 - Disabling validateAccessWidener task on build script
+- Fixed Warm/Cold Chicken icons
+- Fixed HappyGhast support in LookControls (supports Lead/Follow)
 
 ## [2.0.0] - 2025-06-30
 
