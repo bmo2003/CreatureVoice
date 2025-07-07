@@ -6,14 +6,16 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ## Unreleased
 
+### Added
+- Support for Minecraft 1.21.5, 1.21.6, and 1.21.7
+- NeoForge loader support for 1.21, 1.21.1
+
 ### Changed
-- Large refactor to support Minecraft 1.21.5 and 1.21.7 (rendering changes)
-- Moving to official mojang mappings, due to missing blaze3d yarn mappings in 1.21.5/1.21.6 (HUGE refactor)
+- Large refactor to support Minecraft 1.21.5+ (large NBT, rendering, and API changes)
+- Migrated to official mojang mappings, due to missing yarn mappings in 1.21.5/1.21.6 (HUGE refactor)
 - Updated font color to 0xffffffff (required by 1.21.6 - interpreted as ARGB)
 - Updated serverLevel() => level(), which is more compatible across versions
 - Changing FlyingMob to FlyingAnimal, and manually including Phantom
-- Updated build script to include 1.21.5, 1.21.6, and 1.21.7, and a neoforge option for 1.21.1
-- Improving the version-specific build system to include resources (like accesswidener)
 
 ### Fixed
 - Fixing duplicate log messages about missing textures

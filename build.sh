@@ -69,6 +69,7 @@ EOD
   # Safe Forge/NeoForge packaging
   case "$mc_version" in
     "1.20.1") suffix="forge" ;;
+    "1.21") suffix="neoforge" ;;
     "1.21.1") suffix="neoforge" ;;
     *)        suffix="" ;;
   esac
