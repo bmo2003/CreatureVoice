@@ -4,9 +4,9 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.utils.WitherEntityAccessor;
-import net.minecraft.entity.boss.WitherEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.server.level.ServerLevel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -15,21 +15,28 @@ import org.spongepowered.asm.mixin.Shadow;
  * {@code dropEquipment(ServerWorld, DamageSource, boolean)}
  * to our legacy 3-arg accessor.
  */
-@Mixin(WitherEntity.class)
+@Mixin(WitherBoss.class)
 public abstract class MixinWitherEntity implements WitherEntityAccessor {
 
-    // New 1.21 signature
+    /**
+     * Shadow the new signature:
+     * protected void dropCustomDeathLoot(ServerLevel, DamageSource, boolean)
+     */
     @Shadow
-    protected abstract void dropEquipment(ServerWorld world,
-                                          DamageSource source,
-                                          boolean causedByPlayer);
+    protected abstract void dropCustomDeathLoot(ServerLevel world,
+                                                DamageSource source,
+                                                boolean allowDrops);
 
-    /** Keeps old API; {@code lootingMultiplier} is obsolete in 1.21. */
+    /**
+     * Legacy interface method. We ignore lootingMultiplier (dropped in 1.21)
+     * and forward into the new hook.
+     */
     @Override
     public void callDropEquipment(DamageSource source,
                                   int lootingMultiplier,
                                   boolean allowDrops) {
-        ServerWorld world = (ServerWorld) ((WitherEntity) (Object) this).getWorld();
-        dropEquipment(world, source, allowDrops);
+        // level() returns a Level; cast to ServerLevel
+        ServerLevel world = (ServerLevel) ((WitherBoss)(Object)this).level();
+        dropCustomDeathLoot(world, source, allowDrops);
     }
 }

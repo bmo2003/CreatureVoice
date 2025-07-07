@@ -13,6 +13,6 @@ public final class TickDelta {
     private TickDelta() { }          // utility class
 
     public static float get(WorldRenderContext ctx) {
-        return ctx.tickCounter().getTickDelta(false);
+        return ctx.tickCounter().getGameTimeDeltaPartialTick(false);
     }
 }

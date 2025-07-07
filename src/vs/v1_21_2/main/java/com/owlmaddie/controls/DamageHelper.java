@@ -3,9 +3,9 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.controls;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * 1.21.2+ implementation: uses the new three-arg damage(...)
@@ -18,8 +18,8 @@ public final class DamageHelper {
      * @return true if damage was applied
      */
     public static boolean applyLeapDamage(LivingEntity attacker, LivingEntity target, float amount) {
-        ServerWorld world = (ServerWorld)attacker.getWorld();
-        DamageSource src = attacker.getDamageSources().generic();
-        return target.damage(world, src, amount);
+        ServerLevel world = (ServerLevel)attacker.level();
+        DamageSource src = attacker.damageSources().generic();
+        return target.hurtServer(world, src, amount);
     }
 }

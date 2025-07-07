@@ -9,18 +9,21 @@ shopt -s nullglob
 
 # Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
 VERSIONS=$(cat <<'EOF'
-1.20    1.20+build.1       0.16.14    1.10-SNAPSHOT   0.83.0+1.20
-1.20.1  1.20.1+build.10    0.15.11    1.10-SNAPSHOT   0.92.1+1.20.1
-1.20.2  1.20.2+build.4     0.15.11    1.10-SNAPSHOT   0.91.6+1.20.2
-1.20.3  1.20.3+build.1     0.15.11    1.10-SNAPSHOT   0.91.1+1.20.3
-1.20.4  1.20.4+build.3     0.15.11    1.10-SNAPSHOT   0.97.0+1.20.4
-1.20.5  1.20.5+build.1     0.16.14    1.10-SNAPSHOT   0.97.8+1.20.5
-1.20.6  1.20.6+build.3     0.16.14    1.10-SNAPSHOT   0.100.8+1.20.6
-1.21    1.21+build.9       0.16.14    1.10-SNAPSHOT   0.102.0+1.21
-1.21.1  1.21.1+build.3     0.16.14    1.10-SNAPSHOT   0.116.3+1.21.1
-1.21.2  1.21.2+build.1     0.16.14    1.10-SNAPSHOT   0.106.1+1.21.2
-1.21.3  1.21.3+build.2     0.16.14    1.10-SNAPSHOT   0.114.1+1.21.3
-1.21.4  1.21.4+build.8     0.16.14    1.10-SNAPSHOT   0.119.3+1.21.4
+1.20    1.20+build.1       0.16.14    1.11-SNAPSHOT   0.83.0+1.20
+1.20.1  1.20.1+build.10    0.15.11    1.11-SNAPSHOT   0.92.1+1.20.1
+1.20.2  1.20.2+build.4     0.15.11    1.11-SNAPSHOT   0.91.6+1.20.2
+1.20.3  1.20.3+build.1     0.15.11    1.11-SNAPSHOT   0.91.1+1.20.3
+1.20.4  1.20.4+build.3     0.15.11    1.11-SNAPSHOT   0.97.0+1.20.4
+1.20.5  1.20.5+build.1     0.16.14    1.11-SNAPSHOT   0.97.8+1.20.5
+1.20.6  1.20.6+build.3     0.16.14    1.11-SNAPSHOT   0.100.8+1.20.6
+1.21    1.21+build.9       0.16.14    1.11-SNAPSHOT   0.102.0+1.21
+1.21.1  1.21.1+build.3     0.16.14    1.11-SNAPSHOT   0.116.3+1.21.1
+1.21.2  1.21.2+build.1     0.16.14    1.11-SNAPSHOT   0.106.1+1.21.2
+1.21.3  1.21.3+build.2     0.16.14    1.11-SNAPSHOT   0.114.1+1.21.3
+1.21.4  1.21.4+build.8     0.16.14    1.11-SNAPSHOT   0.119.3+1.21.4
+1.21.5  1.21.5+build.1     0.16.14    1.11-SNAPSHOT   0.128.1+1.21.5
+1.21.6  1.21.6+build.1     0.16.14    1.11-SNAPSHOT   0.128.2+1.21.6
+1.21.7  1.21.7+build.6     0.16.14    1.11-SNAPSHOT   0.128.2+1.21.7
 EOF
 )
 
@@ -41,7 +44,7 @@ loader_version=$loader_version, \
 loom_version=$loom_version, \
 fabric_version=$fabric_version
 [DRY RUN] fabric.mod.json -> "minecraft": "~$mc_version"
-[DRY RUN] run './gradlew build -x test --build-cache --parallel'
+[DRY RUN] run './gradlew build -x test -x validateAccessWidener --build-cache --parallel'
 [DRY RUN] download fabric-api-$fabric_version.jar from FabricMC
 EOD
     echo
@@ -59,20 +62,27 @@ EOD
   sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$mc_version\"/" \
     src/main/resources/fabric.mod.json
 
-  ./gradlew build -x test --build-cache --parallel
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
   find build/libs -name '*sources*.jar' -delete
   mv build/libs/creaturechat-*.jar .
 
-  # safe Forge packaging for exactly 1.20.1
-  if [[ "$mc_version" == "1.20.1" ]]; then
-    forge_jars=(creaturechat-*+1.20.1.jar)
+  # Safe Forge/NeoForge packaging
+  case "$mc_version" in
+    "1.20.1") suffix="forge" ;;
+    "1.21.1") suffix="neoforge" ;;
+    *)        suffix="" ;;
+  esac
+
+  if [[ -n "$suffix" ]]; then
+    forge_jars=(creaturechat-*+"$mc_version".jar)
     if (( ${#forge_jars[@]} )); then
       jar="${forge_jars[0]}"
-      cp "$jar" "${jar%.jar}-forge.jar"
-      touch FORGE
-      zip -r "${jar%.jar}-forge.jar" FORGE
+      cp "$jar" "${jar%.jar}-$suffix.jar"
+      touch "${suffix^^}"  # Uppercase marker file: FORGE or NEOFORGE
+      zip -r "${jar%.jar}-$suffix.jar" "${suffix^^}"
+      rm "${suffix^^}"
     else
-      echo "Warning: no jar matched for Forge packaging (creaturechat-*+1.20.1.jar)" >&2
+      echo "Warning: no jar matched for $suffix packaging (creaturechat-*+$mc_version.jar)" >&2
     fi
   fi
 

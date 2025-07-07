@@ -4,6 +4,26 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2025-07-07
+
+### Added
+- Support for Minecraft 1.21.5, 1.21.6, and 1.21.7
+- Initial NeoForge support for Minecraft 1.21.1
+- New icons: Happy Ghast, Pig (cold & warm variants)
+
+### Changed
+- Major refactor to support Minecraft 1.21.5+ (new NBT format, rendering pipeline, and updated APIs)
+- Migrated to official Mojang mappings due to missing Yarn support in 1.21.5+ (huge internal rewrite)
+- Updated font color to `0xFFFFFFFF` (now ARGB as required by 1.21.6)
+- Changed `serverLevel()` to `level()` for broader version compatibility
+- Switched `FlyingMob` to `FlyingAnimal`, and added Phantom entity
+
+### Fixed
+- Removed duplicate log messages for missing textures
+- Fixed broken icons: Chicken (temperate), Cow (cold, temperate, warm)
+- Fixed HappyGhast behavior in LookControls (supports lead/follow logic)
+- Disabled `validateAccessWidener` during build to prevent build failures
+
 ## [2.0.0] - 2025-06-30
 
 ### Added

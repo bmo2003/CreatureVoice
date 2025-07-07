@@ -4,17 +4,17 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.controls.ISquidEntity;
-import net.minecraft.entity.passive.SquidEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.animal.Squid;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 
 /** Exposes forceSwimVector(...) by calling the old public API. */
-@Mixin(SquidEntity.class)
+@Mixin(Squid.class)
 public abstract class MixinSquidEntity implements ISquidEntity {
     @Override
-    public void forceSwimVector(Vec3d vec) {
+    public void forceSwimVector(Vec3 vec) {
         // 1.20: the public method still exists
-        ((SquidEntity)(Object)this)
-            .setSwimmingVector((float)vec.x, (float)vec.y, (float)vec.z);
+        ((Squid)(Object)this)
+            .setMovementVector((float)vec.x, (float)vec.y, (float)vec.z);
     }
 }

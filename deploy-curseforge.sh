@@ -57,13 +57,14 @@ fetch_game_version_ids() {
   local server_id=$(echo "$response" | jq -r '.[] | select(.name == "Server") | .id')
   local fabric_id=$(echo "$response" | jq -r '.[] | select(.name == "Fabric") | .id')
   local forge_id=$(echo "$response" | jq -r '.[] | select(.name == "Forge") | .id')
+  local neoforge_id=$(echo "$response" | jq -r '.[] | select(.name == "NeoForge") | .id')
 
   if [ -z "$client_id" ] || [ -z "$server_id" ] || ([ -z "$fabric_id" ] && [ -z "$forge_id" ]); then
     echo "ERROR: One or more game version IDs not found."
     exit 1
   fi
 
-  echo "$client_id $server_id $fabric_id $forge_id $minecraft_id"
+  echo "$client_id $server_id $fabric_id $forge_id $minecraft_id $neoforge_id"
 }
 
 # Read the first changelog block
@@ -90,7 +91,7 @@ for FILE in creaturechat*.jar; do
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
     OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
-    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\)*\.jar/\1/p')
+    MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\|-neoforge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION-$MINECRAFT_VERSION"
 
     # Verify that OUR_VERSION and MINECRAFT_VERSION are not empty and OUR_VERSION matches VERSION
@@ -107,14 +108,20 @@ for FILE in creaturechat*.jar; do
 
     # DEBUG
     echo "Minecraft Type ID: $GAME_TYPE_ID"
-    echo "Minecraft Versions IDs (client_id: ${GAME_VERSION_IDS[0]}, server_id: ${GAME_VERSION_IDS[1]}, fabric_id: ${GAME_VERSION_IDS[2]}, forge_id: ${GAME_VERSION_IDS[3]}, minecraft_id: ${GAME_VERSION_IDS[4]})"
+    echo "Minecraft Versions IDs (client_id: ${GAME_VERSION_IDS[0]}, server_id: ${GAME_VERSION_IDS[1]}, fabric_id: ${GAME_VERSION_IDS[2]}, forge_id: ${GAME_VERSION_IDS[3]}, minecraft_id: ${GAME_VERSION_IDS[4]}, neoforge_id: ${GAME_VERSION_IDS[5]})"
 
-    # Determine the dependency slugs and loader ID based on the file name
+    # Determine the dependency slugs and gameVersions based on the file name
     if [[ "$FILE_BASENAME" == *"-forge.jar" ]]; then
       DEPENDENCY_SLUGS=("sinytra-connector" "forgified-fabric-api")
+      # client, server, forge, minecraft
       GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[3]}, ${GAME_VERSION_IDS[4]}]"
+    elif [[ "$FILE_BASENAME" == *"-neoforge.jar" ]]; then
+      DEPENDENCY_SLUGS=("sinytra-connector" "forgified-fabric-api")
+      # client, server, neoforge, minecraft
+      GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[5]}, ${GAME_VERSION_IDS[4]}]"
     else
       DEPENDENCY_SLUGS=("fabric-api")
+      # client, server, fabric, minecraft
       GAME_VERSIONS="[${GAME_VERSION_IDS[0]}, ${GAME_VERSION_IDS[1]}, ${GAME_VERSION_IDS[2]}, ${GAME_VERSION_IDS[4]}]"
     fi
 

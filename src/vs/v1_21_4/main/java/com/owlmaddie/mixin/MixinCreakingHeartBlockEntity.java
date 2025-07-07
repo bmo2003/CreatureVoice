@@ -5,9 +5,7 @@ package com.owlmaddie.mixin;
 
 import com.mojang.datafixers.util.Either;
 import com.owlmaddie.chat.ChatDataManager;
-import net.minecraft.block.entity.CreakingHeartBlockEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.CreakingEntity;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -17,25 +15,28 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.UUID;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.monster.creaking.Creaking;
+import net.minecraft.world.level.block.entity.CreakingHeartBlockEntity;
 
 /*
 * Mixin to allow a Creaking Puppet to maintain chat history when spawned / despawned (day / night)
 * */
 @Mixin(CreakingHeartBlockEntity.class)
 public class MixinCreakingHeartBlockEntity {
-    @Shadow private Either<CreakingEntity, UUID> creakingPuppet;
+    @Shadow @Nullable private Either<Creaking, UUID> creakingInfo;
     @Unique private UUID creaturechatCachedId;
 
     /**
      * Cache the old puppet UUID when the heart kills its puppet (night despawn)
      */
     @Inject(
-            method = "killPuppet(Lnet/minecraft/entity/damage/DamageSource;)V",
-            at = @At("HEAD")
+            method = "removeProtector(Lnet/minecraft/world/damagesource/DamageSource;)V",
+            at     = @At("HEAD")
     )
-    private void cacheOnKill(DamageSource source, CallbackInfo ci) {
-        if (creakingPuppet != null) {
-            creaturechatCachedId = creakingPuppet.map(e -> e.getUuid(), u -> u);
+    private void cacheOnKill(@Nullable DamageSource source, CallbackInfo ci) {
+        if (creakingInfo != null) {
+            creaturechatCachedId = creakingInfo.map(e -> e.getUUID(), u -> u);
             LoggerFactory.getLogger("creaturechat").info("[Creaking-Cache] cached puppetUUID={}", creaturechatCachedId);
         } else {
             LoggerFactory.getLogger("creaturechat").warn("[Creaking-Cache] no puppet to cache");
@@ -46,17 +47,17 @@ public class MixinCreakingHeartBlockEntity {
      * Restore chat mapping when a new puppet is set (spawn at dawn)
      */
     @Inject(
-            method = "setCreakingPuppet(Lnet/minecraft/entity/mob/CreakingEntity;)V",
-            at = @At("TAIL")
+            method = "setCreakingInfo(Lnet/minecraft/world/entity/monster/creaking/Creaking;)V",
+            at     = @At("TAIL")
     )
-    private void restoreOnSpawn(CreakingEntity puppet, CallbackInfo ci) {
+    private void restoreOnSpawn(Creaking puppet, CallbackInfo ci) {
         if (creaturechatCachedId != null) {
-            UUID newId = puppet.getUuid();
+            UUID newId = puppet.getUUID();
             LoggerFactory.getLogger("creaturechat").info("[Creaking-Restore] {} → {}", creaturechatCachedId, newId);
             ChatDataManager.getServerInstance().updateUUID(creaturechatCachedId.toString(), newId.toString());
             creaturechatCachedId = null;
         } else {
-            LoggerFactory.getLogger("creaturechat").warn("[Creaking-Restore] no cached UUID for puppet {}", puppet.getUuid());
+            LoggerFactory.getLogger("creaturechat").warn("[Creaking-Restore] no cached UUID for puppet {}", puppet.getUUID());
         }
     }
 }

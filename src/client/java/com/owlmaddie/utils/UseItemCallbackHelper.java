@@ -4,11 +4,11 @@
 package com.owlmaddie.utils;
 
 import com.owlmaddie.ui.ClickHandler;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /**
  * Helper for UseItemCallback, forwarding to the shared shouldCancelAction logic.
@@ -19,22 +19,22 @@ public final class UseItemCallbackHelper {
     /**
      * Fabric 1.20.x & 1.21.2 handler using TypedActionResult&lt;ItemStack&gt;.
      */
-    public static TypedActionResult<ItemStack> handleUseItemAction(
-            PlayerEntity player,
-            World world,
-            Hand hand
+    public static InteractionResultHolder<ItemStack> handleUseItemAction(
+            Player player,
+            Level world,
+            InteractionHand hand
     ) {
         if (shouldCancelAction(world)) {
-            return TypedActionResult.fail(player.getStackInHand(hand));
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
-        return TypedActionResult.pass(player.getStackInHand(hand));
+        return InteractionResultHolder.pass(player.getItemInHand(hand));
     }
 
     /**
      * Mirrors whatever logic you had in ClickHandler.shouldCancelAction.
      * You’ll need to make that method public in ClickHandler so you can call it here.
      */
-    private static boolean shouldCancelAction(World world) {
+    private static boolean shouldCancelAction(Level world) {
         return ClickHandler.shouldCancelAction(world);
     }
 }

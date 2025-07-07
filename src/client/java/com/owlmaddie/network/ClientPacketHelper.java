@@ -5,9 +5,9 @@ package com.owlmaddie.network;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * 1.20.4-compatible wrapper around Fabric’s networking helpers.
@@ -23,7 +23,7 @@ public final class ClientPacketHelper {
     /**
      * Send a packet from the client to the server.
      */
-    public static void send(Identifier channelId, PacketByteBuf buf) {
+    public static void send(ResourceLocation channelId, FriendlyByteBuf buf) {
         ClientPlayNetworking.send(channelId, buf);
     }
 
@@ -31,7 +31,7 @@ public final class ClientPacketHelper {
      * Register a global receiver on the client (S2C).
      */
     public static void registerReceiver(
-            Identifier channelId,
+            ResourceLocation channelId,
             ClientPlayNetworking.PlayChannelHandler handler) {
         ClientPlayNetworking.registerGlobalReceiver(channelId, handler);
     }
@@ -41,7 +41,7 @@ public final class ClientPacketHelper {
     /**
      * Send a packet from the server to a specific client.
      */
-    public static void send(ServerPlayerEntity player, Identifier channelId, PacketByteBuf buf) {
+    public static void send(ServerPlayer player, ResourceLocation channelId, FriendlyByteBuf buf) {
         ServerPlayNetworking.send(player, channelId, buf);
     }
 
@@ -49,7 +49,7 @@ public final class ClientPacketHelper {
      * Register a global receiver on the server (C2S).
      */
     public static void registerReceiver(
-            Identifier channelId,
+            ResourceLocation channelId,
             ServerPlayNetworking.PlayChannelHandler handler) {
         ServerPlayNetworking.registerGlobalReceiver(channelId, handler);
     }

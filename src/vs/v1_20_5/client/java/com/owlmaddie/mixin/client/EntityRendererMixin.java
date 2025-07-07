@@ -3,11 +3,11 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.mixin.client;
 
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.text.Text;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,10 +18,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * */
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity> {
-    @Inject(method = "renderLabelIfPresent",
-            at = @At("HEAD"), cancellable = true, require = 0)
-    private void cancelRenderLabel(T entity, Text text, MatrixStack matrices, VertexConsumerProvider vcp,
-                                   int light, float tickDelta, CallbackInfo ci) {
-        ci.cancel();
+    @Inject(
+            method = "renderNameTag(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IF)V",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void cancelRenderLabel(
+            T entity,
+            Component text,
+            PoseStack matrices,
+            MultiBufferSource vertexConsumers,
+            int light,
+            float tickDelta,
+            CallbackInfo ci
+    ) {
+        ci.cancel(); // hide the name tag
     }
 }

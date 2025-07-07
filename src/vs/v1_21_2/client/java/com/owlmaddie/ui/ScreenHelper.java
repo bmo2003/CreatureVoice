@@ -5,12 +5,12 @@ package com.owlmaddie.ui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.owlmaddie.utils.TextureLoader;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Provides a Screen class which renders a chat-background, and can be modified
@@ -21,32 +21,32 @@ public abstract class ScreenHelper extends Screen {
     private boolean skipNextBackground = false;
     protected static final TextureLoader textures = new TextureLoader();
 
-    protected ScreenHelper(Text title) {
+    protected ScreenHelper(Component title) {
         super(title);
     }
 
     /**
      * Subclass must return its TextFieldWidget instance here
      */
-    protected abstract TextFieldWidget getTextField();
+    protected abstract EditBox getTextField();
 
     /**
      * Subclass must return its label Text here
      */
-    protected abstract Text getLabelText();
+    protected abstract Component getLabelText();
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Draw the vanilla gradient once
         super.renderBackground(context, mouseX, mouseY, delta);
 
         // Draw the chat-box texture
-        Identifier bgTex = textures.GetUI("chat-background");
+        ResourceLocation bgTex = textures.GetUI("chat-background");
         if (bgTex != null) {
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            context.drawTexture(
-                    RenderLayer::getGuiTextured,
+            context.blit(
+                    RenderType::guiTextured,
                     bgTex,
                     bgX, bgY,
                     0f, 0f,
@@ -62,16 +62,16 @@ public abstract class ScreenHelper extends Screen {
         skipNextBackground = false;
 
         // Draw the "Enter your message:" label
-        TextFieldWidget tf = getTextField();
-        Text           lbl = getLabelText();
-        int lw = textRenderer.getWidth(lbl);
+        EditBox tf = getTextField();
+        Component           lbl = getLabelText();
+        int lw = font.width(lbl);
         int lx = (this.width - lw) / 2;
         int ly = tf.getY() - TITLE_OFFSET;
-        context.drawTextWithShadow(textRenderer, lbl, lx, ly, 0xFFFFFF);
+        context.drawString(font, lbl, lx, ly, 0xFFFFFF);
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
         if (!skipNextBackground) {
             super.renderBackground(context, mouseX, mouseY, delta);
         }

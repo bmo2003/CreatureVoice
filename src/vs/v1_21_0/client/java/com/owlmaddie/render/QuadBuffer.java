@@ -5,7 +5,15 @@ package com.owlmaddie.render;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.*;
+
+// Official Mojang mappings for 1.21+
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+
 import org.joml.Matrix4f;
 
 /**
@@ -20,40 +28,56 @@ public final class QuadBuffer {
 
     private QuadBuffer() {}
 
-    // Accepts 0‒1 float channels, matches vanilla VertexConsumer.color(float…)
-    public QuadBuffer color(float r, float g, float b, float a) {
-        buf.color(r, g, b, a);
+    // begin
+    public QuadBuffer begin() {
+        return begin(Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP);
+    }
+
+    public QuadBuffer begin(Mode mode) {
+        return begin(mode, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP);
+    }
+
+    public QuadBuffer begin(Mode mode, VertexFormat fmt) {
+        buf = Tesselator.getInstance().begin(mode, fmt);
         return this;
     }
 
-    // begin
-    public QuadBuffer begin(VertexFormat.DrawMode mode) {
-        return begin(mode, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
-    }
-
-    public QuadBuffer begin(VertexFormat.DrawMode mode, VertexFormat fmt) {
-        buf = Tessellator.getInstance().begin(mode, fmt);
+    /** Add a vertex and set a default normal (pointing up) to satisfy the format */
+    public QuadBuffer vertex(float x, float y, float z) {
+        buf.addVertex(x, y, z);
         return this;
     }
 
     // vertex helpers
     public QuadBuffer vertex(Matrix4f mat, float x, float y, float z) {
-        buf.vertex(mat, x, y, z);
+        buf.addVertex(mat, x, y, z);
         return this;
     }
 
-    public QuadBuffer vertex(float x, float y, float z) {
-        buf.vertex(x, y, z);
+    public QuadBuffer color(int r, int g, int b, int a) {
+        buf.setColor(r, g, b, a);
         return this;
     }
 
-    public QuadBuffer texture(float u, float v)           { buf.texture(u, v);   return this; }
-    public QuadBuffer color(int r,int g,int b,int a)      { buf.color(r, g, b, a); return this; }
-    public QuadBuffer light(int packed)                   { buf.light(packed);   return this; }
-    public QuadBuffer overlay(int packed)                 { buf.overlay(packed); return this; }
+    public QuadBuffer texture(float u, float v) {
+        buf.setUv(u, v);
+        return this;
+    }
 
-    // end & draw
+    public QuadBuffer overlay(int packed) {
+        buf.setOverlay(packed);
+        return this;
+    }
+
+    public QuadBuffer light(int packed) {
+        buf.setLight(packed);
+        return this;
+    }
+
     public void draw() {
-        BufferRenderer.drawWithGlobalProgram(buf.end());  // 1.21 path
+        var mesh = buf.build();
+        if (mesh != null) {
+            BufferUploader.drawWithShader(mesh);
+        }
     }
 }

@@ -7,7 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +109,7 @@ public class ChatDataManager {
 
     // Save chat data to file
     public void saveChatData(MinecraftServer server) {
-        File saveFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
+        File saveFile = new File(server.getWorldPath(LevelResource.ROOT).toFile(), "chatdata.json");
         LOGGER.info("Saving chat data to " + saveFile.getAbsolutePath());
 
         // Clean up blank, temp entities in data
@@ -126,7 +126,7 @@ public class ChatDataManager {
 
     // Load chat data from file
     public void loadChatData(MinecraftServer server) {
-        File loadFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "chatdata.json");
+        File loadFile = new File(server.getWorldPath(LevelResource.ROOT).toFile(), "chatdata.json");
         LOGGER.info("Loading chat data from " + loadFile.getAbsolutePath());
 
         if (loadFile.exists()) {

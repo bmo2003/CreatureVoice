@@ -3,9 +3,9 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.render;
 
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 /**
  * Helper to access the getTexture method of a renderer. This API changes in later versions of Minecraft, so we
@@ -19,7 +19,7 @@ public final class EntityTextureHelper {
      * @param entity   the entity whose skin/icon to fetch
      * @return the Identifier of the skin texture
      */
-    public static Identifier getTexture(EntityRenderer renderer, Entity entity) {
-        return renderer.getTexture(entity);
+    public static ResourceLocation getTexture(EntityRenderer renderer, Entity entity) {
+        return renderer.getTextureLocation(entity);
     }
 }

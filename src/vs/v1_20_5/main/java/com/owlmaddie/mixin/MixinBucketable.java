@@ -4,13 +4,6 @@
 package com.owlmaddie.mixin;
 
 import com.owlmaddie.chat.ChatDataManager;
-import net.minecraft.entity.Bucketable;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.component.DataComponentType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,6 +12,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.UUID;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Bucketable;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
 /**
  * Updated Bucketable mixin for Minecraft 1.20.5+ compatibility (new Data Component API for NBT)
@@ -26,33 +26,33 @@ import java.util.UUID;
 @Mixin(Bucketable.class)
 public interface MixinBucketable {
     @Inject(
-            method = "copyDataToStack(Lnet/minecraft/entity/mob/MobEntity;Lnet/minecraft/item/ItemStack;)V",
+            method = "saveDefaultDataToBucketTag(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/world/item/ItemStack;)V",
             at = @At("TAIL")
     )
-    private static void addCCUUIDToStack(MobEntity entity, ItemStack stack, CallbackInfo ci) {
+    private static void addCCUUIDToStack(Mob entity, ItemStack stack, CallbackInfo ci) {
         Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-        UUID originalUUID = entity.getUuid();
+        UUID originalUUID = entity.getUUID();
         LOGGER.info("Saving original UUID of bucketed entity: " + originalUUID);
 
         // Use Data Components for NBT data
-        DataComponentType<NbtComponent> type = DataComponentTypes.BUCKET_ENTITY_DATA;
+        DataComponentType<CustomData> type = DataComponents.BUCKET_ENTITY_DATA;
         // Get existing or create a new component with an empty NbtCompound
-        NbtComponent component = stack.getOrDefault(type, NbtComponent.of(new NbtCompound()));
+        CustomData component = stack.getOrDefault(type, CustomData.of(new CompoundTag()));
         // Copy its internal NBT, modify, then reapply
-        NbtCompound data = component.copyNbt();
-        data.putUuid("CCUUID", originalUUID);
-        stack.set(type, NbtComponent.of(data));
+        CompoundTag data = component.copyTag();
+        data.putUUID("CCUUID", originalUUID);
+        stack.set(type, CustomData.of(data));
     }
 
     @Inject(
-            method = "copyDataFromNbt(Lnet/minecraft/entity/mob/MobEntity;Lnet/minecraft/nbt/NbtCompound;)V",
+            method = "loadDefaultDataFromBucketTag(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/nbt/CompoundTag;)V",
             at = @At("TAIL")
     )
-    private static void readCCUUIDFromNbt(MobEntity entity, NbtCompound nbt, CallbackInfo ci) {
+    private static void readCCUUIDFromNbt(Mob entity, CompoundTag nbt, CallbackInfo ci) {
         Logger LOGGER = LoggerFactory.getLogger("creaturechat");
-        UUID newUUID = entity.getUuid();
+        UUID newUUID = entity.getUUID();
         if (nbt.contains("CCUUID")) {
-            UUID originalUUID = nbt.getUuid("CCUUID");
+            UUID originalUUID = nbt.getUUID("CCUUID");
             LOGGER.info("Duplicating bucketed chat data for original UUID (" + originalUUID + ") to cloned entity: (" + newUUID + ")");
             ChatDataManager.getServerInstance().updateUUID(originalUUID.toString(), newUUID.toString());
         }

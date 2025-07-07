@@ -4,19 +4,18 @@
 package com.owlmaddie.goals;
 
 import com.owlmaddie.controls.DamageHelper;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.RangedAttackMob;
-import net.minecraft.entity.mob.Angerable;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.GolemEntity;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.EnumSet;
 import java.util.concurrent.ThreadLocalRandom;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.NeutralMob;
+import net.minecraft.world.entity.animal.AbstractGolem;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.RangedAttackMob;
+import net.minecraft.world.phys.Vec3;
 
 import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
 
@@ -25,7 +24,7 @@ import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
  * For passive entities like chickens (or hostile entities in creative mode), damage is simulated with particles.
  */
 public class AttackPlayerGoal extends PlayerBaseGoal {
-    protected final MobEntity attackerEntity;
+    protected final Mob attackerEntity;
     protected final double speed;
     protected enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
     protected EntityState currentState = EntityState.IDLE;
@@ -35,21 +34,21 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     protected final double CHARGE_DISTANCE = 25D; // 5 blocks away
     protected final double ATTACK_DISTANCE = 4D; // 2 blocks away
 
-    public AttackPlayerGoal(LivingEntity targetEntity, MobEntity attackerEntity, double speed) {
+    public AttackPlayerGoal(LivingEntity targetEntity, Mob attackerEntity, double speed) {
         super(targetEntity);
         this.attackerEntity = attackerEntity;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.TARGET));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.TARGET));
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && isGoalActive();
+    public boolean canUse() {
+        return super.canUse() && isGoalActive();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return super.canStart() && isGoalActive();
+    public boolean canContinueToUse() {
+        return super.canUse() && isGoalActive();
     }
 
     @Override
@@ -67,14 +66,14 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         }
 
         // Is nearby to target
-        boolean isNearby = this.attackerEntity.squaredDistanceTo(this.targetEntity) < MOVE_DISTANCE;
+        boolean isNearby = this.attackerEntity.distanceToSqr(this.targetEntity) < MOVE_DISTANCE;
 
         // Check if the attacker is nearby and no native attacks
         boolean isNearbyAndNoNativeAttacks = isNearby && !hasNativeAttacks();
 
         // Check if it has native attacks but can't target (e.g., creative mode)
         LivingEntity livingAttackerEntity = this.attackerEntity;
-        boolean hasNativeAttacksButCannotTarget = isNearby && hasNativeAttacks() && !livingAttackerEntity.canTarget(this.targetEntity);
+        boolean hasNativeAttacksButCannotTarget = isNearby && hasNativeAttacks() && !livingAttackerEntity.canAttack(this.targetEntity);
 
         // Return true if either condition is met
         return isNearbyAndNoNativeAttacks || hasNativeAttacksButCannotTarget;
@@ -82,35 +81,35 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
 
     private boolean hasNativeAttacks() {
         // Does this entity have native attacks
-        return this.attackerEntity instanceof HostileEntity ||
-                this.attackerEntity instanceof Angerable ||
+        return this.attackerEntity instanceof Monster ||
+                this.attackerEntity instanceof NeutralMob ||
                 this.attackerEntity instanceof RangedAttackMob ||
-                this.attackerEntity instanceof GolemEntity;
+                this.attackerEntity instanceof AbstractGolem;
     }
 
     private void performAttack() {
         // Track the attacker (needed for protect to work)
         if (!this.attackerEntity.equals(this.targetEntity)) {
-            this.targetEntity.setAttacker(this.attackerEntity);
+            this.targetEntity.setLastHurtByMob(this.attackerEntity);
         }
 
         // For passive entities (or hostile in creative mode), apply minimal damage to simulate a 'leap' / 'melee' attack
         DamageHelper.applyLeapDamage(attackerEntity, targetEntity, 1.0F);
 
         // Play damage sound
-        this.attackerEntity.playSound(SoundEvents.ENTITY_PLAYER_HURT, 1F, 1F);
+        this.attackerEntity.playSound(SoundEvents.PLAYER_HURT, 1F, 1F);
 
         // Spawn red particles to simulate 'injury'
         int numParticles = ThreadLocalRandom.current().nextInt(2, 7);  // Random number between 2 (inclusive) and 7 (exclusive)
-        ((ServerWorld) this.attackerEntity.getWorld()).spawnParticles((ParticleEffect) ATTACK_PARTICLE,
-                this.targetEntity.getX(), this.targetEntity.getBodyY(0.5D), this.targetEntity.getZ(),
+        ((ServerLevel) this.attackerEntity.level()).sendParticles((ParticleOptions) ATTACK_PARTICLE,
+                this.targetEntity.getX(), this.targetEntity.getY(0.5D), this.targetEntity.getZ(),
                 numParticles, 0.5, 0.5, 0.1, 0.4);
     }
 
     @Override
     public void tick() {
-        double squaredDistanceToPlayer = this.attackerEntity.squaredDistanceTo(this.targetEntity);
-        this.attackerEntity.getLookControl().lookAt(this.targetEntity, 30.0F, 30.0F);
+        double squaredDistanceToPlayer = this.attackerEntity.distanceToSqr(this.targetEntity);
+        this.attackerEntity.getLookControl().setLookAt(this.targetEntity, 30.0F, 30.0F);
 
         // State transitions and actions
         switch (currentState) {
@@ -126,7 +125,7 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
                 break;
 
             case MOVING_TOWARDS_PLAYER:
-                this.attackerEntity.getNavigation().startMovingTo(this.targetEntity, this.speed);
+                this.attackerEntity.getNavigation().moveTo(this.targetEntity, this.speed);
                 if (squaredDistanceToPlayer < CHARGE_DISTANCE) {
                     currentState = EntityState.CHARGING;
                 } else {
@@ -135,7 +134,7 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
                 break;
 
             case CHARGING:
-                this.attackerEntity.getNavigation().startMovingTo(this.targetEntity, this.speed / 2.5D);
+                this.attackerEntity.getNavigation().moveTo(this.targetEntity, this.speed / 2.5D);
                 if (cooldownTimer <= 0) {
                     currentState = EntityState.LEAPING;
                 }
@@ -143,16 +142,16 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
 
             case LEAPING:
                 // Leap towards the player
-                Vec3d leapDirection = new Vec3d(this.targetEntity.getX() - this.attackerEntity.getX(), 0.1D, this.targetEntity.getZ() - this.attackerEntity.getZ()).normalize().multiply(1.0);
-                this.attackerEntity.setVelocity(leapDirection);
-                this.attackerEntity.velocityModified = true;
+                Vec3 leapDirection = new Vec3(this.targetEntity.getX() - this.attackerEntity.getX(), 0.1D, this.targetEntity.getZ() - this.attackerEntity.getZ()).normalize().scale(1.0);
+                this.attackerEntity.setDeltaMovement(leapDirection);
+                this.attackerEntity.hurtMarked = true;
 
                 currentState = EntityState.ATTACKING;
                 break;
 
             case ATTACKING:
                 // Attack player
-                this.attackerEntity.getNavigation().startMovingTo(this.targetEntity, this.speed / 2.5D);
+                this.attackerEntity.getNavigation().moveTo(this.targetEntity, this.speed / 2.5D);
                 if (squaredDistanceToPlayer < ATTACK_DISTANCE && cooldownTimer <= 0) {
                     this.performAttack();
                     currentState = EntityState.IDLE;

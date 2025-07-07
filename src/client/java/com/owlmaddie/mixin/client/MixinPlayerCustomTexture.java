@@ -5,7 +5,7 @@ package com.owlmaddie.mixin.client;
 
 import com.owlmaddie.skin.PlayerCustomTexture;
 import com.owlmaddie.skin.SkinUtils;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
@@ -24,7 +24,7 @@ public abstract class MixinPlayerCustomTexture {
      * @author jonoomph
      */
     @Overwrite
-    public static boolean hasCustomIcon(Identifier skinId) {
+    public static boolean hasCustomIcon(ResourceLocation skinId) {
         // Delegate to SkinUtils to check for custom skin properties
         return SkinUtils.checkCustomSkinKey(skinId);
     }

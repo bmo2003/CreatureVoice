@@ -3,14 +3,13 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.utils;
 
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.Random;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * The {@code RandomTargetFinder} class generates random targets around an entity (the LEAD behavior uses this)
@@ -18,19 +17,19 @@ import java.util.Random;
 public class RandomTargetFinder {
     private static final Random random = new Random();
 
-    public static Vec3d findRandomTarget(MobEntity entity, double maxAngleOffset, double minDistance, double maxDistance) {
-        Vec3d entityPos = entity.getPos();
-        Vec3d initialDirection = getLookDirection(entity);
+    public static Vec3 findRandomTarget(Mob entity, double maxAngleOffset, double minDistance, double maxDistance) {
+        Vec3 entityPos = entity.position();
+        Vec3 initialDirection = getLookDirection(entity);
 
         for (int attempt = 0; attempt < 10; attempt++) {
-            Vec3d constrainedDirection = getConstrainedDirection(initialDirection, maxAngleOffset);
-            Vec3d target = getTargetInDirection(entity, constrainedDirection, minDistance, maxDistance);
+            Vec3 constrainedDirection = getConstrainedDirection(initialDirection, maxAngleOffset);
+            Vec3 target = getTargetInDirection(entity, constrainedDirection, minDistance, maxDistance);
 
-            if (entity instanceof PathAwareEntity) {
-                Vec3d validTarget = FuzzyTargeting.findTo((PathAwareEntity) entity, (int) maxDistance, (int) maxDistance, target);
+            if (entity instanceof PathfinderMob) {
+                Vec3 validTarget = LandRandomPos.getPosTowards((PathfinderMob) entity, (int) maxDistance, (int) maxDistance, target);
 
                 if (validTarget != null && isWithinDistance(entityPos, validTarget, minDistance, maxDistance)) {
-                    Path path = entity.getNavigation().findPathTo(validTarget.x, validTarget.y, validTarget.z, 4);
+                    Path path = entity.getNavigation().createPath(validTarget.x, validTarget.y, validTarget.z, 4);
                     if (path != null) {
                         return validTarget;
                     }
@@ -45,16 +44,16 @@ public class RandomTargetFinder {
         return getTargetInDirection(entity, initialDirection, minDistance, maxDistance);
     }
 
-    private static Vec3d getLookDirection(MobEntity entity) {
-        float yaw = entity.getYaw() * ((float) Math.PI / 180F);
-        float pitch = entity.getPitch() * ((float) Math.PI / 180F);
-        float x = -MathHelper.sin(yaw) * MathHelper.cos(pitch);
-        float y = -MathHelper.sin(pitch);
-        float z = MathHelper.cos(yaw) * MathHelper.cos(pitch);
-        return new Vec3d(x, y, z);
+    private static Vec3 getLookDirection(Mob entity) {
+        float yaw = entity.getYRot() * ((float) Math.PI / 180F);
+        float pitch = entity.getXRot() * ((float) Math.PI / 180F);
+        float x = -Mth.sin(yaw) * Mth.cos(pitch);
+        float y = -Mth.sin(pitch);
+        float z = Mth.cos(yaw) * Mth.cos(pitch);
+        return new Vec3(x, y, z);
     }
 
-    private static Vec3d getConstrainedDirection(Vec3d initialDirection, double maxAngleOffset) {
+    private static Vec3 getConstrainedDirection(Vec3 initialDirection, double maxAngleOffset) {
         double randomYawAngleOffset = (random.nextDouble() * Math.toRadians(maxAngleOffset)) - Math.toRadians(maxAngleOffset / 2);
         double randomPitchAngleOffset = (random.nextDouble() * Math.toRadians(maxAngleOffset)) - Math.toRadians(maxAngleOffset / 2);
 
@@ -69,16 +68,16 @@ public class RandomTargetFinder {
         double sinPitch = Math.sin(randomPitchAngleOffset);
         double yPitch = initialDirection.y * cosPitch - zYaw * sinPitch;
         double zPitch = zYaw * cosPitch + initialDirection.y * sinPitch;
-        return new Vec3d(xYaw, yPitch, zPitch).normalize();
+        return new Vec3(xYaw, yPitch, zPitch).normalize();
     }
 
-    private static Vec3d getTargetInDirection(MobEntity entity, Vec3d direction, double minDistance, double maxDistance) {
+    private static Vec3 getTargetInDirection(Mob entity, Vec3 direction, double minDistance, double maxDistance) {
         double distance = minDistance + entity.getRandom().nextDouble() * (maxDistance - minDistance);
-        return entity.getPos().add(direction.multiply(distance));
+        return entity.position().add(direction.scale(distance));
     }
 
-    private static boolean isWithinDistance(Vec3d entityPos, Vec3d targetPos, double minDistance, double maxDistance) {
-        double distance = entityPos.squaredDistanceTo(targetPos);
+    private static boolean isWithinDistance(Vec3 entityPos, Vec3 targetPos, double minDistance, double maxDistance) {
+        double distance = entityPos.distanceToSqr(targetPos);
         return distance >= minDistance * minDistance && distance <= maxDistance * maxDistance;
     }
 }

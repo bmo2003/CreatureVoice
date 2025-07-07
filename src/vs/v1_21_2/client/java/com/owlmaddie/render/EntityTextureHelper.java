@@ -3,13 +3,13 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.render;
 
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.client.render.entity.state.LivingEntityRenderState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Helper to access the getTexture method of a renderer. This API changes in later versions of Minecraft, so we
@@ -18,17 +18,17 @@ import net.minecraft.util.Identifier;
 public final class EntityTextureHelper {
     private EntityTextureHelper() {}
 
-    public static Identifier getTexture(EntityRenderer<?, ?> renderer, Entity entity) {
+    public static ResourceLocation getTexture(EntityRenderer<?, ?> renderer, Entity entity) {
         if (renderer instanceof LivingEntityRenderer livingRenderer
                 && entity   instanceof LivingEntity       living) {
 
             // Get the generic EntityRenderState then downcast
-            EntityRenderState rawState = livingRenderer.getAndUpdateRenderState(living, 0.0f);
+            EntityRenderState rawState = livingRenderer.createRenderState(living, 0.0f);
             LivingEntityRenderState state = (LivingEntityRenderState) rawState;
 
             // Raw‐cast so we can call getTexture(state)
             @SuppressWarnings("unchecked")
-            Identifier tex = ((LivingEntityRenderer) livingRenderer).getTexture(state);
+            ResourceLocation tex = ((LivingEntityRenderer) livingRenderer).getTextureLocation(state);
 
             return tex;
         }

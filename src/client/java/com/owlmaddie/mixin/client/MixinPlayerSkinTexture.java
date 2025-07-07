@@ -3,11 +3,11 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.mixin.client;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.owlmaddie.skin.IPlayerSkinTexture;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.PlayerSkinTexture;
-import net.minecraft.client.texture.ResourceTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.texture.HttpTexture;
+import net.minecraft.client.renderer.texture.SimpleTexture;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,17 +19,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * of the player's skin native image, so we can later use it for pixel checking (black/white key) for
  * loading custom player icons in the unused UV coordinates of the player skin image.
  */
-@Mixin(PlayerSkinTexture.class)
-public abstract class MixinPlayerSkinTexture extends ResourceTexture implements IPlayerSkinTexture {
+@Mixin(HttpTexture.class)
+public abstract class MixinPlayerSkinTexture extends SimpleTexture implements IPlayerSkinTexture {
 
     @Unique
     private NativeImage cachedSkinImage;
 
-    public MixinPlayerSkinTexture(Identifier location) {
+    public MixinPlayerSkinTexture(ResourceLocation location) {
         super(location);
     }
 
-    @Inject(method = "onTextureLoaded", at = @At("HEAD"))
+    @Inject(method = "loadCallback(Lcom/mojang/blaze3d/platform/NativeImage;)V", at = @At("HEAD"))
     private void captureNativeImage(NativeImage image, CallbackInfo ci) {
         // Instead of image.copy(), we do a manual clone
         this.cachedSkinImage = cloneNativeImage(image);
@@ -43,7 +43,7 @@ public abstract class MixinPlayerSkinTexture extends ResourceTexture implements 
     // Example of the utility method in the same class (or in a separate helper):
     private static NativeImage cloneNativeImage(NativeImage source) {
         NativeImage copy = new NativeImage(
-                source.getFormat(),
+                source.format(),
                 source.getWidth(),
                 source.getHeight(),
                 false

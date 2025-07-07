@@ -4,8 +4,8 @@
 package com.owlmaddie.particle;
 
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.particle.SimpleParticleType;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 
 /**
  * Particle definitions for CreatureChat. Modified for Minecraft 1.20.5+ compatibility, and now

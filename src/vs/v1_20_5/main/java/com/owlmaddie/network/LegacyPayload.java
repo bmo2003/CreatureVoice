@@ -4,44 +4,44 @@
 package com.owlmaddie.network;
 
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Payload for messages used by Minecraft 1.20.5+ compatibility. Previous versions did
  * not need a Payload.
  */
-public record LegacyPayload(CustomPayload.Id<LegacyPayload> id, PacketByteBuf data)
-        implements CustomPayload {
+public record LegacyPayload(CustomPacketPayload.Type<LegacyPayload> id, FriendlyByteBuf data)
+        implements CustomPacketPayload {
 
     @Override
-    public CustomPayload.Id<LegacyPayload> getId() {
+    public CustomPacketPayload.Type<LegacyPayload> type() {
         return id;
     }
 
     /* turn a logical channel into a payload id */
-    public static CustomPayload.Id<LegacyPayload> idFor(Identifier chan) {
-        return new CustomPayload.Id<>(chan);
+    public static CustomPacketPayload.Type<LegacyPayload> idFor(ResourceLocation chan) {
+        return new CustomPacketPayload.Type<>(chan);
     }
 
     // Codec that drains the buffer when decoding, fixing the “extra bytes” kick.
-    public static PacketCodec<RegistryByteBuf, LegacyPayload> codec(
-            CustomPayload.Id<LegacyPayload> pid) {
+    public static StreamCodec<RegistryFriendlyByteBuf, LegacyPayload> codec(
+            CustomPacketPayload.Type<LegacyPayload> pid) {
 
-        return PacketCodec.ofStatic(
+        return StreamCodec.of(
                 // encoder (two-arg, returns void)
-                (RegistryByteBuf buf, LegacyPayload p) ->
+                (RegistryFriendlyByteBuf buf, LegacyPayload p) ->
                         buf.writeBytes(p.data()),
 
                 // decoder (one-arg, returns value)
-                (RegistryByteBuf buf) -> {
+                (RegistryFriendlyByteBuf buf) -> {
                     byte[] bytes = new byte[buf.readableBytes()];
                     buf.readBytes(bytes); // consume all bytes
                     return new LegacyPayload(pid,
-                            new PacketByteBuf(Unpooled.wrappedBuffer(bytes)));
+                            new FriendlyByteBuf(Unpooled.wrappedBuffer(bytes)));
                 });
     }
 }
