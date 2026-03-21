@@ -125,8 +125,7 @@ public class ClickHandler {
                         // Update lines read < previous lines
                         ClientPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber - ChatDataManager.DISPLAY_NUM_LINES);
                     } else if (hitRegion.equals("RIGHT") && chatData.isEndOfMessage()) {
-                        // End of chat (open player chat screen)
-                        client.setScreen(new ChatScreen(closestEntity, client.player));
+                        // Text input removed — player speaks via voice (hold V key)
                     } else if (hitRegion.equals("TOP")) {
                         // Hide chat
                         ClientPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.HIDDEN);

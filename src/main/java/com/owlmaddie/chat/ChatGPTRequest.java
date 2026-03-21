@@ -58,7 +58,7 @@ public class ChatGPTRequest {
             if (jsonMode) {
                 this.response_format = new ResponseFormat("json_object");
             } else {
-                this.response_format = new ResponseFormat("text");
+                this.response_format = null;
             }
         }
     }

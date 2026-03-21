@@ -68,8 +68,9 @@ public class ConfigurationHandler {
 
     public static class Config {
         private String apiKey = "";
-        private String url = "https://api.openai.com/v1/chat/completions";
-        private String model = "gpt-3.5-turbo";
+        private String url = "https://api.anthropic.com/v1/chat/completions";
+        private String model = "claude-haiku-4-5-20251001";
+        private String deepgramApiKey = "";
         private int maxContextTokens = 16385;
         private int maxOutputTokens = 200;
         private double percentOfContext = 0.75;
@@ -138,5 +139,8 @@ public class ConfigurationHandler {
 
         public int getEntityAutoCooldownSeconds() { return entityAutoCooldownSeconds; }
         public void setEntityAutoCooldownSeconds(int entityAutoCooldownSeconds) { this.entityAutoCooldownSeconds = entityAutoCooldownSeconds; }
+
+        public String getDeepgramApiKey() { return deepgramApiKey; }
+        public void setDeepgramApiKey(String deepgramApiKey) { this.deepgramApiKey = deepgramApiKey; }
     }
 }

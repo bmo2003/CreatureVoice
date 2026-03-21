@@ -773,6 +773,12 @@ public class EntityChatData {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
+        // Strip asterisk emote actions from assistant messages (e.g. *smiles*, *adjusts helmet*)
+        // These break voice immersion and are forbidden by the system prompt as a backup safety net
+        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
+            truncatedMessage = truncatedMessage.replaceAll("\\*[^*]+\\*\\s*", "").trim();
+        }
+
         // Add context-switching logic for USER messages only
         String playerName = player.getDisplayName().getString();
         if (sender == ChatDataManager.ChatSender.USER && previousMessages.size() > 1) {
