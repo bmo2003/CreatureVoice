@@ -341,6 +341,39 @@ public class BubbleRenderer {
         BlendHelper.disableDepthTest();
     }
 
+    /**
+     * Extracts the English subtitle text from a message that contains [EN: text] tags.
+     * Returns null if no subtitle tag is present (entity speaks English — no subtitle needed).
+     */
+    private static String extractSubtitle(String message) {
+        if (message == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("\\[EN:\\s*(.*?)\\]").matcher(message);
+        return m.find() ? m.group(1).trim() : null;
+    }
+
+    /**
+     * Word-wraps subtitle text to fit within maxWidth pixels, returning a list of
+     * display-ready strings. Kept to a maximum of 3 lines so the bubble stays compact.
+     */
+    private static List<String> wrapSubtitle(Font font, String text, int maxWidth) {
+        List<String> lines = new ArrayList<>();
+        String[] words = text.split(" ");
+        StringBuilder line = new StringBuilder();
+        for (String word : words) {
+            String test = line.isEmpty() ? word : line + " " + word;
+            if (font.width(test) > maxWidth && !line.isEmpty()) {
+                lines.add(line.toString());
+                if (lines.size() >= 3) break; // cap at 3 lines
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(test);
+            }
+        }
+        if (!line.isEmpty() && lines.size() < 3) lines.add(line.toString());
+        return lines;
+    }
+
     private static void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
                                  MultiBufferSource immediate, float lineSpacing, int fullBright, float yOffset) {
         Font fontRenderer = Minecraft.getInstance().font;
@@ -565,12 +598,36 @@ public class BubbleRenderer {
 
                 } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT
                         && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                    // Mob has spoken and header is visible — show name, face, friendship
-                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, 0, playerData.friendship);
-                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
-                    drawEntityIcon(matrices, entity, -82, 7, 32, 32);
-                    drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
-                    // HIDDEN: draw nothing — header is completely dismissed
+                    // Check if this entity uses subtitles (speaks a foreign language)
+                    String subtitle = extractSubtitle(chatData.currentMessage);
+
+                    if (subtitle != null) {
+                        // Subtitle mode: show the text body with the English translation so the
+                        // player can read what the mob said in their native tongue.
+                        Font font = Minecraft.getInstance().font;
+                        List<String> subtitleLines = wrapSubtitle(font, subtitle, 108);
+                        int numLines = subtitleLines.size();
+                        float textBodyHeight = numLines * (font.lineHeight + lineSpacing) + DISPLAY_PADDING * 2;
+
+                        // Shift the whole bubble up to make room for the text body below the header
+                        matrices.translate(0F, -textBodyHeight, 0F);
+
+                        drawTextBubbleBackground("text-top", matrices, -64, 0, 128, textBodyHeight, playerData.friendship);
+                        drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
+                        drawEntityIcon(matrices, entity, -82, 7, 32, 32);
+                        drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
+
+                        // Draw subtitle text inside the body section (below the 40px header)
+                        drawMessageText(matrix, subtitleLines, 0, numLines, immediate, lineSpacing,
+                                fullBright, textHeaderHeight + DISPLAY_PADDING);
+                    } else {
+                        // Normal voice mode: header only, no text body
+                        drawTextBubbleBackground("text-top", matrices, -64, 0, 128, 0, playerData.friendship);
+                        drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
+                        drawEntityIcon(matrices, entity, -82, 7, 32, 32);
+                        drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
+                        // HIDDEN: draw nothing — header is completely dismissed
+                    }
                 }
 
             } else if (entity instanceof Player) {

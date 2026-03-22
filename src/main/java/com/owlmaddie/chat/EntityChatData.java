@@ -102,6 +102,12 @@ public class EntityChatData {
     // After generation completes the message is replayed so the player doesn't have to speak twice.
     public transient String pendingVoiceMessage = null;
 
+    // Set by generate_character when the entity type has a foreign-language personality.
+    // When true, generateMessage injects a subtitle rule into the chat prompt so the entity
+    // includes [EN: English translation] tags in every response for the bubble to display.
+    public transient boolean subtitleMode = false;
+    public transient String nativeLanguage = null;
+
     @SerializedName("playerId")
     @Expose(serialize = false)
     private String legacyPlayerId;
@@ -517,6 +523,17 @@ public class EntityChatData {
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+
+        // If this entity speaks a foreign language, inject the subtitle instruction so every
+        // chat response includes [EN: English translation] for the bubble to display.
+        if (this.subtitleMode && this.nativeLanguage != null) {
+            contextData.put("subtitle_rule",
+                    "SUBTITLE RULE: Respond in " + this.nativeLanguage + " only. After your sentence," +
+                    " append [EN: English translation of your sentence] before any behavior tags." +
+                    " Example: こんにちは！ [EN: Hello!] <FRIENDSHIP 1>");
+        } else {
+            contextData.put("subtitle_rule", "");
+        }
 
         // Get messages for player
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());

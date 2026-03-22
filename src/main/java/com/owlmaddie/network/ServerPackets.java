@@ -6,6 +6,7 @@ package com.owlmaddie.network;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.ChatDataSaverScheduler;
 import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.EntityTypePersonalities;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
@@ -325,7 +326,18 @@ public class ServerPackets {
         String randomLetter = Randomizer.RandomLetter();
         int randomSyllables = Randomizer.RandomNumber(5) + 1;
 
-        // Build the message
+        // Look up entity-type personality for distinctive character seeds
+        net.minecraft.resources.ResourceLocation entityTypeId =
+                BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        EntityTypePersonalities.Personality personality = entityTypeId != null
+                ? EntityTypePersonalities.get(entityTypeId.toString()) : null;
+
+        // Foreign-language entities override the player's language so the character sheet
+        // and greeting are generated in the entity's native tongue (e.g. Endermen → Japanese).
+        String entityLanguage = (personality != null && !personality.language().equals("English"))
+                ? personality.language() : userLanguage;
+
+        // Build the character generation prompt
         StringBuilder userMessageBuilder = new StringBuilder();
         userMessageBuilder.append("Please generate a ").append(randomAdjective).append(" character. ");
         userMessageBuilder.append("This character is a ").append(randomClass).append(" class, who is ").append(randomAlignment).append(". ");
@@ -335,7 +347,18 @@ public class ServerPackets {
             userMessageBuilder.append("Their name starts with the letter '").append(randomLetter)
                     .append("' and is ").append(randomSyllables).append(" syllables long. ");
         }
-        userMessageBuilder.append("They speak in '").append(userLanguage).append("' with a ").append(randomSpeakingStyle).append(" style.");
+        userMessageBuilder.append("They speak in '").append(entityLanguage).append("' with a ").append(randomSpeakingStyle).append(" style.");
+
+        // Append entity-type personality seed for distinctive behaviour archetypes
+        if (personality != null) {
+            userMessageBuilder.append(" ").append(personality.personalitySeed());
+        }
+
+        // Store subtitle mode so the chat prompt injects the translation rule each request
+        if (personality != null && personality.subtitle()) {
+            chatData.subtitleMode = true;
+            chatData.nativeLanguage = personality.language();
+        }
 
         // Generate new character
         chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), is_auto_message);
