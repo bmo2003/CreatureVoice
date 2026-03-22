@@ -73,7 +73,7 @@ public class ConfigurationHandler {
         private String deepgramApiKey = "";
         private String elevenLabsApiKey = "";
         private int maxContextTokens = 16385;
-        private int maxOutputTokens = 60;
+        private int maxOutputTokens = 150;
         private double percentOfContext = 0.75;
         private int timeout = 10;
         private boolean chatBubbles = true;

@@ -195,6 +195,9 @@ public class ServerPackets {
                 if (entity != null) {
                     EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getStringUUID());
                     if (chatData.characterSheet.isEmpty()) {
+                        // Store the player's message so it can be replayed after character
+                        // generation finishes — prevents the player from having to speak twice.
+                        chatData.pendingVoiceMessage = message;
                         generate_character(userLanguage, chatData, player, entity, false);
                     } else {
                         generate_chat(userLanguage, chatData, player, entity, message, false);

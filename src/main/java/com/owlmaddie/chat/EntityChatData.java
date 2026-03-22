@@ -98,6 +98,10 @@ public class EntityChatData {
     public Long death;
     public transient AutoMessageBucket autoBucket;
 
+    // Holds the player's voice message that arrived while character generation was in progress.
+    // After generation completes the message is replayed so the player doesn't have to speak twice.
+    public transient String pendingVoiceMessage = null;
+
     @SerializedName("playerId")
     @Expose(serialize = false)
     private String legacyPlayerId;
@@ -328,6 +332,7 @@ public class EntityChatData {
      */
     private static String findNearbyStructures(ServerLevel level, BlockPos origin) {
         // [display name, tag path] — tag path must match a structure tag in data/minecraft/tags/structure/
+        // Village variants (village_plains, village_desert, etc.) all start with "village".
         String[][] structuresToCheck = {
             {"Village",          "village"},
             {"Mineshaft",        "mineshaft"},
@@ -347,25 +352,38 @@ public class EntityChatData {
                 TagKey<Structure> tag = TagKey.create(Registries.STRUCTURE,
                         ResourceLocation.parse("minecraft:" + entry[1]));
 
-                // True containment check: ask Minecraft if the player is actually
-                // standing inside a structure piece, not just within an arbitrary radius.
-                // getStructureWithPieceAt returns INVALID_START (not null) when no match.
-                StructureStart inside = level.structureManager()
+                // Primary containment check: is the player inside any individual structure piece
+                // (a specific building, tunnel section, room, etc.)?
+                // Works great for compact structures like mineshafts, strongholds, temples.
+                StructureStart pieceCheck = level.structureManager()
                         .getStructureWithPieceAt(origin, tag);
-                if (inside != StructureStart.INVALID_START) {
+                if (pieceCheck != StructureStart.INVALID_START) {
                     found.add(entry[0] + " (you are here)");
-                    continue; // no need to look for distance
+                    continue;
                 }
 
-                // Not inside — find the nearest one and report direction + distance
+                // Find the nearest structure of this type
                 BlockPos structPos = level.findNearestMapStructure(tag, origin, 200, false);
-                if (structPos != null) {
-                    int dx = structPos.getX() - origin.getX();
-                    int dz = structPos.getZ() - origin.getZ();
-                    // Round to nearest 10 blocks for a natural feel
-                    int dist = ((int) Math.sqrt(dx * dx + dz * dz) + 5) / 10 * 10;
-                    found.add(entry[0] + " ~" + dist + " blocks " + compassDirection(dx, dz));
+                if (structPos == null) continue;
+
+                int dx = structPos.getX() - origin.getX();
+                int dz = structPos.getZ() - origin.getZ();
+                int xzDist = (int) Math.sqrt(dx * dx + dz * dz);
+
+                // Proximity fallback: handles open structures like villages where the player
+                // walks between buildings and isn't inside any single piece's bounding box.
+                // Only triggers if the structure is also at a similar Y level (within 30 blocks)
+                // so a mineshaft directly 100 blocks below doesn't falsely say "you are here".
+                int yDist = Math.abs(structPos.getY() - origin.getY());
+                if (xzDist < 50 && yDist < 30) {
+                    found.add(entry[0] + " (you are here)");
+                    continue;
                 }
+
+                // Report direction + rounded distance
+                int dist = (xzDist + 5) / 10 * 10;
+                found.add(entry[0] + " ~" + dist + " blocks " + compassDirection(dx, dz));
+
             } catch (Exception ignored) {
                 // Structure type doesn't exist in this dimension — skip it
             }
@@ -415,6 +433,14 @@ public class EntityChatData {
                     this.characterSheet = output_message;
                     String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A")).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
                     this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+
+                    // If the player spoke while we were generating the character, replay their
+                    // message now so they don't have to say it twice.
+                    String pending = this.pendingVoiceMessage;
+                    this.pendingVoiceMessage = null;
+                    if (pending != null && !pending.isBlank()) {
+                        this.generateMessage(userLanguage, player, pending, is_auto_message);
+                    }
 
                 } else {
                     // No valid LLM response
