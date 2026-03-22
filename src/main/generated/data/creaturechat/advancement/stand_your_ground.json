@@ -1,0 +1,29 @@
+{
+  "parent": "creaturechat:lead_the_way",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Why are you running?",
+      "translate": "creaturechat.advancement.stand_your_ground.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:leather_boots"
+    },
+    "title": {
+      "fallback": "Stand Your Ground",
+      "translate": "creaturechat.advancement.stand_your_ground.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

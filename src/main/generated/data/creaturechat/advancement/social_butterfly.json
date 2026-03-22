@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:true_companion",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Love conquers all.",
+      "translate": "creaturechat.advancement.social_butterfly.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:oxeye_daisy"
+    },
+    "title": {
+      "fallback": "Social Butterfly",
+      "translate": "creaturechat.advancement.social_butterfly.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

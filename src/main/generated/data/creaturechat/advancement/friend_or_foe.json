@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:arch_nemesis",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Remember the good times?",
+      "translate": "creaturechat.advancement.friend_or_foe.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:tnt"
+    },
+    "title": {
+      "fallback": "Friend Or Foe",
+      "translate": "creaturechat.advancement.friend_or_foe.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

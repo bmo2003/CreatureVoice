@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "background": "creaturechat:ui/advancements-background",
+    "description": {
+      "fallback": "Your world just got way more alive.",
+      "translate": "creaturechat.advancement.root.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:book"
+    },
+    "title": {
+      "fallback": "CreatureChat",
+      "translate": "creaturechat.advancement.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

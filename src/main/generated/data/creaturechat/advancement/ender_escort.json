@@ -1,0 +1,33 @@
+{
+  "parent": "creaturechat:guided_tour",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Together till the End.",
+      "translate": "creaturechat.advancement.ender_escort.desc"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:ender_eye"
+    },
+    "title": {
+      "fallback": "Ender Escort",
+      "translate": "creaturechat.advancement.ender_escort.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "rewards": {
+    "experience": 50
+  },
+  "sends_telemetry_event": true
+}

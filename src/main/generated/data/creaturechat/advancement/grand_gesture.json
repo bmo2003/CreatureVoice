@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:calm_the_storm",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "You got rizz.",
+      "translate": "creaturechat.advancement.grand_gesture.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:experience_bottle"
+    },
+    "title": {
+      "fallback": "Grand Gesture",
+      "translate": "creaturechat.advancement.grand_gesture.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

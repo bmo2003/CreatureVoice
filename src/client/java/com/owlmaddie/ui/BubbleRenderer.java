@@ -347,9 +347,13 @@ public class BubbleRenderer {
      */
     private static String extractSubtitle(String message) {
         if (message == null) return null;
+        // Match [EN: text] or [EN: text (without closing bracket — LLM sometimes omits it).
+        // Stop capturing at ] or < (start of a behavior tag) or end of string.
         java.util.regex.Matcher m = java.util.regex.Pattern
-                .compile("\\[EN:\\s*(.*?)\\]").matcher(message);
-        return m.find() ? m.group(1).trim() : null;
+                .compile("\\[EN:\\s*([^\\]<]+)").matcher(message);
+        if (!m.find()) return null;
+        String result = m.group(1).trim();
+        return result.isEmpty() ? null : result;
     }
 
     /**

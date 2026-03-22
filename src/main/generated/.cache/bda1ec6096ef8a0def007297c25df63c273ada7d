@@ -1,0 +1,15 @@
+// 1.21.7	-999999999-01-01T00:00:00	CreatureChat/minecraft:generic Loot Table
+efe030fcd8133a181d97b8ba1dda20d515f1ee98 data/creaturechat/loot_table/biomes/aquatic.json
+d8c92db372b37a1b2866490717fd868fc42937ea data/creaturechat/loot_table/biomes/beach.json
+2c971006221f879a66066310075646505d07f3a3 data/creaturechat/loot_table/biomes/catch_all.json
+90bab6eeaf6fb214a144851c81ec2835620f46a4 data/creaturechat/loot_table/biomes/cave.json
+72a97aefad1c3e5a6210db2b79f94d50760abd9b data/creaturechat/loot_table/biomes/dry_overworld.json
+deb16e1ea5f5c08fd6512e5b3dbd6b8e3a3cad6f data/creaturechat/loot_table/biomes/end.json
+e2552928fb6b4d7b022854416da97451130d9df9 data/creaturechat/loot_table/biomes/forest.json
+f543fba05ae70a7a604b4893ca677e411a976dd7 data/creaturechat/loot_table/biomes/jungle.json
+10dc3a7a1334e948a1e324c74adacf93ce31cdb2 data/creaturechat/loot_table/biomes/mushroom.json
+ce1cadda33783dc4a4281ff895a545407a72a6e9 data/creaturechat/loot_table/biomes/nether.json
+de60d046de1954bbd2d8df7c941f711bd39e05fc data/creaturechat/loot_table/biomes/plains.json
+892377b414cc49c52a941bd92c902c395800eaae data/creaturechat/loot_table/biomes/snowy.json
+0a23e72bf646df2d61ac54907b482f70b7f5a5e9 data/creaturechat/loot_table/biomes/swamp.json
+07afaba0aaea3cd9c7f43161223d5c7bc7fd09cc data/creaturechat/loot_table/biomes/taiga.json

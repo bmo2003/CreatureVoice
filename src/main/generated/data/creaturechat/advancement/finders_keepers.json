@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:open_sesame",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Borrowed forever.",
+      "translate": "creaturechat.advancement.finders_keepers.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:gold_ingot"
+    },
+    "title": {
+      "fallback": "Finder’s Keepers",
+      "translate": "creaturechat.advancement.finders_keepers.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

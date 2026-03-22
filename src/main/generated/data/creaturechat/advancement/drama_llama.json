@@ -1,0 +1,29 @@
+{
+  "parent": "creaturechat:grand_gesture",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Best friends for never.",
+      "translate": "creaturechat.advancement.drama_llama.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:llama_spawn_egg"
+    },
+    "title": {
+      "fallback": "Drama Llama",
+      "translate": "creaturechat.advancement.drama_llama.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

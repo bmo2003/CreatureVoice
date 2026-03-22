@@ -1,0 +1,30 @@
+{
+  "parent": "creaturechat:finders_keepers",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "The perfect crime.",
+      "translate": "creaturechat.advancement.the_heist.desc"
+    },
+    "frame": "goal",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:diamond"
+    },
+    "title": {
+      "fallback": "The Heist",
+      "translate": "creaturechat.advancement.the_heist.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

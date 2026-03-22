@@ -1,0 +1,29 @@
+{
+  "parent": "creaturechat:friend_or_foe",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "It’s complicated.",
+      "translate": "creaturechat.advancement.love_hate_relationship.desc"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:wither_rose"
+    },
+    "title": {
+      "fallback": "Love Hate Relationship",
+      "translate": "creaturechat.advancement.love_hate_relationship.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

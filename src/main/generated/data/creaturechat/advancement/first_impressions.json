@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:ice_breaker",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Make a friend.",
+      "translate": "creaturechat.advancement.first_impressions.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:apple"
+    },
+    "title": {
+      "fallback": "First Impressions",
+      "translate": "creaturechat.advancement.first_impressions.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:first_impressions",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Regain a friend.",
+      "translate": "creaturechat.advancement.no_hard_feelings.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:cake"
+    },
+    "title": {
+      "fallback": "No Hard Feelings",
+      "translate": "creaturechat.advancement.no_hard_feelings.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

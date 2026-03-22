@@ -1,0 +1,29 @@
+{
+  "parent": "creaturechat:inner_circle",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Sway the Crowd.",
+      "translate": "creaturechat.advancement.popular_opinion.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:bell"
+    },
+    "title": {
+      "fallback": "Popular Opinion",
+      "translate": "creaturechat.advancement.popular_opinion.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

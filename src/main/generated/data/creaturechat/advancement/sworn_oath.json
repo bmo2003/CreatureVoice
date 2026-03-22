@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:tag_along",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "I will protect you.",
+      "translate": "creaturechat.advancement.sworn_oath.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:shield"
+    },
+    "title": {
+      "fallback": "Sworn Oath",
+      "translate": "creaturechat.advancement.sworn_oath.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

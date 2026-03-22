@@ -1,0 +1,29 @@
+{
+  "parent": "creaturechat:finders_keepers",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Try my sword.",
+      "translate": "creaturechat.advancement.sleight_of_hand.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:stick"
+    },
+    "title": {
+      "fallback": "Sleight of Hand",
+      "translate": "creaturechat.advancement.sleight_of_hand.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:true_companion",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Every real story is a never ending story.",
+      "translate": "creaturechat.advancement.the_neverending_story.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:writable_book"
+    },
+    "title": {
+      "fallback": "The NeverEnding Story",
+      "translate": "creaturechat.advancement.the_neverending_story.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

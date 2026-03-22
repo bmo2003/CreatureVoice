@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:no_hard_feelings",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "From rocky start to best friends.",
+      "translate": "creaturechat.advancement.wordsmith.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:feather"
+    },
+    "title": {
+      "fallback": "Wordsmith",
+      "translate": "creaturechat.advancement.wordsmith.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -140,7 +140,7 @@ public class TtsManager {
      */
     private static String cleanForSpeech(String text) {
         text = text.replaceAll("<[^>]+>", "");                     // remove <TAG> tokens
-        text = text.replaceAll("\\[EN:[^\\]]*\\]", "");           // remove [EN: subtitle] tags (TTS speaks native language only)
+        text = text.replaceAll("\\[EN:[^\\]]*\\]?", "");           // remove [EN: subtitle] tags (TTS speaks native language only, closing ] optional)
         text = text.replaceAll("\\*[^*]*\\s[^*]*\\*\\s*", "");    // multi-word *emote* → remove
         text = text.replaceAll("\\*([^*\\s]+)\\*", "$1");         // single-word *emphasis* → unwrap
         return text.trim();

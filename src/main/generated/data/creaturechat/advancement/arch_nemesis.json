@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:ice_breaker",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Keep your enemies closer.",
+      "translate": "creaturechat.advancement.arch_nemesis.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:crossbow"
+    },
+    "title": {
+      "fallback": "Arch Nemesis",
+      "translate": "creaturechat.advancement.arch_nemesis.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

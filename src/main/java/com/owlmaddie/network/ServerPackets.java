@@ -354,10 +354,13 @@ public class ServerPackets {
             userMessageBuilder.append(" ").append(personality.personalitySeed());
         }
 
-        // Store subtitle mode so the chat prompt injects the translation rule each request
+        // Store subtitle mode and speaking-style note so generateMessage enforces them each request
         if (personality != null && personality.subtitle()) {
             chatData.subtitleMode = true;
             chatData.nativeLanguage = personality.language();
+        }
+        if (personality != null && personality.chatStyleNote() != null) {
+            chatData.chatStyleNote = personality.chatStyleNote();
         }
 
         // Generate new character
@@ -430,6 +433,23 @@ public class ServerPackets {
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+
+        // Re-apply subtitle mode on every chat call — subtitleMode is transient so it
+        // resets to false after a server reload. Without this, only the first message
+        // (generated during generate_character) would include the subtitle rule.
+        net.minecraft.resources.ResourceLocation entityTypeId =
+                BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        EntityTypePersonalities.Personality personality = entityTypeId != null
+                ? EntityTypePersonalities.get(entityTypeId.toString()) : null;
+        if (personality != null && personality.subtitle()) {
+            chatData.subtitleMode = true;
+            chatData.nativeLanguage = personality.language();
+        }
+        if (personality != null && personality.chatStyleNote() != null) {
+            chatData.chatStyleNote = personality.chatStyleNote();
+        }
+        LOGGER.info("generate_chat: entityType={} subtitleMode={} nativeLanguage={} chatStyleNote={}",
+                entityTypeId, chatData.subtitleMode, chatData.nativeLanguage, chatData.chatStyleNote);
 
         // Add new message
         chatData.generateMessage(userLanguage, player, message, is_auto_message);

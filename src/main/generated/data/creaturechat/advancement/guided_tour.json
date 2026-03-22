@@ -1,0 +1,28 @@
+{
+  "parent": "creaturechat:lead_the_way",
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "fallback": "Lost, together.",
+      "translate": "creaturechat.advancement.guided_tour.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:spyglass"
+    },
+    "title": {
+      "fallback": "Guided Tour",
+      "translate": "creaturechat.advancement.guided_tour.title"
+    }
+  },
+  "requirements": [
+    [
+      "triggered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

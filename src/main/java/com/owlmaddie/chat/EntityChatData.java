@@ -102,11 +102,16 @@ public class EntityChatData {
     // After generation completes the message is replayed so the player doesn't have to speak twice.
     public transient String pendingVoiceMessage = null;
 
-    // Set by generate_character when the entity type has a foreign-language personality.
+    // Set by generate_character/generate_chat when the entity type has a foreign-language personality.
     // When true, generateMessage injects a subtitle rule into the chat prompt so the entity
     // includes [EN: English translation] tags in every response for the bubble to display.
     public transient boolean subtitleMode = false;
     public transient String nativeLanguage = null;
+
+    // Hard speaking-style constraint for this entity type (e.g. "Max 3 words. Moan and grunt.").
+    // Injected into entity_speaking_style on every chat call so the LLM always follows it
+    // regardless of whatever random speaking style the character generator rolled.
+    public transient String chatStyleNote = null;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
@@ -524,15 +529,49 @@ public class EntityChatData {
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
 
+        // Apply the entity-type speaking style constraint (word limits, speech patterns).
+        // Injected into STRICT OUTPUT RULES (chat_style_note) so the LLM sees it as a
+        // mandatory rule before anything else, and also appended to entity_speaking_style
+        // as belt-and-suspenders. This ensures zombie stays zombie-like, piglin stays
+        // terse, etc., regardless of whatever random speaking style the character sheet rolled.
+        if (this.chatStyleNote != null) {
+            contextData.put("chat_style_note",
+                    "- SPEAKING STYLE OVERRIDE (MANDATORY): " + this.chatStyleNote + "\n");
+            String existingStyle = contextData.getOrDefault("entity_speaking_style", "");
+            contextData.put("entity_speaking_style", existingStyle + " " + this.chatStyleNote);
+        } else {
+            contextData.put("chat_style_note", "");
+        }
+
         // If this entity speaks a foreign language, inject the subtitle instruction so every
         // chat response includes [EN: English translation] for the bubble to display.
         if (this.subtitleMode && this.nativeLanguage != null) {
+            // Reinforce the subtitle rule inside entity_speaking_style so the LLM sees it
+            // in the entity persona section as well as the output rules section.
+            String existingStyle = contextData.getOrDefault("entity_speaking_style", "");
+            contextData.put("entity_speaking_style",
+                    existingStyle + " ALWAYS append [EN: English translation] after every response.");
+
             contextData.put("subtitle_rule",
-                    "SUBTITLE RULE: Respond in " + this.nativeLanguage + " only. After your sentence," +
-                    " append [EN: English translation of your sentence] before any behavior tags." +
-                    " Example: こんにちは！ [EN: Hello!] <FRIENDSHIP 1>");
+                    "- SUBTITLE RULE (MANDATORY): Respond ONLY in " + this.nativeLanguage + "." +
+                    " EVERY response MUST end with [EN: English translation] before any behavior tags." +
+                    " NEVER omit this. Example: こんにちは！ [EN: Hello!] <FRIENDSHIP 1>");
+
+            // Few-shot examples showing the exact [EN: ...] format the LLM must follow.
+            // These are the strongest signal — the LLM copies demonstrated patterns reliably.
+            contextData.put("subtitle_examples",
+                    "\nSubtitle format examples (follow this format for EVERY response):\n" +
+                    "PLAYER: Hello!\n" +
+                    "ENTITY: こんにちは！ [EN: Hello!] <FRIENDSHIP 1>\n\n" +
+                    "PLAYER: What do you want?\n" +
+                    "ENTITY: 何が欲しいの？ [EN: What do you want?]\n\n" +
+                    "PLAYER: Leave me alone!\n" +
+                    "ENTITY: わかった。 [EN: Understood.] <FRIENDSHIP -1>\n\n" +
+                    "PLAYER: Follow me!\n" +
+                    "ENTITY: ついて行く。 [EN: I will follow.] <FOLLOW>");
         } else {
             contextData.put("subtitle_rule", "");
+            contextData.put("subtitle_examples", "");
         }
 
         // Get messages for player
