@@ -118,6 +118,8 @@ repositories {
    mavenCentral()
    maven { url "https://maven.fabricmc.net/" }
    maven { url "https://repo.spongepowered.org/repository/maven-public/" }
+   maven { url "https://maven.shedaniel.me/" }                    // Cloth Config
+   maven { url "https://maven.terraformersmc.com/releases/" }     // Mod Menu
 }
 
 loom {
@@ -149,6 +151,15 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Cloth Config — bundled in the JAR so players don't need to install it separately.
+	// Provides the in-game config screen API (used by the Mod Menu integration).
+	modImplementation include("me.shedaniel.cloth:cloth-config-fabric:19.0.147")
+
+	// Mod Menu — optional. Players install it independently to get the config button.
+	// Compile-only so we can implement ModMenuApi; modLocalRuntime adds it to runClient.
+	modCompileOnly "com.terraformersmc:modmenu:15.0.1"
+	modLocalRuntime "com.terraformersmc:modmenu:15.0.1"
 
 	// Validate mixin targets at compile time
 	annotationProcessor "org.spongepowered:mixin:0.8.7:processor"

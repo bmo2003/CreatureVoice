@@ -2,15 +2,15 @@
 	"schemaVersion": 1,
 	"id": "creaturechat",
 	"version": "${version}",
-	"name": "CreatureChat",
-	"description": "Chat, befriend, and interact with a rich world of creatures like never before! All creatures can talk and respond naturally using AI.",
+	"name": "CreatureVoice",
+	"description": "Speak directly to Minecraft mobs and hear them talk back. Full voice pipeline: hold V to speak, mobs respond with unique AI voices in 3D positional audio.",
 	"authors": [
-		"Jonathan Thomas <jonathan@openshot.org>",
-		"owlmaddie <owlmaddie@gmail.com>"
+		"bmo2003"
 	],
 	"contact": {
-		"homepage": "http://discord.creaturechat.com",
-		"sources": "https://github.com/CreatureChat/creature-chat"
+		"homepage": "https://github.com/bmo2003/CreatureVoice",
+		"sources": "https://github.com/bmo2003/CreatureVoice",
+		"issues": "https://github.com/bmo2003/CreatureVoice/issues"
 	},
 	"license": "GPLv3",
 	"icon": "assets/creaturechat/icon.png",
@@ -24,6 +24,9 @@
         ],
         "fabric-datagen": [
           "com.owlmaddie.datagen.CreatureChatDataGenerator"
+        ],
+        "modmenu": [
+          "com.owlmaddie.config.ModMenuIntegration"
         ]
     },
 	"mixins": [
@@ -39,5 +42,8 @@
 		"minecraft": "~1.21.7",
 		"java": ">=17",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": ">=15"
 	}
 }

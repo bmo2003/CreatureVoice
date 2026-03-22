@@ -6,7 +6,9 @@ package com.owlmaddie;
 import com.owlmaddie.commands.CreatureChatCommands;
 import com.owlmaddie.inventory.ModMenus;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.npc.NpcLifeManager;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +33,9 @@ public class ModInit implements ModInitializer {
                 // Register menus and events
                 ModMenus.register();
                 ServerPackets.register();
+
+                // NPC life: random mob-initiated conversations and overhearing
+                ServerTickEvents.END_SERVER_TICK.register(NpcLifeManager::onServerTick);
 
 		LOGGER.info("CreatureChat MOD Initialized!");
 	}

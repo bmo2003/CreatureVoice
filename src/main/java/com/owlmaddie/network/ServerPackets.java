@@ -451,6 +451,12 @@ public class ServerPackets {
         LOGGER.info("generate_chat: entityType={} subtitleMode={} nativeLanguage={} chatStyleNote={}",
                 entityTypeId, chatData.subtitleMode, chatData.nativeLanguage, chatData.chatStyleNote);
 
+        // Overhearing: when a player speaks (not an auto-message), check if any
+        // nearby mobs react. Angry messages trigger a much higher reaction chance.
+        if (!is_auto_message && entity.level() instanceof ServerLevel serverLevel) {
+            com.owlmaddie.npc.NpcLifeManager.checkOverhearing(serverLevel, player, entity, message);
+        }
+
         // Add new message
         chatData.generateMessage(userLanguage, player, message, is_auto_message);
     }
