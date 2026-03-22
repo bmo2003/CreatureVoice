@@ -37,6 +37,10 @@ World Info:
 - Time: {{world_time}} (24hr)
 - Weather: Rain {{world_is_raining}}, Thunder {{world_is_thundering}}
 - Moon: {{world_moon_phase}}
+- Underground: {{player_underground}}
+- Nearby Structures: {{nearby_structures}}
+
+LOCATION RULE: Only tell the player about places that appear in Nearby Structures above. If something is not listed, say you don't know where it is — never guess or invent directions.
 
 Behaviors:
 IMPORTANT: Output one or more of these behaviors at the end of the message to instruct

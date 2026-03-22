@@ -23,9 +23,16 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -297,7 +304,83 @@ public class EntityChatData {
             contextData.put("entity_friendship", String.valueOf(0));
         }
 
+        // Underground: simple Y-level check (sea level = 63)
+        int playerY = player.blockPosition().getY();
+        if (playerY < 20) {
+            contextData.put("player_underground", "yes (deep underground)");
+        } else if (playerY < 63) {
+            contextData.put("player_underground", "yes (below surface)");
+        } else {
+            contextData.put("player_underground", "no");
+        }
+
+        // Nearby structures — gives the entity real location knowledge for quests
+        contextData.put("nearby_structures",
+                findNearbyStructures((ServerLevel) player.level(), player.blockPosition()));
+
         return contextData;
+    }
+
+    /**
+     * Scans for common structures near the given position using Minecraft's built-in
+     * structure locator. Returns a comma-separated list with direction and rough distance,
+     * or "none detected" if nothing was found within search range.
+     */
+    private static String findNearbyStructures(ServerLevel level, BlockPos origin) {
+        // [display name, tag path] — tag path must match a structure tag in data/minecraft/tags/structure/
+        String[][] structuresToCheck = {
+            {"Village",          "village"},
+            {"Mineshaft",        "mineshaft"},
+            {"Stronghold",       "stronghold"},
+            {"Ruined Portal",    "ruined_portal"},
+            {"Desert Temple",    "desert_pyramid"},
+            {"Jungle Temple",    "jungle_temple"},
+            {"Ocean Monument",   "monument"},
+            {"Woodland Mansion", "mansion"},
+            {"Nether Fortress",  "fortress"},
+            {"Ancient City",     "ancient_city"},
+        };
+
+        List<String> found = new ArrayList<>();
+        for (String[] entry : structuresToCheck) {
+            try {
+                TagKey<Structure> tag = TagKey.create(Registries.STRUCTURE,
+                        ResourceLocation.parse("minecraft:" + entry[1]));
+
+                // True containment check: ask Minecraft if the player is actually
+                // standing inside a structure piece, not just within an arbitrary radius.
+                // getStructureWithPieceAt returns INVALID_START (not null) when no match.
+                StructureStart inside = level.structureManager()
+                        .getStructureWithPieceAt(origin, tag);
+                if (inside != StructureStart.INVALID_START) {
+                    found.add(entry[0] + " (you are here)");
+                    continue; // no need to look for distance
+                }
+
+                // Not inside — find the nearest one and report direction + distance
+                BlockPos structPos = level.findNearestMapStructure(tag, origin, 200, false);
+                if (structPos != null) {
+                    int dx = structPos.getX() - origin.getX();
+                    int dz = structPos.getZ() - origin.getZ();
+                    // Round to nearest 10 blocks for a natural feel
+                    int dist = ((int) Math.sqrt(dx * dx + dz * dz) + 5) / 10 * 10;
+                    found.add(entry[0] + " ~" + dist + " blocks " + compassDirection(dx, dz));
+                }
+            } catch (Exception ignored) {
+                // Structure type doesn't exist in this dimension — skip it
+            }
+        }
+        return found.isEmpty() ? "none detected nearby" : String.join(", ", found);
+    }
+
+    /** Convert a delta-X/Z vector to the nearest compass direction (8 points). */
+    private static String compassDirection(int dx, int dz) {
+        // In Minecraft: -Z = North, +Z = South, +X = East, -X = West
+        double angle = Math.toDegrees(Math.atan2(dx, -dz)); // 0 = North, clockwise
+        if (angle < 0) angle += 360;
+        String[] dirs = {"North", "North-East", "East", "South-East",
+                         "South", "South-West", "West", "North-West"};
+        return dirs[(int) Math.round(angle / 45) % 8];
     }
 
     // Generate a new character
@@ -330,7 +413,7 @@ public class EntityChatData {
 
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
-                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
+                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A")).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
                     this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 } else {
@@ -413,7 +496,7 @@ public class EntityChatData {
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (previousMessages.size() == 1) {
             // No messages exist yet for this player (start with normal greeting)
-            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
+            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A")).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
             previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
         }
 

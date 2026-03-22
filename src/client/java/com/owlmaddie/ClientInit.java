@@ -75,6 +75,7 @@ public class ClientInit implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             tickCounter++;
             PlayerMessageManager.tickUpdate();
+            TtsManager.tick();
 
             // Voice input: detect hold-to-talk key press and release edges
             if (client.player == null || client.level == null) return;

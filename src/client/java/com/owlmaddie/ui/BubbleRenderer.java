@@ -563,13 +563,14 @@ public class BubbleRenderer {
                     // Mob is thinking — show animated dots
                     drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
 
-                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
-                    // Mob has spoken (DISPLAY or HIDDEN) — show header: name, face, friendship
-                    // No text body, no navigation arrows; voice carries the message
+                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT
+                        && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
+                    // Mob has spoken and header is visible — show name, face, friendship
                     drawTextBubbleBackground("text-top", matrices, -64, 0, 128, 0, playerData.friendship);
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
                     drawEntityIcon(matrices, entity, -82, 7, 32, 32);
                     drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
+                    // HIDDEN: draw nothing — header is completely dismissed
                 }
 
             } else if (entity instanceof Player) {
