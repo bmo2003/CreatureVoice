@@ -17,6 +17,7 @@ import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.TickDelta;
 import com.owlmaddie.inventory.ModMenus;
 import com.owlmaddie.inventory.MobInventoryScreen;
+import com.owlmaddie.voice.TtsManager;
 import com.owlmaddie.voice.VoiceInputManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -112,9 +113,10 @@ public class ClientInit implements ClientModInitializer {
             BubbleRenderer.drawTextAboveEntities(ctx, tickCounter, delta);
         });
 
-        // Load the Deepgram API key into VoiceInputManager when joining a world
+        // Load API keys and fetch ElevenLabs voices when joining a world
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            loadDeepgramKey();
+            loadApiKeys();
+            TtsManager.fetchVoices();
         });
 
         // Register an event callback for when the client disconnects from a server or changes worlds
@@ -124,29 +126,39 @@ public class ClientInit implements ClientModInitializer {
     }
 
     /**
-     * Reads the deepgramApiKey field from creaturechat.json and passes it to
-     * VoiceInputManager. Checks the world-save folder first, then the run root.
+     * Reads voice API keys from creaturechat.json and passes them to the voice managers.
+     * Checks the run root first, then the saves folder as a fallback.
      */
-    private static void loadDeepgramKey() {
+    private static void loadApiKeys() {
         Path[] candidates = {
-                Paths.get("creaturechat.json"),                          // run root (single-player dev)
-                Paths.get("saves", "creaturechat.json")                  // legacy fallback
+                Paths.get("creaturechat.json"),
+                Paths.get("saves", "creaturechat.json")
         };
         for (Path path : candidates) {
             if (Files.exists(path)) {
                 try (Reader reader = Files.newBufferedReader(path)) {
                     JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
+
                     if (obj.has("deepgramApiKey")) {
-                        String key = obj.get("deepgramApiKey").getAsString();
-                        VoiceInputManager.setApiKey(key);
+                        VoiceInputManager.setApiKey(obj.get("deepgramApiKey").getAsString());
                         VoiceInputManager.LOGGER.info("Deepgram API key loaded from {}", path);
-                        return;
+                    } else {
+                        VoiceInputManager.LOGGER.warn("deepgramApiKey not found in {} — voice input disabled", path);
                     }
+
+                    if (obj.has("elevenLabsApiKey")) {
+                        TtsManager.setApiKey(obj.get("elevenLabsApiKey").getAsString());
+                        TtsManager.LOGGER.info("ElevenLabs API key loaded from {}", path);
+                    } else {
+                        TtsManager.LOGGER.warn("elevenLabsApiKey not found in {} — TTS disabled", path);
+                    }
+
+                    return;
                 } catch (Exception e) {
                     VoiceInputManager.LOGGER.warn("Failed to read config at {}: {}", path, e.getMessage());
                 }
             }
         }
-        VoiceInputManager.LOGGER.warn("deepgramApiKey not found in creaturechat.json — voice input disabled");
+        VoiceInputManager.LOGGER.warn("creaturechat.json not found — voice input and TTS disabled");
     }
 }

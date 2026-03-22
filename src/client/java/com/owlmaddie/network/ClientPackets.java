@@ -12,6 +12,7 @@ import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
+import com.owlmaddie.voice.TtsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,6 +133,12 @@ public class ClientPackets {
                 ChatDataManager chatDataManager = ChatDataManager.getClientInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(entityId.toString());
 
+                // Detect a genuinely new assistant message before overwriting currentMessage
+                boolean isNewAssistantMessage = sender == ChatDataManager.ChatSender.ASSISTANT
+                        && status == ChatDataManager.ChatStatus.DISPLAY
+                        && !message.isEmpty()
+                        && !message.equals(chatData.currentMessage);
+
                 // Add entity message
                 if (!message.isEmpty()) {
                     chatData.currentMessage = message;
@@ -140,6 +147,11 @@ public class ClientPackets {
                 chatData.status = status;
                 chatData.sender = sender;
                 chatData.players = players;
+
+                // Speak the new assistant message via ElevenLabs TTS
+                if (isNewAssistantMessage) {
+                    TtsManager.speak(entityId, message);
+                }
 
                 // Play sound with volume based on distance (from player or entity)
                 Mob entity = ClientEntityFinder.getEntityByUUID(client.level, entityId);

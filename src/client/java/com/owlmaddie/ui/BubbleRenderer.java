@@ -543,95 +543,33 @@ public class BubbleRenderer {
             float scaledTextHeight = 0;
 
             if (chatData != null) {
-                // Set the range of lines to display
-                List<String> lines = chatData.getWrappedLines();
-                float linesDisplayed = 0;
-                int starting_line = chatData.currentLineNumber;
-                int ending_line = Math.min(chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES, lines.size());
-
-                // Determine max line length
-                linesDisplayed = ending_line - starting_line;
-
-                // Calculate size of text scaled to world
-                scaledTextHeight = linesDisplayed * (fontRenderer.lineHeight + lineSpacing);
-                scaledTextHeight = Math.max(scaledTextHeight, minTextHeight);
-
-                // Update Bubble Data for Click Handling using UUID (account for scaling)
+                // Update bubble hit area for click handling (header-only size)
                 BubbleLocationManager.updateBubbleData(entity.getUUID(), bubblePosition,
-                        128F / (1 / 0.02F), (scaledTextHeight + 25F) / (1 / 0.02F), yaw, pitch);
+                        128F / (1 / 0.02F), textHeaderHeight / (1 / 0.02F), yaw, pitch);
 
                 // Scale down before rendering textures (otherwise font is huge)
                 matrices.scale(-0.02F, -0.02F, 0.02F);
 
-                // Translate above the entity
-                matrices.translate(0F, -scaledTextHeight - textHeaderHeight - textFooterHeight, 0F);
+                // Translate above the entity — header only, no text body
+                matrices.translate(0F, -textHeaderHeight, 0F);
 
-                // Check if conversation has started
                 if (chatData.status == ChatDataManager.ChatStatus.NONE) {
-                    // Draw 'start chat' button
+                    // No conversation yet — show name and a prompt icon so the player
+                    // knows they can hold V to start talking
                     drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
-
-                    // Draw Entity (Custom Name)
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
 
                 } else if (chatData.status == ChatDataManager.ChatStatus.PENDING) {
-                    // Draw 'pending' button
+                    // Mob is thinking — show animated dots
                     drawIcon("button-dot-" + animationFrame, matrices, -16, textHeaderHeight, 32, 17);
 
-                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status != ChatDataManager.ChatStatus.HIDDEN) {
-                    // Draw Entity (Custom Name)
+                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
+                    // Mob has spoken (DISPLAY or HIDDEN) — show header: name, face, friendship
+                    // No text body, no navigation arrows; voice carries the message
+                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, 0, playerData.friendship);
                     drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
-
-                    // Draw text background (no smaller than 50F tall)
-                    drawTextBubbleBackground("text-top", matrices, -64, 0, 128, scaledTextHeight, playerData.friendship);
-
-                    // Draw face icon of entity
                     drawEntityIcon(matrices, entity, -82, 7, 32, 32);
-
-                    // Draw Friendship status
                     drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
-
-                    // Draw 'arrows' & 'keyboard' buttons
-                    if (chatData.currentLineNumber > 0) {
-                        drawIcon("arrow-left", matrices, -63, scaledTextHeight + 29, 16, 16);
-                    }
-                    if (!chatData.isEndOfMessage()) {
-                        drawIcon("arrow-right", matrices, 47, scaledTextHeight + 29, 16, 16);
-                    } else {
-                        drawIcon("keyboard", matrices, 47, scaledTextHeight + 28, 16, 16);
-                    }
-
-                    // Render each line of the text
-                    drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
-
-                } else if (chatData.sender == ChatDataManager.ChatSender.ASSISTANT && chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
-                    // Draw Entity (Custom Name)
-                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, false);
-
-                    // Draw 'resume chat' button
-                    if (playerData.friendship == 3) {
-                        // Friend chat bubble
-                        drawIcon("button-chat-friend", matrices, -16, textHeaderHeight, 32, 17);
-                    } else if (playerData.friendship == -3) {
-                        // Enemy chat bubble
-                        drawIcon("button-chat-enemy", matrices, -16, textHeaderHeight, 32, 17);
-                    } else {
-                        // Normal chat bubble
-                        drawIcon("button-chat", matrices, -16, textHeaderHeight, 32, 17);
-                    }
-
-                } else if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                    // Draw Player Name
-                    drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
-
-                    // Draw text background
-                    drawTextBubbleBackground("text-top-player", matrices, -64, 0, 128, scaledTextHeight, playerData.friendship);
-
-                    // Draw face icon of player
-                    drawPlayerIcon(matrices, entity, -75, 14, 18, 18);
-
-                    // Render each line of the player's text
-                    drawMessageText(matrix, lines, starting_line, ending_line, immediate, lineSpacing, fullBright, 40.0F + DISPLAY_PADDING);
                 }
 
             } else if (entity instanceof Player) {

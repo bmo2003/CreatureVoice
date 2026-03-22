@@ -71,8 +71,9 @@ public class ConfigurationHandler {
         private String url = "https://api.anthropic.com/v1/chat/completions";
         private String model = "claude-haiku-4-5-20251001";
         private String deepgramApiKey = "";
+        private String elevenLabsApiKey = "";
         private int maxContextTokens = 16385;
-        private int maxOutputTokens = 200;
+        private int maxOutputTokens = 60;
         private double percentOfContext = 0.75;
         private int timeout = 10;
         private boolean chatBubbles = true;
@@ -142,5 +143,8 @@ public class ConfigurationHandler {
 
         public String getDeepgramApiKey() { return deepgramApiKey; }
         public void setDeepgramApiKey(String deepgramApiKey) { this.deepgramApiKey = deepgramApiKey; }
+
+        public String getElevenLabsApiKey() { return elevenLabsApiKey; }
+        public void setElevenLabsApiKey(String elevenLabsApiKey) { this.elevenLabsApiKey = elevenLabsApiKey; }
     }
 }

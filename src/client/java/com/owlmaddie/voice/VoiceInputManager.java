@@ -162,13 +162,22 @@ public class VoiceInputManager {
      */
     private static String sendToDeepgram(byte[] rawAudio) {
         try {
-            // smart_format=true cleans up punctuation and casing automatically
+            // smart_format cleans up punctuation/casing; keyterm boosts words Deepgram commonly mishears
+            // in a Minecraft context — add more terms here if specific words keep getting mangled
             String urlStr = "https://api.deepgram.com/v1/listen"
                     + "?model=nova-3"
                     + "&encoding=linear16"
                     + "&sample_rate=16000"
                     + "&channels=1"
-                    + "&smart_format=true";
+                    + "&smart_format=true"
+                    + "&keyterm=thief:5"
+                    + "&keyterm=sword:5"
+                    + "&keyterm=creeper:5"
+                    + "&keyterm=enderman:5"
+                    + "&keyterm=nether:5"
+                    + "&keyterm=stronghold:5"
+                    + "&keyterm=enchant:5"
+                    + "&keyterm=potion:5";
 
             URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();

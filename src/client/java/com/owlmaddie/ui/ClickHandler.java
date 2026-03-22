@@ -118,20 +118,11 @@ public class ClickHandler {
                     ClientPackets.sendGenerateGreeting(closestEntity);
 
                 } else if (chatData.status == ChatDataManager.ChatStatus.DISPLAY) {
-                    if (hitRegion.equals("RIGHT") && !chatData.isEndOfMessage()) {
-                        // Update lines read > next lines
-                        ClientPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber + ChatDataManager.DISPLAY_NUM_LINES);
-                    } else if (hitRegion.equals("LEFT") && chatData.currentLineNumber > 0) {
-                        // Update lines read < previous lines
-                        ClientPackets.sendUpdateLineNumber(closestEntity, chatData.currentLineNumber - ChatDataManager.DISPLAY_NUM_LINES);
-                    } else if (hitRegion.equals("RIGHT") && chatData.isEndOfMessage()) {
-                        // Text input removed — player speaks via voice (hold V key)
-                    } else if (hitRegion.equals("TOP")) {
-                        // Hide chat
-                        ClientPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.HIDDEN);
-                    }
+                    // Right-click the header to minimise it
+                    ClientPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.HIDDEN);
+
                 } else if (chatData.status == ChatDataManager.ChatStatus.HIDDEN) {
-                    // Show chat
+                    // Right-click again to restore the header
                     ClientPackets.setChatStatus(closestEntity, ChatDataManager.ChatStatus.DISPLAY);
                 }
                 return true;

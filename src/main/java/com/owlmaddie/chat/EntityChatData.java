@@ -32,6 +32,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.Mob;
@@ -283,7 +284,7 @@ public class EntityChatData {
         contextData.put("entity_class", getCharacterProp("Class"));
         contextData.put("entity_skills", getCharacterProp("Skills"));
         contextData.put("entity_background", getCharacterProp("Background"));
-        if (entity.tickCount < 0) {
+        if (entity instanceof AgeableMob ageableMob && ageableMob.getAge() < 0) {
             contextData.put("entity_maturity", "Baby");
         } else {
             contextData.put("entity_maturity", "Adult");
@@ -773,10 +774,30 @@ public class EntityChatData {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
-        // Strip asterisk emote actions from assistant messages (e.g. *smiles*, *adjusts helmet*)
-        // These break voice immersion and are forbidden by the system prompt as a backup safety net
+        // Strip asterisk emote actions from assistant messages (e.g. *adjusts helmet*, *smiles warmly*)
+        // Multi-word asterisk phrases are emote actions — remove them entirely.
+        // Single-word asterisk wrapping is emphasis (e.g. *really*, *Skeleton*) — keep the word.
         if (sender == ChatDataManager.ChatSender.ASSISTANT) {
-            truncatedMessage = truncatedMessage.replaceAll("\\*[^*]+\\*\\s*", "").trim();
+            truncatedMessage = truncatedMessage.replaceAll("\\*[^*]*\\s[^*]*\\*\\s*", "").trim(); // multi-word: remove
+            truncatedMessage = truncatedMessage.replaceAll("\\*([^*\\s]+)\\*", "$1").trim();       // single-word: unwrap
+
+            // Keep only the first complete sentence. Behavior tags (e.g. <LEAD>) are preserved
+            // by splitting them off first, truncating the speech, then re-appending.
+            // This prevents the model from monologuing regardless of token limits.
+            java.util.regex.Matcher tagMatcher = java.util.regex.Pattern
+                    .compile("(\\s*<[^>]+>)+\\s*$").matcher(truncatedMessage);
+            String trailingTags = tagMatcher.find() ? tagMatcher.group().trim() : "";
+            String speechOnly = tagMatcher.replaceAll("").trim();
+
+            // Find the end of the first sentence (., !, or ?)
+            java.util.regex.Matcher sentenceMatcher = java.util.regex.Pattern
+                    .compile("[.!?]").matcher(speechOnly);
+            if (sentenceMatcher.find()) {
+                speechOnly = speechOnly.substring(0, sentenceMatcher.end());
+            }
+            truncatedMessage = trailingTags.isEmpty()
+                    ? speechOnly
+                    : speechOnly + " " + trailingTags;
         }
 
         // Add context-switching logic for USER messages only
