@@ -58,6 +58,27 @@ public class BubbleRenderer {
     private static final float TEXT_Z_OFFSET = -0.05F;
     public static List<String> whitelist = new ArrayList<>();
     public static List<String> blacklist = new ArrayList<>();
+    /** When true, show the full spoken text in the bubble even for non-subtitle (English) mobs. */
+    public static boolean showAllBubbles = false;
+    /**
+     * When true, only bipedal (two-legged) mobs show the chat bubble UI.
+     * Four-legged animals are excluded so players don't think they can speak to them.
+     */
+    public static boolean realismMode = false;
+    // Must match the BIPEDAL_MOB_IDS set in ServerPackets — these are the mobs
+    // allowed to speak when Realism Mode is on.
+    private static final java.util.Set<String> BIPEDAL_MOB_IDS = java.util.Set.of(
+            "minecraft:zombie", "minecraft:zombie_villager", "minecraft:husk", "minecraft:drowned",
+            "minecraft:skeleton", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:bogged",
+            "minecraft:villager", "minecraft:wandering_trader",
+            "minecraft:witch", "minecraft:vindicator", "minecraft:pillager",
+            "minecraft:evoker", "minecraft:illusioner",
+            "minecraft:piglin", "minecraft:piglin_brute", "minecraft:zombified_piglin",
+            "minecraft:enderman",
+            "minecraft:iron_golem", "minecraft:snow_golem",
+            "minecraft:blaze", "minecraft:strider", "minecraft:warden", "minecraft:giant",
+            "minecraft:vex", "minecraft:breeze"
+    );
     private static int queryEntityDataCount = 0;
     private static List<Entity> relevantEntities;
 
@@ -474,6 +495,10 @@ public class BubbleRenderer {
                         }
                         ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
                         String entityIdString = entityId.toString();
+                        // Realism mode: only bipedal mobs show the bubble UI
+                        if (realismMode && !BIPEDAL_MOB_IDS.contains(entityIdString)) {
+                            return false;
+                        }
                         // Check blacklist first
                         if (blacklist.contains(entityIdString)) {
                             return false;
@@ -624,13 +649,34 @@ public class BubbleRenderer {
                         // Draw subtitle text inside the body section (below the 40px header)
                         drawMessageText(matrix, subtitleLines, 0, numLines, immediate, lineSpacing,
                                 fullBright, textHeaderHeight + DISPLAY_PADDING);
+                    } else if (showAllBubbles) {
+                        // Full-bubble mode: strip tags from the message and show it as a text body
+                        String plainText = chatData.currentMessage == null ? ""
+                                : chatData.currentMessage
+                                        .replaceAll("<[^>]+>", "")
+                                        .replaceAll("\\[EN:[^\\]]*\\]?", "")
+                                        .replaceAll("\\*[^*]+\\*", "")
+                                        .trim();
+                        Font font = Minecraft.getInstance().font;
+                        List<String> bodyLines = wrapSubtitle(font, plainText, 108);
+                        int numLines = bodyLines.isEmpty() ? 1 : bodyLines.size();
+                        float textBodyHeight = numLines * (font.lineHeight + lineSpacing) + DISPLAY_PADDING * 2;
+
+                        matrices.translate(0F, -textBodyHeight, 0F);
+                        drawTextBubbleBackground("text-top", matrices, -64, 0, 128, textBodyHeight, playerData.friendship);
+                        drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
+                        drawEntityIcon(matrices, entity, -82, 7, 32, 32);
+                        drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
+                        if (!bodyLines.isEmpty()) {
+                            drawMessageText(matrix, bodyLines, 0, numLines, immediate, lineSpacing,
+                                    fullBright, textHeaderHeight + DISPLAY_PADDING);
+                        }
                     } else {
                         // Normal voice mode: header only, no text body
                         drawTextBubbleBackground("text-top", matrices, -64, 0, 128, 0, playerData.friendship);
                         drawEntityName(entity, matrix, immediate, fullBright, 24F + DISPLAY_PADDING, true);
                         drawEntityIcon(matrices, entity, -82, 7, 32, 32);
                         drawFriendshipStatus(matrices, 51, 18, 31, 21, playerData.friendship);
-                        // HIDDEN: draw nothing — header is completely dismissed
                     }
                 }
 

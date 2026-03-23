@@ -85,7 +85,11 @@ public class Randomizer {
             "unpredictable", "wildcard", "stuttering", "hypochondriac", "hypocritical",
             "optimistic", "overconfident", "jumpy", "brief", "flighty", "visionary", "adorable",
             "sparkly", "bubbly", "unstable", "sad", "angry", "bossy", "altruistic", "quirky",
-            "nostalgic", "emotional", "enthusiastic", "unusual", "conspirator", "traitorous"
+            "nostalgic", "emotional", "enthusiastic", "unusual", "conspirator", "traitorous",
+            // Dark personalities — explicitly seeded so the LLM generates genuinely menacing characters
+            "vengeful", "bitter", "cruel", "ruthless", "sadistic", "hateful", "corrupt",
+            "bloodthirsty", "treacherous", "paranoid", "wrathful", "spiteful", "cold-blooded",
+            "power-hungry", "nihilistic", "vindictive"
     );
     private static List<String> speakingStyles = Arrays.asList(
             "formal", "casual", "eloquent", "blunt", "humorous", "sarcastic", "mysterious",
@@ -116,9 +120,13 @@ public class Randomizer {
             "antagonist", "avenger", "seeker", "mystic", "outlaw"
     );
     private static List<String> alignments = Arrays.asList(
+            // Good (3 entries) — roughly 1 in 5 chance each
             "lawful good", "neutral good", "chaotic good",
-            "lawful neutral", "true neutral", "chaotic neutral",
-            "lawful evil", "neutral evil", "chaotic evil"
+            // Neutral (2 entries)
+            "lawful neutral", "true neutral",
+            // Evil (5 entries, weighted ~50%) — Minecraft is dangerous; dark characters should be common
+            "chaotic neutral",
+            "lawful evil", "neutral evil", "chaotic evil", "chaotic evil"
     );
 
     // Get random message by type

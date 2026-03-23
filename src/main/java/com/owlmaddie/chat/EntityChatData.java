@@ -29,6 +29,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
@@ -42,8 +43,11 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.npc.Villager;
@@ -94,6 +98,9 @@ public class EntityChatData {
     public ChatDataManager.ChatSender sender;
     public int auto_generated;
     public List<ChatMessage> previousMessages;
+    // Permanent death log — entries never expire so mobs remember forever who died nearby.
+    // Stored in chatdata.json via GSON so it survives server restarts.
+    public List<String> witnessedDeaths;
     public Long born;
     public Long death;
     public transient AutoMessageBucket autoBucket;
@@ -134,6 +141,7 @@ public class EntityChatData {
         this.sender = ChatDataManager.ChatSender.USER;
         this.auto_generated = 0;
         this.previousMessages = new ArrayList<>();
+        this.witnessedDeaths = new ArrayList<>();
         this.born = System.currentTimeMillis();;
         this.autoBucket = null;
 
@@ -146,6 +154,9 @@ public class EntityChatData {
     public void postDeserializeInitialization() {
         if (this.players == null) {
             this.players = new HashMap<>(); // Ensure players map is initialized
+        }
+        if (this.witnessedDeaths == null) {
+            this.witnessedDeaths = new ArrayList<>(); // Migrate old saves that predate this field
         }
         if (this.legacyPlayerId != null && !this.legacyPlayerId.isEmpty()) {
             this.migrateData();
@@ -329,11 +340,164 @@ public class EntityChatData {
             contextData.put("player_underground", "no");
         }
 
-        // Nearby structures — gives the entity real location knowledge for quests
+        // Nearby structures — large named structures (villages, strongholds, etc.)
         contextData.put("nearby_structures",
                 findNearbyStructures((ServerLevel) player.level(), player.blockPosition()));
 
+        // Nearby containers — chests, furnaces, brewing stands, etc. the mob can reference
+        // or lead the player to. Scanned from the mob's position (not the player's).
+        contextData.put("nearby_containers",
+                findNearbyContainers((ServerLevel) entity.level(), entity.blockPosition()));
+
+        // Nearby buildings — detected by scanning for door blocks, then clustering.
+        // Lets the mob know about individual houses it could hide in, burn, or lead to.
+        contextData.put("nearby_buildings",
+                findNearbyBuildings((ServerLevel) entity.level(), entity.blockPosition()));
+
+        // Nearby NPCs — other mobs with character sheets that this entity can name-drop.
+        // Injected into World Info so the LLM knows who else is around.
+        contextData.put("nearby_npcs", buildNearbyNpcsContext(entity, (ServerLevel) player.level()));
+
+        // Entity inventory / profession / trades — prevents the LLM from lying about
+        // what the mob is carrying or what it can offer in trade.
+        contextData.put("entity_inventory", buildEntityInventoryContext(entity));
+
+        // Build recent_events by combining permanent death memories (never expire) with
+        // transient nearby events (attacks, confrontations — expire after 60 sec).
+        // Deaths are stored per-mob in witnessedDeaths and survive server restarts.
+        StringBuilder events = new StringBuilder();
+        if (this.witnessedDeaths != null && !this.witnessedDeaths.isEmpty()) {
+            events.append(String.join("; ", this.witnessedDeaths));
+        }
+        String recentEvents = com.owlmaddie.npc.NpcLifeManager.getRecentEventsContext(entity);
+        if (!recentEvents.isEmpty()) {
+            if (events.length() > 0) events.append("; ");
+            events.append(recentEvents);
+        }
+        contextData.put("recent_events", events.length() > 0 ? events.toString() : "none");
+
         return contextData;
+    }
+
+    /**
+     * Returns a list of nearby NPCs within 32 blocks that have character sheets, with
+     * both name and type — e.g. "Jackson (Villager, ~4 blocks), Delilah (Zombie, ~11 blocks)".
+     * Including the entity type prevents the LLM from confusing similarly-spelled names
+     * and helps it answer questions like "do you know the zombie over there?"
+     */
+    /** Public accessor so ServerPackets can inject nearby NPC names during character generation. */
+    public static String buildNearbyNpcsContext(Mob entity, ServerLevel level) {
+        AABB searchBox = entity.getBoundingBox().inflate(32.0);
+        List<Mob> nearby = level.getEntitiesOfClass(Mob.class, searchBox);
+        List<String> entries = new ArrayList<>();
+        for (Mob other : nearby) {
+            if (other.getUUID().equals(entity.getUUID())) continue;
+            float dist = other.distanceTo(entity);
+            if (dist > 32.0f) continue;
+            EntityChatData data = ChatDataManager.getServerInstance()
+                    .getOrCreateChatData(other.getStringUUID());
+            if (!data.characterSheet.isEmpty()) {
+                String name = data.getCharacterProp("Name");
+                if (name.isEmpty()) name = other.getType().getDescription().getString();
+                String typeName = other.getType().getDescription().getString();
+                int distBlocks = Math.round(dist);
+                entries.add(name + " (" + typeName + ", ~" + distBlocks + " blocks)");
+            }
+        }
+        return entries.isEmpty() ? "none" : String.join(", ", entries);
+    }
+
+    /**
+     * Builds a text summary of what this mob is carrying or can offer:
+     * profession (for villagers), held items, and any notable equipment.
+     * Used to ground the LLM so it doesn't invent items it doesn't have.
+     */
+    private static String buildEntityInventoryContext(Mob entity) {
+        StringBuilder inv = new StringBuilder();
+
+        // Villager profession + trades
+        if (entity instanceof net.minecraft.world.entity.npc.Villager villager) {
+            try {
+                // Parse the profession out of VillagerData.toString() — this works regardless
+                // of whether the API exposes it as getProfession() or profession() or a Holder.
+                // VillagerData.toString() typically produces something like:
+                //   "VillagerData[profession=Holder.Reference[minecraft:farmer], ...]"
+                String vdStr = villager.getVillagerData().toString();
+                java.util.regex.Matcher pm = java.util.regex.Pattern
+                        .compile("profession[\\[=][^a-z]*([a-z_]+)")
+                        .matcher(vdStr);
+                if (pm.find()) {
+                    String profName = pm.group(1).replace("_", " ");
+                    if (!profName.equals("none") && !profName.isBlank()) {
+                        inv.append("Profession: ").append(profName).append(". ");
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            try {
+                // Trades — getResult() always returns ItemStack. getCostA() is ItemCost in
+                // 1.21.5+ but its toString() gives readable text like "1 minecraft:wheat".
+                net.minecraft.world.item.trading.MerchantOffers offers = villager.getOffers();
+                if (offers != null && !offers.isEmpty()) {
+                    inv.append("Known trades (pay -> receive): ");
+                    int count = 0;
+                    for (net.minecraft.world.item.trading.MerchantOffer offer : offers) {
+                        if (count++ >= 6) { inv.append("..."); break; }
+                        String pays = cleanItemDesc(offer.getCostA().toString());
+                        String gets = formatItemStack(offer.getResult());
+                        inv.append(pays).append(" -> ").append(gets);
+                        if (count < Math.min(offers.size(), 6)) inv.append("; ");
+                    }
+                    inv.append(". ");
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Held items — applies to all mob types
+        try {
+            ItemStack mainHand = entity.getMainHandItem();
+            ItemStack offHand  = entity.getOffhandItem();
+            if (!mainHand.isEmpty()) {
+                inv.append("Holding: ").append(formatItemStack(mainHand)).append(". ");
+            }
+            if (!offHand.isEmpty()) {
+                inv.append("Offhand: ").append(formatItemStack(offHand)).append(". ");
+            }
+        } catch (Exception ignored) {}
+
+        return inv.length() == 0 ? "nothing notable" : inv.toString().trim();
+    }
+
+    /** Returns a clean human-readable item name, e.g. "iron sword" from "minecraft:iron_sword". */
+    private static String formatItemStack(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return "nothing";
+        String raw = stack.getItem().toString().replace("minecraft:", "").replace("_", " ");
+        int count = stack.getCount();
+        return count > 1 ? count + "x " + raw : raw;
+    }
+
+    /**
+     * Strips class names and namespace from an item/cost toString() output so the LLM
+     * gets readable text. Works on both ItemStack and ItemCost toString formats.
+     * Examples: "1 minecraft:wheat" -> "wheat",  "ItemCost{item=minecraft:emerald, count=1}" -> "emerald"
+     */
+    private static String cleanItemDesc(String raw) {
+        if (raw == null) return "?";
+        // Extract last segment after a colon (namespace:id) and remove noise chars
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(\\d+)?\\s*(?:minecraft:)?([a-z_]+)")
+                .matcher(raw.toLowerCase(java.util.Locale.ENGLISH));
+        List<String> parts = new ArrayList<>();
+        while (m.find()) {
+            String count = m.group(1);
+            String name  = m.group(2).replace("_", " ");
+            // Skip known class-name fragments that appear in toString output
+            if (name.equals("item") || name.equals("count") || name.equals("itemcost")
+                    || name.equals("holder") || name.equals("reference")) continue;
+            parts.add(count != null && !count.equals("1") ? count + "x " + name : name);
+            if (parts.size() >= 2) break; // "2x wheat" is enough
+        }
+        return parts.isEmpty() ? raw.substring(0, Math.min(raw.length(), 20)) : String.join(" + ", parts);
     }
 
     /**
@@ -412,8 +576,168 @@ public class EntityChatData {
         return dirs[(int) Math.round(angle / 45) % 8];
     }
 
+    /**
+     * Scans loaded chunks within 30 blocks for container-type block entities
+     * (chests, furnaces, brewing stands, etc.) and returns a readable list with
+     * direction and distance relative to the given origin (the mob's position).
+     * Using chunk block-entity maps is cheap — no block-by-block iteration needed.
+     */
+    private static String findNearbyContainers(ServerLevel level, BlockPos origin) {
+        int searchRadius = 30;
+        int chunkRadius = (searchRadius >> 4) + 1;
+        int centerChunkX = origin.getX() >> 4;
+        int centerChunkZ = origin.getZ() >> 4;
+
+        List<String> found = new ArrayList<>();
+
+        for (int cx = centerChunkX - chunkRadius; cx <= centerChunkX + chunkRadius; cx++) {
+            for (int cz = centerChunkZ - chunkRadius; cz <= centerChunkZ + chunkRadius; cz++) {
+                // Skip unloaded chunks — getChunk on an unloaded chunk would force-load it
+                if (!level.isLoaded(new BlockPos(cx << 4, 0, cz << 4))) continue;
+                net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+                for (Map.Entry<BlockPos, net.minecraft.world.level.block.entity.BlockEntity> entry
+                        : chunk.getBlockEntities().entrySet()) {
+                    BlockPos pos = entry.getKey();
+                    int dx = pos.getX() - origin.getX();
+                    int dz = pos.getZ() - origin.getZ();
+                    int dist = (int) Math.sqrt(dx * dx + dz * dz);
+                    if (dist > searchRadius) continue;
+                    String name = containerTypeName(entry.getValue());
+                    if (name != null) {
+                        found.add(name + " (~" + dist + " blocks " + compassDirection(dx, dz) + ")");
+                    }
+                }
+            }
+        }
+
+        if (found.isEmpty()) return "none detected";
+        // Sort by distance so nearest entries appear first
+        found.sort(Comparator.comparingInt(s -> {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("~(\\d+)").matcher(s);
+            return m.find() ? Integer.parseInt(m.group(1)) : 999;
+        }));
+        return String.join(", ", found.subList(0, Math.min(found.size(), 10)));
+    }
+
+    /** Maps a block entity to a readable container name, or null if not a relevant container. */
+    private static String containerTypeName(net.minecraft.world.level.block.entity.BlockEntity be) {
+        if (be instanceof net.minecraft.world.level.block.entity.ChestBlockEntity)      return "Chest";
+        if (be instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity)     return "Barrel";
+        if (be instanceof net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity) return "Shulker Box";
+        if (be instanceof net.minecraft.world.level.block.entity.FurnaceBlockEntity)    return "Furnace";
+        if (be instanceof net.minecraft.world.level.block.entity.BlastFurnaceBlockEntity) return "Blast Furnace";
+        if (be instanceof net.minecraft.world.level.block.entity.SmokerBlockEntity)     return "Smoker";
+        if (be instanceof net.minecraft.world.level.block.entity.BrewingStandBlockEntity) return "Brewing Stand";
+        if (be instanceof net.minecraft.world.level.block.entity.HopperBlockEntity)     return "Hopper";
+        if (be instanceof net.minecraft.world.level.block.entity.DispenserBlockEntity)  return "Dispenser";
+        if (be instanceof net.minecraft.world.level.block.entity.EnderChestBlockEntity) return "Ender Chest";
+        return null;
+    }
+
+    /**
+     * Scans within 50 blocks for door blocks, then clusters nearby doors together
+     * so each cluster counts as one building. Returns a readable list of building
+     * locations relative to the origin (the mob's position).
+     *
+     * Doors are the most reliable single indicator of human-made structures —
+     * they appear in village houses, player houses, and most generated buildings.
+     * Scanning at 3-block steps keeps the cost low (~800 block checks).
+     */
+    private static String findNearbyBuildings(ServerLevel level, BlockPos origin) {
+        int searchRadius = 50;
+        List<BlockPos> doorPositions = new ArrayList<>();
+
+        for (int x = -searchRadius; x <= searchRadius; x++) {
+            for (int z = -searchRadius; z <= searchRadius; z++) {
+                if (x * x + z * z > searchRadius * searchRadius) continue;
+                // Check ground level ± a few blocks to handle uneven terrain
+                for (int dy = -2; dy <= 8; dy++) {
+                    BlockPos checkPos = origin.offset(x, dy, z);
+                    if (!level.isLoaded(checkPos)) continue;
+                    if (level.getBlockState(checkPos).is(BlockTags.DOORS)) {
+                        doorPositions.add(checkPos);
+                        break; // one door per XZ column is sufficient
+                    }
+                }
+            }
+        }
+
+        if (doorPositions.isEmpty()) return "none detected";
+
+        // Greedy cluster: doors within 12 blocks of the seed door form one building
+        List<BlockPos> buildingCentres = clusterDoorPositions(doorPositions, 12);
+
+        List<String> found = new ArrayList<>();
+        for (BlockPos centre : buildingCentres) {
+            int dx = centre.getX() - origin.getX();
+            int dz = centre.getZ() - origin.getZ();
+            int dist = (int) Math.sqrt(dx * dx + dz * dz);
+            String loc = dist < 5 ? "you are here" : "~" + dist + " blocks " + compassDirection(dx, dz);
+            found.add("Building (" + loc + ")");
+        }
+        // Sort closest first (entries with "you are here" have no number — sort them first)
+        found.sort(Comparator.comparingInt(s -> {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("~(\\d+)").matcher(s);
+            return m.find() ? Integer.parseInt(m.group(1)) : 0;
+        }));
+        return String.join(", ", found.subList(0, Math.min(found.size(), 5)));
+    }
+
+    /**
+     * Returns the BlockPos of the nearest building entrance within 50 blocks of the origin,
+     * or null if no buildings were detected. Used by the LEAD and SET_FIRE behavior handlers
+     * to give mobs a real destination instead of random waypoints.
+     */
+    public static BlockPos findNearestBuildingPos(ServerLevel level, BlockPos origin) {
+        int searchRadius = 50;
+        List<BlockPos> doorPositions = new ArrayList<>();
+
+        for (int x = -searchRadius; x <= searchRadius; x++) {
+            for (int z = -searchRadius; z <= searchRadius; z++) {
+                if (x * x + z * z > searchRadius * searchRadius) continue;
+                for (int dy = -2; dy <= 8; dy++) {
+                    BlockPos checkPos = origin.offset(x, dy, z);
+                    if (!level.isLoaded(checkPos)) continue;
+                    if (level.getBlockState(checkPos).is(BlockTags.DOORS)) {
+                        doorPositions.add(checkPos);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (doorPositions.isEmpty()) return null;
+
+        List<BlockPos> centres = clusterDoorPositions(doorPositions, 12);
+        // Return the centre closest to the origin
+        return centres.stream()
+                .min(Comparator.comparingInt(p -> (int) p.distSqr(origin)))
+                .orElse(null);
+    }
+
+    /** Greedy spatial clustering: groups door positions within clusterDist of each seed. */
+    private static List<BlockPos> clusterDoorPositions(List<BlockPos> doors, int clusterDist) {
+        List<BlockPos> centres = new ArrayList<>();
+        boolean[] used = new boolean[doors.size()];
+        for (int i = 0; i < doors.size(); i++) {
+            if (used[i]) continue;
+            int ax = 0, ay = 0, az = 0, count = 0;
+            for (int j = i; j < doors.size(); j++) {
+                if (!used[j] && doors.get(i).distSqr(doors.get(j)) <= clusterDist * clusterDist) {
+                    ax += doors.get(j).getX();
+                    ay += doors.get(j).getY();
+                    az += doors.get(j).getZ();
+                    count++;
+                    used[j] = true;
+                }
+            }
+            centres.add(new BlockPos(ax / count, ay / count, az / count));
+        }
+        return centres;
+    }
+
     // Generate a new character
-    public void generateCharacter(String userLanguage, ServerPlayer player, String userMessage, boolean is_auto_message) {
+    public void generateCharacter(String userLanguage, ServerPlayer player, String userMessage, boolean is_auto_message, String nearbyNpcs) {
         String systemPrompt = "system-character";
         if (is_auto_message) {
             // Increment an auto-generated message
@@ -432,6 +756,13 @@ public class EntityChatData {
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+
+        // Inject nearby NPC names so evil/dark characters can develop grudges against real neighbours
+        if (nearbyNpcs != null && !nearbyNpcs.isBlank()) {
+            contextData.put("nearby_characters", "Nearby Characters (can be referenced in Likes/Dislikes/Background/Grudge): " + nearbyNpcs);
+        } else {
+            contextData.put("nearby_characters", "");
+        }
 
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
@@ -609,6 +940,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, StayGoal.class); // release stand-still lock
                                 EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -624,6 +956,8 @@ public class EntityChatData {
 
                             } else if (behavior.getName().equals("UNFOLLOW")) {
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                // Lock in place so the mob doesn't resume wandering on its own
+                                EntityBehaviorManager.addGoal(entity, new StayGoal(entity), GoalPriority.STAY_PLAYER);
 
                             } else if (behavior.getName().equals("FLEE")) {
                                 float fleeDistance = 40F;
@@ -633,6 +967,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, StayGoal.class); // release stand-still lock
                                 EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
                                 playerData.fleeing = true;
@@ -643,6 +978,8 @@ public class EntityChatData {
 
                             } else if (behavior.getName().equals("UNFLEE")) {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                // Lock in place — mob stopped fleeing on command, should stay put
+                                EntityBehaviorManager.addGoal(entity, new StayGoal(entity), GoalPriority.STAY_PLAYER);
                                 if (playerData.fleeing) {
                                     AdvancementHelper.standYourGround(player);
                                     playerData.fleeing = false;
@@ -655,6 +992,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, StayGoal.class); // release stand-still lock
                                 EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
                                 playerData.attacking = true;
@@ -668,6 +1006,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, StayGoal.class); // release stand-still lock
                                 EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -691,11 +1030,22 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                             } else if (behavior.getName().equals("LEAD")) {
-                                LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
+                                // If a building is nearby, navigate there directly with GoToPositionGoal.
+                                // This handles "go stand in that house" and "hide in the building" commands.
+                                // Without this, LEAD uses random waypoints and the mob never reaches the house.
+                                // If no building is found, fall back to the existing random-waypoint lead.
+                                BlockPos buildingPos = findNearestBuildingPos((ServerLevel) entity.level(), entity.blockPosition());
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
-                                EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
+                                EntityBehaviorManager.removeGoal(entity, StayGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                // Only navigate if an actual building was found — no random wandering
+                                if (buildingPos != null) {
+                                    EntityBehaviorManager.addGoal(entity,
+                                            new GoToPositionGoal(entity, buildingPos, entitySpeedMedium),
+                                            GoalPriority.LEAD_PLAYER);
+                                }
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
                                     playerData.attacking = false;
@@ -709,6 +1059,213 @@ public class EntityChatData {
                                 }
                             } else if (behavior.getName().equals("UNLEAD")) {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                // Lock in place after done leading — mob shouldn't wander off
+                                EntityBehaviorManager.addGoal(entity, new StayGoal(entity), GoalPriority.STAY_PLAYER);
+
+                            } else if (behavior.getName().equals("EXPLODE")) {
+                                // Trigger a creeper explosion — only works on Creeper entities.
+                                // We use the vanilla Level.explode() API directly so it plays the
+                                // full blast animation, destroys blocks, and deals damage just like
+                                // a normal creeper detonation, then remove the entity.
+                                if (entity instanceof net.minecraft.world.entity.monster.Creeper creeper) {
+                                    boolean powered = creeper.isPowered();
+                                    float radius = powered ? 6.0F : 3.0F;
+                                    entity.level().explode(
+                                            creeper,
+                                            creeper.getX(), creeper.getY(), creeper.getZ(),
+                                            radius,
+                                            net.minecraft.world.level.Level.ExplosionInteraction.MOB
+                                    );
+                                    creeper.discard();
+                                }
+
+                            } else if (behavior.getName().equals("ATTACK_NPC")) {
+                                // Make this mob attack a specific named NPC nearby.
+                                // We reuse AttackPlayerGoal — it accepts any LivingEntity, not just
+                                // players. This means ANY mob (villager, chicken, etc.) can attack
+                                // another mob the same way it attacks the player when <ATTACK> fires.
+                                String targetName = behavior.getStringArgument();
+                                if (targetName != null && !targetName.isBlank()) {
+                                    // Expanded search: 32 blocks, same as overhear range
+                                    AABB searchBox = entity.getBoundingBox().inflate(32.0);
+                                    String lowerTarget = targetName.trim().toLowerCase();
+                                    Mob foundTarget = null;
+                                    for (Mob nearby : ((ServerLevel) entity.level()).getEntitiesOfClass(Mob.class, searchBox)) {
+                                        if (nearby.getUUID().equals(entity.getUUID())) continue;
+                                        String displayName = nearby.getDisplayName().getString().toLowerCase();
+                                        EntityChatData nearbyData = com.owlmaddie.chat.ChatDataManager
+                                                .getServerInstance().getOrCreateChatData(nearby.getStringUUID());
+                                        String sheetName = com.owlmaddie.npc.NpcLifeManager
+                                                .extractMobNamePublic(nearbyData, nearby).toLowerCase();
+                                        if (displayName.contains(lowerTarget) || sheetName.contains(lowerTarget)
+                                                || lowerTarget.contains(sheetName.split("\\s+")[0])) {
+                                            foundTarget = nearby;
+                                            break;
+                                        }
+                                    }
+                                    if (foundTarget != null) {
+                                        // forceAttack=true bypasses the native-attack check that
+                                        // normally gates the goal for monsters. Without it, a zombie
+                                        // or skeleton commanded to attack a cow would have
+                                        // isGoalActive() return false because canAttack(cow)=true
+                                        // makes hasNativeAttacksButCannotTarget=false.
+                                        AttackPlayerGoal attackNpcGoal = new AttackPlayerGoal(foundTarget, entity, entitySpeedFast, true);
+                                        EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, StayGoal.class);
+                                        EntityBehaviorManager.addGoal(entity, attackNpcGoal, GoalPriority.ATTACK_PLAYER);
+                                        LOGGER.info("ATTACK_NPC: {} targeting {}", entity.getType().toShortString(), targetName);
+                                    } else {
+                                        LOGGER.info("ATTACK_NPC: could not find '{}' near {} (searched 32 blocks)", targetName, entity.getType().toShortString());
+                                    }
+                                }
+
+                            } else if (behavior.getName().equals("GIVE_ITEM")) {
+                                // The mob gives the player an item by dropping it at its own feet.
+                                // Format: <GIVE_ITEM emerald> or <GIVE_ITEM emerald 2>
+                                // Works for any mob type — villagers can also drop items this way,
+                                // independently of the trade UI.
+                                String giveArg = behavior.getStringArgument();
+                                if (giveArg != null && !giveArg.isBlank()) {
+                                    String[] parts = giveArg.trim().split("\\s+");
+                                    int giveCount = 1;
+                                    String itemName;
+                                    // If last token is a number, treat it as quantity
+                                    if (parts.length > 1) {
+                                        try {
+                                            giveCount = Math.max(1, Math.min(64, Integer.parseInt(parts[parts.length - 1])));
+                                            itemName = java.util.Arrays.stream(parts, 0, parts.length - 1)
+                                                    .collect(Collectors.joining("_")).toLowerCase();
+                                        } catch (NumberFormatException ex) {
+                                            itemName = java.util.Arrays.stream(parts, 0, parts.length)
+                                                    .collect(Collectors.joining("_")).toLowerCase();
+                                        }
+                                    } else {
+                                        itemName = parts[0].toLowerCase();
+                                    }
+                                    // Normalize: spaces/hyphens → underscores, strip minecraft: prefix if present
+                                    itemName = itemName.replace("-", "_").replace(" ", "_")
+                                            .replaceFirst("^minecraft:", "");
+                                    net.minecraft.resources.ResourceLocation rl =
+                                            net.minecraft.resources.ResourceLocation.tryParse("minecraft:" + itemName);
+                                    if (rl != null && entity.level() instanceof ServerLevel giveLevel) {
+                                        java.util.Optional<net.minecraft.world.item.Item> optItem =
+                                                net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(rl);
+                                        if (optItem.isPresent() && optItem.get() != net.minecraft.world.item.Items.AIR) {
+                                            ItemStack gift = new ItemStack(optItem.get(), giveCount);
+                                            // Spawn item entity at the mob's feet — player walks over to pick it up
+                                            net.minecraft.world.entity.item.ItemEntity dropped =
+                                                    new net.minecraft.world.entity.item.ItemEntity(
+                                                            giveLevel,
+                                                            entity.getX(), entity.getY() + 0.5, entity.getZ(),
+                                                            gift);
+                                            dropped.setDefaultPickUpDelay();
+                                            // Toss the item toward the player so it rolls their way
+                                            double dx = player.getX() - entity.getX();
+                                            double dz = player.getZ() - entity.getZ();
+                                            double dist = Math.sqrt(dx * dx + dz * dz);
+                                            if (dist > 0) {
+                                                dropped.setDeltaMovement(dx / dist * 0.3, 0.3, dz / dist * 0.3);
+                                            }
+                                            giveLevel.addFreshEntity(dropped);
+                                            LOGGER.info("GIVE_ITEM: {} gave {}x {}", entity.getType().toShortString(), giveCount, itemName);
+                                        } else {
+                                            LOGGER.warn("GIVE_ITEM: unknown item '{}' — LLM hallucinated an item name", itemName);
+                                        }
+                                    }
+                                }
+
+                            } else if (behavior.getName().equals("RECEIVE_ITEM")) {
+                                // The player gives the mob an item by having it removed from their
+                                // inventory. Format: <RECEIVE_ITEM emerald> or <RECEIVE_ITEM emerald 2>
+                                // The mob "accepts" the payment; the items disappear from the player's hand.
+                                String receiveArg = behavior.getStringArgument();
+                                if (receiveArg != null && !receiveArg.isBlank()) {
+                                    String[] parts = receiveArg.trim().split("\\s+");
+                                    int receiveCount = 1;
+                                    String itemName;
+                                    if (parts.length > 1) {
+                                        try {
+                                            receiveCount = Math.max(1, Math.min(64, Integer.parseInt(parts[parts.length - 1])));
+                                            itemName = java.util.Arrays.stream(parts, 0, parts.length - 1)
+                                                    .collect(Collectors.joining("_")).toLowerCase();
+                                        } catch (NumberFormatException ex) {
+                                            itemName = java.util.Arrays.stream(parts, 0, parts.length)
+                                                    .collect(Collectors.joining("_")).toLowerCase();
+                                        }
+                                    } else {
+                                        itemName = parts[0].toLowerCase();
+                                    }
+                                    itemName = itemName.replace("-", "_").replace(" ", "_")
+                                            .replaceFirst("^minecraft:", "");
+                                    net.minecraft.resources.ResourceLocation rl =
+                                            net.minecraft.resources.ResourceLocation.tryParse("minecraft:" + itemName);
+                                    if (rl != null) {
+                                        java.util.Optional<net.minecraft.world.item.Item> optItem =
+                                                net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(rl);
+                                        if (optItem.isPresent() && optItem.get() != net.minecraft.world.item.Items.AIR) {
+                                            net.minecraft.world.item.Item wantedItem = optItem.get();
+                                            net.minecraft.world.entity.player.Inventory inv = player.getInventory();
+                                            int remaining = receiveCount;
+                                            // Walk every inventory slot and shrink matching stacks
+                                            for (int slot = 0; slot < inv.getContainerSize() && remaining > 0; slot++) {
+                                                ItemStack stack = inv.getItem(slot);
+                                                if (stack.is(wantedItem)) {
+                                                    int take = Math.min(stack.getCount(), remaining);
+                                                    stack.shrink(take);
+                                                    remaining -= take;
+                                                }
+                                            }
+                                            if (remaining == 0) {
+                                                LOGGER.info("RECEIVE_ITEM: {} took {}x {} from player", entity.getType().toShortString(), receiveCount, itemName);
+                                            } else {
+                                                // Player didn't have enough — took what was available
+                                                LOGGER.info("RECEIVE_ITEM: player had insufficient {}; took {}/{}", itemName, receiveCount - remaining, receiveCount);
+                                            }
+                                        } else {
+                                            LOGGER.warn("RECEIVE_ITEM: unknown item '{}' — LLM hallucinated an item name", itemName);
+                                        }
+                                    }
+                                }
+
+                            } else if (behavior.getName().equals("RENAME")) {
+                                // Rename the mob to whatever the player requested, update the nameplate
+                                // above its head, and update the character sheet so it knows its new name.
+                                String newName = behavior.getStringArgument();
+                                if (newName != null && !newName.isBlank()) {
+                                    newName = newName.trim();
+                                    // Update the entity nameplate (always visible once set)
+                                    entity.setCustomName(net.minecraft.network.chat.Component.literal(newName));
+                                    entity.setCustomNameVisible(true);
+                                    // Update the character sheet so future LLM calls see the new name
+                                    String finalNewName = newName;
+                                    characterSheet = characterSheet.replaceFirst(
+                                            "(?i)(- ?Name:\\s*).*",
+                                            "$1" + java.util.regex.Matcher.quoteReplacement(finalNewName));
+                                    LOGGER.info("RENAME: {} renamed to '{}'", entity.getType().toShortString(), finalNewName);
+                                }
+
+                            } else if (behavior.getName().equals("SET_FIRE")) {
+                                // The mob walks toward the nearest building and starts setting it on fire.
+                                // SetFireGoal navigates there and ignites flammable blocks (wood, leaves, etc.)
+                                // one at a time every 5 ticks — fire then spreads naturally.
+                                if (entity.level() instanceof ServerLevel setFireLevel) {
+                                    BlockPos buildingPos = findNearestBuildingPos(setFireLevel, entity.blockPosition());
+                                    if (buildingPos != null) {
+                                        EntityBehaviorManager.removeGoal(entity, StayGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                        EntityBehaviorManager.addGoal(entity,
+                                                new com.owlmaddie.goals.SetFireGoal(entity, buildingPos, entitySpeedMedium),
+                                                GoalPriority.LEAD_PLAYER);
+                                        LOGGER.info("SET_FIRE: {} heading toward building at {}", entity.getType().toShortString(), buildingPos);
+                                    } else {
+                                        LOGGER.info("SET_FIRE: no building found within 50 blocks of {}", entity.getType().toShortString());
+                                    }
+                                }
 
                             } else if (behavior.getName().equals("FRIENDSHIP")) {
                                 int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
@@ -954,11 +1511,23 @@ public class EntityChatData {
             String trailingTags = tagMatcher.find() ? tagMatcher.group().trim() : "";
             String speechOnly = tagMatcher.replaceAll("").trim();
 
-            // Find the end of the first sentence (., !, or ?)
+            // Find the end of the first sentence that contains at least 4 words.
+            // This prevents short exclamations like "Oh!" from being treated as the
+            // full response when the actual sentence follows immediately after.
+            int cutPoint = -1;
             java.util.regex.Matcher sentenceMatcher = java.util.regex.Pattern
-                    .compile("[.!?]").matcher(speechOnly);
-            if (sentenceMatcher.find()) {
-                speechOnly = speechOnly.substring(0, sentenceMatcher.end());
+                    .compile("(?<!\\.)\\.(?!\\.)|[!?]").matcher(speechOnly);
+            while (sentenceMatcher.find()) {
+                int candidate = sentenceMatcher.end();
+                String fragment = speechOnly.substring(0, candidate).trim();
+                // Accept this cut point only if the fragment has at least 4 words
+                if (fragment.split("\\s+").length >= 4) {
+                    cutPoint = candidate;
+                    break;
+                }
+            }
+            if (cutPoint > 0) {
+                speechOnly = speechOnly.substring(0, cutPoint).trim();
             }
             truncatedMessage = trailingTags.isEmpty()
                     ? speechOnly

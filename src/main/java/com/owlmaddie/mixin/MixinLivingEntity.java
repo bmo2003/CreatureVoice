@@ -7,6 +7,7 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.npc.NpcLifeManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -81,6 +83,11 @@ public class MixinLivingEntity {
                 String attackedMessage = "<" + player.getDisplayName().getString() + " attacked you " + directness + " with " + weaponName + ">";
                 ServerPackets.generate_chat("N/A", chatData, player, (Mob) thisEntity, attackedMessage, true);
             }
+
+            // Let any nearby witness with a character sheet react to seeing the attack
+            if (thisEntity.level() instanceof ServerLevel serverLevel) {
+                NpcLifeManager.checkWitnesses(serverLevel, player, (Mob) thisEntity);
+            }
         }
     }
 
@@ -89,24 +96,22 @@ public class MixinLivingEntity {
         LivingEntity entity = (LivingEntity) (Object) this;
         Level world = entity.level();
 
-        if (!world.isClientSide() && entity.hasCustomName()) {
-            // Skip tamed entities and players
-            if (entity instanceof TamableAnimal && ((TamableAnimal) entity).isTame()) {
-                return;
-            }
+        if (world.isClientSide()) return;
+        if (entity instanceof Player) return;
+        if (entity instanceof TamableAnimal && ((TamableAnimal) entity).isTame()) return;
 
-            if (entity instanceof Player) {
-                return;
-            }
+        EntityChatData chatData = getChatData(entity);
+        if (chatData == null || chatData.characterSheet.isEmpty()) return;
 
-            // Get chatData for the entity
-            EntityChatData chatData = getChatData(entity);
-            if (chatData != null && !chatData.characterSheet.isEmpty()) {
-                // Get the original death message
-                Component deathMessage = entity.getCombatTracker().getDeathMessage();
-                // Broadcast the death message to all players in the world
-                ServerPackets.BroadcastMessage(deathMessage);
-            }
+        // Broadcast the death message for named/known mobs
+        if (entity.hasCustomName()) {
+            Component deathMessage = entity.getCombatTracker().getDeathMessage();
+            ServerPackets.BroadcastMessage(deathMessage);
+        }
+
+        // Notify nearby mobs with character sheets so they can react in character
+        if (entity instanceof Mob && world instanceof ServerLevel serverLevel) {
+            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(serverLevel, (Mob) entity);
         }
     }
 }

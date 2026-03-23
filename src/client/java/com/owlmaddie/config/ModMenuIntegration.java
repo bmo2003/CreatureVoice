@@ -10,6 +10,8 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.network.chat.Component;
 
+import net.minecraft.client.Minecraft;
+
 import java.util.ArrayList;
 
 /**
@@ -100,9 +102,20 @@ public class ModMenuIntegration implements ModMenuApi {
 
             gameplay.addEntry(entry
                     .startBooleanToggle(Component.literal("Show Chat Bubbles"), config.getChatBubbles())
-                    .setDefaultValue(true)
-                    .setTooltip(Component.literal("Show speech bubbles above mobs when they are talking."))
+                    .setDefaultValue(false)
+                    .setTooltip(Component.literal("Show speech bubbles above all mobs when they speak."),
+                                Component.literal("Off by default — bubbles only appear for foreign-language mobs"),
+                                Component.literal("when subtitles are active. Enable this to read every response."))
                     .setSaveConsumer(config::setChatBubbles)
+                    .build());
+
+            gameplay.addEntry(entry
+                    .startBooleanToggle(Component.literal("Realism Mode"), config.getRealismMode())
+                    .setDefaultValue(false)
+                    .setTooltip(Component.literal("Only bipedal (two-legged) mobs can speak or be spoken to."),
+                                Component.literal("Allowed: zombies, skeletons, villagers, endermen, iron golems, etc."),
+                                Component.literal("Excluded: cows, pigs, cats, horses, wolves, and other four-legged animals."))
+                    .setSaveConsumer(config::setRealismMode)
                     .build());
 
             gameplay.addEntry(entry
@@ -113,21 +126,23 @@ public class ModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(config::setStory)
                     .build());
 
-            gameplay.addEntry(entry
-                    .startStrList(Component.literal("Mob Whitelist"), config.getWhitelist() != null ? config.getWhitelist() : new ArrayList<>())
-                    .setDefaultValue(new ArrayList<>())
-                    .setTooltip(Component.literal("Only these mob types can speak. Leave empty to allow all."),
-                                Component.literal("Use Minecraft IDs, e.g. minecraft:zombie, minecraft:cow"))
-                    .setSaveConsumer(config::setWhitelist)
-                    .build());
+            // Whitelist — opens a full mob picker screen.
+            // Saves to disk immediately when Done is clicked in the picker so the
+            // player doesn't need to find and click a separate Save button.
+            gameplay.addEntry(new MobListButtonEntry(
+                    Component.literal("Mob Whitelist"),
+                    config.getWhitelist() != null ? config.getWhitelist() : new ArrayList<>(),
+                    newList -> { config.setWhitelist(newList); ClientConfigManager.save(config); },
+                    () -> Minecraft.getInstance().screen,
+                    "Whitelist — only these mobs can speak (empty = all mobs)"));
 
-            gameplay.addEntry(entry
-                    .startStrList(Component.literal("Mob Blacklist"), config.getBlacklist() != null ? config.getBlacklist() : new ArrayList<>())
-                    .setDefaultValue(new ArrayList<>())
-                    .setTooltip(Component.literal("These mob types will never speak."),
-                                Component.literal("Use Minecraft IDs, e.g. minecraft:bat, minecraft:cod"))
-                    .setSaveConsumer(config::setBlacklist)
-                    .build());
+            // Blacklist — opens a full mob picker screen.
+            gameplay.addEntry(new MobListButtonEntry(
+                    Component.literal("Mob Blacklist"),
+                    config.getBlacklist() != null ? config.getBlacklist() : new ArrayList<>(),
+                    newList -> { config.setBlacklist(newList); ClientConfigManager.save(config); },
+                    () -> Minecraft.getInstance().screen,
+                    "Blacklist — these mobs will never speak (overrides whitelist)"));
 
             gameplay.addEntry(entry
                     .startIntField(Component.literal("Max Player Auto-Responses"), config.getMaxPlayerAutoResponses())

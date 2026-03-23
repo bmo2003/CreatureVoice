@@ -76,7 +76,7 @@ public class ConfigurationHandler {
         private int maxOutputTokens = 150;
         private double percentOfContext = 0.75;
         private int timeout = 10;
-        private boolean chatBubbles = true;
+        private boolean chatBubbles = false;
         private List<String> whitelist = new ArrayList<>();
         private List<String> blacklist = new ArrayList<>();
         private String story = "";
@@ -84,6 +84,9 @@ public class ConfigurationHandler {
         private int playerAutoCooldownSeconds = 3;
         private int maxEntityAutoResponses = 3;
         private int entityAutoCooldownSeconds = 3;
+        // When true, only bipedal (two-legged) mobs like zombies, villagers, and
+        // skeletons can speak. Four-legged animals are excluded.
+        private boolean realismMode = false;
 
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
@@ -146,5 +149,8 @@ public class ConfigurationHandler {
 
         public String getElevenLabsApiKey() { return elevenLabsApiKey; }
         public void setElevenLabsApiKey(String elevenLabsApiKey) { this.elevenLabsApiKey = elevenLabsApiKey; }
+
+        public boolean getRealismMode() { return realismMode; }
+        public void setRealismMode(boolean realismMode) { this.realismMode = realismMode; }
     }
 }

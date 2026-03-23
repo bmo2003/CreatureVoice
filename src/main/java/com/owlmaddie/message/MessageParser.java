@@ -22,18 +22,36 @@ public class MessageParser {
         LOGGER.debug("Parsing message: {}", input);
         StringBuilder cleanedMessage = new StringBuilder();
         List<Behavior> behaviors = new ArrayList<>();
-        Pattern pattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(input);
 
+        // Integer-argument behaviors (e.g. <FRIENDSHIP 2>) and no-argument behaviors
+        Pattern intPattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|EXPLODE|SET_FIRE)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
+        // String-argument behaviors (e.g. <ATTACK_NPC Jax>, <GIVE_ITEM emerald 2>, <RECEIVE_ITEM emerald 2>, <RENAME Gronk>)
+        // Capture everything between the behavior name and the closing > as the argument
+        Pattern strPattern = Pattern.compile("[<*](ATTACK_NPC|GIVE_ITEM|RECEIVE_ITEM|RENAME)\\s+([^>*]+?)[>*]", Pattern.CASE_INSENSITIVE);
+
+        // First pass: extract ATTACK_NPC with string arg (replace with placeholder to avoid
+        // interfering with the second pass on the same string)
+        Matcher strMatcher = strPattern.matcher(input);
+        StringBuilder afterStrPass = new StringBuilder();
+        while (strMatcher.find()) {
+            String behaviorName = strMatcher.group(1).toUpperCase();
+            String targetName = strMatcher.group(2);
+            behaviors.add(new Behavior(behaviorName, targetName));
+            LOGGER.debug("Found behavior: {} with target: {}", behaviorName, targetName);
+            strMatcher.appendReplacement(afterStrPass, "");
+        }
+        strMatcher.appendTail(afterStrPass);
+
+        // Second pass: extract integer/no-arg behaviors
+        Matcher matcher = intPattern.matcher(afterStrPass.toString());
         while (matcher.find()) {
-            String behaviorName = matcher.group(1);
+            String behaviorName = matcher.group(1).toUpperCase();
             Integer argument = null;
-            if (matcher.group(2) != null) {
-                argument = Integer.valueOf(matcher.group(2));
+            if (matcher.group(2) != null && !matcher.group(2).isBlank()) {
+                argument = Integer.valueOf(matcher.group(2).trim());
             }
             behaviors.add(new Behavior(behaviorName, argument));
             LOGGER.debug("Found behavior: {} with argument: {}", behaviorName, argument);
-
             matcher.appendReplacement(cleanedMessage, "");
         }
         matcher.appendTail(cleanedMessage);

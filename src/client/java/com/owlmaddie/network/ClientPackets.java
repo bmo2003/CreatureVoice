@@ -235,9 +235,14 @@ public class ClientPackets {
                 blacklist.add(buffer.readUtf(32767));
             }
 
+            boolean showAllBubbles = buffer.readBoolean();
+            boolean realismMode = buffer.readBoolean();
+
             client.execute(() -> {
                 BubbleRenderer.whitelist = whitelist;
                 BubbleRenderer.blacklist = blacklist;
+                BubbleRenderer.showAllBubbles = showAllBubbles;
+                BubbleRenderer.realismMode = realismMode;
             });
         });
 

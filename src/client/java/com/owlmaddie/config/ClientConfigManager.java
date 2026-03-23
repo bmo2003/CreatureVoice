@@ -5,6 +5,7 @@ package com.owlmaddie.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.owlmaddie.commands.ConfigurationHandler;
+import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.voice.TtsManager;
 import com.owlmaddie.voice.VoiceInputManager;
 import org.slf4j.Logger;
@@ -65,8 +66,12 @@ public class ClientConfigManager {
             LOGGER.error("Failed to save config to {}: {}", savePath, e.getMessage());
         }
 
-        // Re-apply voice keys immediately so the player doesn't need to restart
+        // Re-apply settings immediately so changes take effect without rejoining
         VoiceInputManager.setApiKey(config.getDeepgramApiKey());
         TtsManager.setApiKey(config.getElevenLabsApiKey());
+        // Sync the chat-bubbles flag so the in-world bubble renderer updates right away
+        BubbleRenderer.showAllBubbles = config.getChatBubbles();
+        // Sync realism mode so excluded mobs hide their bubble UI immediately
+        BubbleRenderer.realismMode = config.getRealismMode();
     }
 }

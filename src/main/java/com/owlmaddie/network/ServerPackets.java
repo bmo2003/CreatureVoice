@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 /**
  * The {@code ServerPackets} class provides methods to send packets to/from the client for generating greetings,
@@ -60,6 +61,38 @@ import java.util.concurrent.TimeUnit;
 public class ServerPackets {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     public static MinecraftServer serverInstance;
+
+    // ── Realism Mode: mobs that walk on two legs (bipedal) ───────────────────
+    // When Realism Mode is enabled in config, only these mob types can speak or
+    // be spoken to. Four-legged animals (cows, pigs, cats, etc.) are excluded.
+    private static final Set<String> BIPEDAL_MOB_IDS = Set.of(
+            "minecraft:zombie", "minecraft:zombie_villager", "minecraft:husk", "minecraft:drowned",
+            "minecraft:skeleton", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:bogged",
+            "minecraft:villager", "minecraft:wandering_trader",
+            "minecraft:witch", "minecraft:vindicator", "minecraft:pillager",
+            "minecraft:evoker", "minecraft:illusioner",
+            "minecraft:piglin", "minecraft:piglin_brute", "minecraft:zombified_piglin",
+            "minecraft:enderman",
+            "minecraft:iron_golem", "minecraft:snow_golem",
+            "minecraft:blaze",
+            "minecraft:strider",
+            "minecraft:warden",
+            "minecraft:giant",
+            "minecraft:vex",
+            "minecraft:breeze"
+    );
+
+    /**
+     * Returns true if this mob is allowed to speak under the current config.
+     * When Realism Mode is off, all mobs are allowed. When on, only bipedal mobs.
+     */
+    private static boolean isAllowedByRealismMode(Mob entity, ConfigurationHandler.Config config) {
+        if (!config.getRealismMode()) return true; // realism mode off — all mobs allowed
+        net.minecraft.resources.ResourceLocation entityTypeId =
+                BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        if (entityTypeId == null) return false;
+        return BIPEDAL_MOB_IDS.contains(entityTypeId.toString());
+    }
     public static ChatDataSaverScheduler scheduler = null;
     public static final ResourceLocation PACKET_C2S_GREETING = new ResourceLocation("creaturechat", "packet_c2s_greeting");
     public static final ResourceLocation PACKET_C2S_READ_NEXT = new ResourceLocation("creaturechat", "packet_c2s_read_next");
@@ -294,6 +327,12 @@ public class ServerPackets {
             buffer.writeUtf(entry);
         }
 
+        // Write the chatBubbles setting so the client knows whether to show text bodies
+        buffer.writeBoolean(config.getChatBubbles());
+
+        // Write the realism mode setting so the client hides bubbles above excluded mobs
+        buffer.writeBoolean(config.getRealismMode());
+
         if (player != null) {
             // Send packet to specific player
             LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getDisplayName().getString());
@@ -308,6 +347,10 @@ public class ServerPackets {
 
     public static void generate_character(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, boolean is_auto_message) {
         ConfigurationHandler.Config config = new ConfigurationHandler(serverInstance).loadConfig();
+
+        // Realism Mode: skip non-bipedal mobs entirely
+        if (!isAllowedByRealismMode(entity, config)) return;
+
         ChatDataManager manager = ChatDataManager.getServerInstance();
         if (!manager.handleAutoResponse(chatData, player, is_auto_message, config)) {
             return;
@@ -363,8 +406,15 @@ public class ServerPackets {
             chatData.chatStyleNote = personality.chatStyleNote();
         }
 
-        // Generate new character
-        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), is_auto_message);
+        // Inject nearby NPC names so dark/evil characters can develop specific grudges or
+        // rivalries against characters the player has already met in this world.
+        String nearbyNpcs = "";
+        if (entity.level() instanceof net.minecraft.server.level.ServerLevel charGenLevel) {
+            nearbyNpcs = com.owlmaddie.chat.EntityChatData.buildNearbyNpcsContext(entity, charGenLevel);
+        }
+
+        // Generate new character (pass nearby NPC names for dark-character grudge seeding)
+        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), is_auto_message, nearbyNpcs);
 
         // Populate inventory with some simple starter items if empty
         if (entity instanceof ChatInventory chatInv) {
@@ -425,6 +475,10 @@ public class ServerPackets {
 
     public static void generate_chat(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, String message, boolean is_auto_message) {
         ConfigurationHandler.Config config = new ConfigurationHandler(serverInstance).loadConfig();
+
+        // Realism Mode: skip non-bipedal mobs entirely
+        if (!isAllowedByRealismMode(entity, config)) return;
+
         ChatDataManager manager = ChatDataManager.getServerInstance();
         if (!manager.handleAutoResponse(chatData, player, is_auto_message, config)) {
             return;
@@ -451,10 +505,12 @@ public class ServerPackets {
         LOGGER.info("generate_chat: entityType={} subtitleMode={} nativeLanguage={} chatStyleNote={}",
                 entityTypeId, chatData.subtitleMode, chatData.nativeLanguage, chatData.chatStyleNote);
 
-        // Overhearing: when a player speaks (not an auto-message), check if any
-        // nearby mobs react. Angry messages trigger a much higher reaction chance.
+        // Overhearing: when a player speaks (not an auto-message), queue an overhear
+        // check rather than firing immediately. The check will fire AFTER the target
+        // mob's LLM response arrives (in BroadcastEntityMessage), so the bystander
+        // has full context — both the player's message AND the mob's reply.
         if (!is_auto_message && entity.level() instanceof ServerLevel serverLevel) {
-            com.owlmaddie.npc.NpcLifeManager.checkOverhearing(serverLevel, player, entity, message);
+            com.owlmaddie.npc.NpcLifeManager.queueOverhear(serverLevel, player, entity, message);
         }
 
         // Add new message
@@ -478,6 +534,15 @@ public class ServerPackets {
                 chatData.entityId, chatData.status,
                 chatData.currentMessage.length() > 24 ? chatData.currentMessage.substring(0, 24) + "..." : chatData.currentMessage,
                 chatData.currentLineNumber, chatData.sender);
+
+        // If this is the mob's completed reply, fire any queued overhear reaction.
+        // The bystander now has both the player's original message AND this response
+        // as context, making their reaction far more relevant and natural.
+        if (chatData.status == ChatDataManager.ChatStatus.DISPLAY
+                && chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
+            com.owlmaddie.npc.NpcLifeManager.firePendingOverhear(
+                    java.util.UUID.fromString(chatData.entityId));
+        }
 
         for (ServerLevel world : serverInstance.getAllLevels()) {
             // Find Entity by UUID and update custom name

@@ -13,10 +13,19 @@ package com.owlmaddie.message;
 public class Behavior {
     private String name;
     private Integer argument;
+    // For behaviors that carry a text target rather than a number (e.g. ATTACK_NPC Jax)
+    private String stringArgument;
 
     public Behavior(String name, Integer argument) {
         this.name = name;
         this.argument = argument;
+        this.stringArgument = null;
+    }
+
+    public Behavior(String name, String stringArgument) {
+        this.name = name;
+        this.argument = null;
+        this.stringArgument = stringArgument;
     }
 
     // Getters
@@ -28,9 +37,15 @@ public class Behavior {
         return argument;
     }
 
+    public String getStringArgument() {
+        return stringArgument;
+    }
+
     @Override
     public String toString() {
-        if (argument != null) {
+        if (stringArgument != null) {
+            return name + ": " + stringArgument;
+        } else if (argument != null) {
             return name + ": " + argument;
         } else {
             return name;

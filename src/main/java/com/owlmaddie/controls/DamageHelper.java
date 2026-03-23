@@ -17,7 +17,10 @@ public final class DamageHelper {
      * @return true if damage was applied
      */
     public static boolean applyLeapDamage(LivingEntity attacker, LivingEntity target, float amount) {
-        DamageSource src = attacker.damageSources().generic();
+        // Use mobAttack so the hit is properly attributed to the attacker — this produces
+        // knockback, hurt sounds, and a visible red flash on the victim, and correctly sets
+        // lastHurtByMob so the target knows who attacked it.
+        DamageSource src = attacker.damageSources().mobAttack(attacker);
         return target.hurt(src, amount);
     }
 }

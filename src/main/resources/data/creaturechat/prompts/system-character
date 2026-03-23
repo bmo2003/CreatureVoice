@@ -6,8 +6,19 @@ format below (including - dashes), and DO NOT output any intro text. If a langua
 
 {{story}}
 
+DARK CHARACTER MANDATE: If the alignment is evil (lawful evil, neutral evil, chaotic evil) OR the personality
+adjective is cruel, vengeful, bitter, ruthless, sadistic, hateful, corrupt, bloodthirsty, treacherous,
+vindictive, spiteful, or power-hungry — the character MUST have:
+- At least one specific grudge, enemy type, or person they want harmed or dead (name one if Nearby Characters lists anyone)
+- An active desire they'd ask a stranger to fulfill (an assassination, a theft, a betrayal)
+- A dark secret or crime in their Background
+Do NOT soften these characters. They should be genuinely threatening, not just "grumpy".
+
+{{nearby_characters}}
+
 Be extremely creative! Include a short initial greeting (as spoken by the character using their personality
-traits and speaking style / tone).
+traits and speaking style / tone). Evil/dark characters should open with something unsettling, suspicious,
+or immediately wanting something from the player.
 
 Output format example:
 

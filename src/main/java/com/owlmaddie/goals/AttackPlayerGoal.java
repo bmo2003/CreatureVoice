@@ -26,6 +26,7 @@ import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
 public class AttackPlayerGoal extends PlayerBaseGoal {
     protected final Mob attackerEntity;
     protected final double speed;
+    protected final boolean forceAttack; // when true, skip native-attack checks (used for ATTACK_NPC)
     protected enum EntityState { MOVING_TOWARDS_PLAYER, IDLE, CHARGING, ATTACKING, LEAPING }
     protected EntityState currentState = EntityState.IDLE;
     protected int cooldownTimer = 0;
@@ -35,9 +36,14 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     protected final double ATTACK_DISTANCE = 4D; // 2 blocks away
 
     public AttackPlayerGoal(LivingEntity targetEntity, Mob attackerEntity, double speed) {
+        this(targetEntity, attackerEntity, speed, false);
+    }
+
+    public AttackPlayerGoal(LivingEntity targetEntity, Mob attackerEntity, double speed, boolean forceAttack) {
         super(targetEntity);
         this.attackerEntity = attackerEntity;
         this.speed = speed;
+        this.forceAttack = forceAttack;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.TARGET));
     }
 
@@ -68,6 +74,14 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         // Is nearby to target
         boolean isNearby = this.attackerEntity.distanceToSqr(this.targetEntity) < MOVE_DISTANCE;
 
+        // ATTACK_NPC (forceAttack=true): always pursue regardless of native-attack capability.
+        // Without this, monsters like zombies or skeletons would fail the goal because
+        // canAttack(target)=true makes hasNativeAttacksButCannotTarget=false, so isGoalActive
+        // returns false and the goal never runs its tick loop.
+        if (forceAttack) {
+            return isNearby;
+        }
+
         // Check if the attacker is nearby and no native attacks
         boolean isNearbyAndNoNativeAttacks = isNearby && !hasNativeAttacks();
 
@@ -93,8 +107,9 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
             this.targetEntity.setLastHurtByMob(this.attackerEntity);
         }
 
-        // For passive entities (or hostile in creative mode), apply minimal damage to simulate a 'leap' / 'melee' attack
-        DamageHelper.applyLeapDamage(attackerEntity, targetEntity, 1.0F);
+        // For passive entities (or hostile in creative mode), apply damage to simulate a melee attack.
+        // 4HP makes the hit clearly visible (knockback + red flash) and kills in a reasonable time.
+        DamageHelper.applyLeapDamage(attackerEntity, targetEntity, 4.0F);
 
         // Play damage sound
         this.attackerEntity.playSound(SoundEvents.PLAYER_HURT, 1F, 1F);
@@ -111,6 +126,12 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         double squaredDistanceToPlayer = this.attackerEntity.distanceToSqr(this.targetEntity);
         this.attackerEntity.getLookControl().setLookAt(this.targetEntity, 30.0F, 30.0F);
 
+        // Re-issue navigation every tick so Brain-based mobs (villagers, etc.) keep pursuing
+        // their target even though the Brain AI tries to override the path each tick.
+        if (squaredDistanceToPlayer >= ATTACK_DISTANCE) {
+            this.attackerEntity.getNavigation().moveTo(this.targetEntity, this.speed);
+        }
+
         // State transitions and actions
         switch (currentState) {
             case IDLE:
@@ -125,7 +146,6 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
                 break;
 
             case MOVING_TOWARDS_PLAYER:
-                this.attackerEntity.getNavigation().moveTo(this.targetEntity, this.speed);
                 if (squaredDistanceToPlayer < CHARGE_DISTANCE) {
                     currentState = EntityState.CHARGING;
                 } else {
@@ -141,16 +161,14 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
                 break;
 
             case LEAPING:
-                // Leap towards the player
+                // Leap towards the target
                 Vec3 leapDirection = new Vec3(this.targetEntity.getX() - this.attackerEntity.getX(), 0.1D, this.targetEntity.getZ() - this.attackerEntity.getZ()).normalize().scale(1.0);
                 this.attackerEntity.setDeltaMovement(leapDirection);
                 this.attackerEntity.hurtMarked = true;
-
                 currentState = EntityState.ATTACKING;
                 break;
 
             case ATTACKING:
-                // Attack player
                 this.attackerEntity.getNavigation().moveTo(this.targetEntity, this.speed / 2.5D);
                 if (squaredDistanceToPlayer < ATTACK_DISTANCE && cooldownTimer <= 0) {
                     this.performAttack();

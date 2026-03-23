@@ -1,11 +1,23 @@
 {
-  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: Where is the strong hold?": {
-    "claude-haiku-4-5-20251001": "*nervously shifts hooves and glances around*  O-oh! Um, the s-stronghold? It\u0027s d-deep underground... r-really deep. I-I know the way if you w-want, but it\u0027s d-dark down there and... and there are m-monsters...  *fidgets anxiously*  D-do you really want me to t-take you? I\u0027ll g-guide you if you need..."
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\brave-archer.json: Hi friend! I am so happy to see you again!": {
+    "claude-haiku-4-5-20251001": "I appreciate the warmth, but I don\u0027t recall our paths crossing before, friend."
   },
-  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: Take me to a secret forrest": {
-    "claude-haiku-4-5-20251001": "*ears twitch nervously*   O-oh! A s-secret forest? I... I know of a p-place like that nearby... *glances around anxiously* It\u0027s q-quiet there, hidden away from p-prying eyes... Follow m-me, but p-please stay quiet..."
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\brave-archer.json: Please follow me": {
+    "claude-haiku-4-5-20251001": "Absolutely, I\u0027m with you! Let\u0027s move out together."
   },
-  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: Can you help me find the location of the secret artifact?": {
-    "claude-haiku-4-5-20251001": "*trembles nervously*  W-wait, a s-secret artifact? I... I m-might know where some r-rare things are hidden, b-but it\u0027s d-dangerous... A-are you sure you want m-me to show you?   *fidgets anxiously*  O-okay, okay... I\u0027ll t-take you there. J-just... please stay c-close and try to be q-quiet, alright?"
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: Quickly, please join me on an adventure": {
+    "claude-haiku-4-5-20251001": "W-wait, you really want m-me to come with you? I-I\u0027m s-so nervous about this..."
+  },
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: \u003cattacked you directly with Stone Axe\u003e": {
+    "claude-haiku-4-5-20251001": "No, please stop! D-don\u0027t hurt me! I didn\u0027t do anything!"
+  },
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: Please follow me": {
+    "claude-haiku-4-5-20251001": "O-okay, okay, I\u0027ll c-come with you... just p-please don\u0027t m-make any sudden n-noises..."
+  },
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\nervous-rogue.json: Come with me please": {
+    "claude-haiku-4-5-20251001": "O-okay, I\u0027ll c-come along... j-just please be gentle, alright?"
+  },
+  "src\\test\\resources\\data\\creaturechat\\chatdata\\brave-archer.json: \u003cattacked you directly with Stone Axe\u003e": {
+    "claude-haiku-4-5-20251001": "You dare strike me? I won\u0027t tolerate such treachery, friend!"
   }
 }

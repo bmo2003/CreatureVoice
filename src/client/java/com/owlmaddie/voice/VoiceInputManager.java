@@ -119,6 +119,16 @@ public class VoiceInputManager {
                 byte[] rawAudio = audioBuffer.toByteArray();
                 if (rawAudio.length == 0) return;
 
+                // Log audio RMS so we can tell if the mic captured actual voice
+                // (RMS near zero = silence — likely wrong mic or muted)
+                double rmsSum = 0;
+                for (int i = 0; i + 1 < rawAudio.length; i += 2) {
+                    short sample = (short) ((rawAudio[i + 1] << 8) | (rawAudio[i] & 0xFF));
+                    rmsSum += (double) sample * sample;
+                }
+                int rms = (int) Math.sqrt(rmsSum / (rawAudio.length / 2.0));
+                LOGGER.info("Audio RMS level: {} (>500 = voice detected)", rms);
+
                 String transcript = sendToDeepgram(rawAudio);
                 if (transcript != null && !transcript.isBlank()) {
                     LOGGER.info("Transcript: {}", transcript);
@@ -128,7 +138,7 @@ public class VoiceInputManager {
                         if (callback != null) callback.accept(transcript);
                     });
                 } else {
-                    LOGGER.warn("Deepgram returned an empty transcript");
+                    LOGGER.warn("Deepgram returned an empty transcript (RMS was {})", rms);
                 }
 
             } catch (Exception e) {
@@ -204,7 +214,13 @@ public class VoiceInputManager {
 
             String responseBody = new String(
                     conn.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            return parseTranscript(responseBody);
+            String result = parseTranscript(responseBody);
+            // Log the raw response whenever transcript is null/empty so we can diagnose API issues
+            if (result == null || result.isBlank()) {
+                LOGGER.warn("Deepgram raw response: {}", responseBody.length() > 400
+                        ? responseBody.substring(0, 400) : responseBody);
+            }
+            return result;
 
         } catch (Exception e) {
             LOGGER.error("Failed to reach Deepgram: {}", e.getMessage());

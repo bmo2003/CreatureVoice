@@ -20,8 +20,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,17 +58,20 @@ public class TtsManager {
         return t;
     });
 
-    // Incremented each time speak() is called. The render-thread callback checks this
-    // before starting playback; if it has moved on, the audio is discarded.
-    private static final AtomicInteger speakGeneration = new AtomicInteger(0);
+    // Per-mob generation counters. Incrementing a mob's counter cancels only that
+    // mob's in-flight or playing audio, leaving other mobs' audio untouched.
+    private static final Map<UUID, AtomicInteger> mobGenerations = new ConcurrentHashMap<>();
 
-    // OpenAL handles for the currently active 3D audio source.
-    // Written on the render thread, read on the render thread in tick().
-    // Zero means no active source.
-    private static int activeAlSource = 0;
-    private static int activeAlBuffer = 0;
-    private static int activeAlGeneration = -1;
-    private static UUID activeAlMobId = null;
+    // Per-mob active OpenAL state. Only accessed on the render thread.
+    private static final Map<UUID, MobSource> activeSources = new HashMap<>();
+
+    /** Bundles the OpenAL handles and generation stamp for one mob's active audio. */
+    private static class MobSource {
+        final int alSource;
+        final int alBuffer;
+        final int generation;
+        MobSource(int src, int buf, int gen) { alSource = src; alBuffer = buf; generation = gen; }
+    }
 
     // Sample rate matching ElevenLabs pcm_24000 output format
     private static final int SAMPLE_RATE = 24000;
@@ -160,9 +166,10 @@ public class TtsManager {
             return;
         }
 
-        // Advance the generation counter. The render-thread tick() will stop the currently
-        // playing source on the next frame, and any in-flight API response will be discarded.
-        int myGeneration = speakGeneration.incrementAndGet();
+        // Advance only this mob's generation counter. Any in-flight request for this
+        // mob will be discarded, but other mobs' audio continues uninterrupted.
+        AtomicInteger genCounter = mobGenerations.computeIfAbsent(mobId, k -> new AtomicInteger(0));
+        int myGeneration = genCounter.incrementAndGet();
 
         ttsThread.submit(() -> {
             String voiceId = getVoiceId(mobId);
@@ -177,8 +184,9 @@ public class TtsManager {
             try {
                 byte[] pcmData = requestTts(voiceId, text);
 
-                // Discard if a newer speak() arrived while the API call was in flight
-                if (speakGeneration.get() != myGeneration) return;
+                // Discard if a newer speak() for this same mob arrived while we were waiting
+                AtomicInteger counter = mobGenerations.get(mobId);
+                if (counter == null || counter.get() != myGeneration) return;
 
                 if (pcmData != null && pcmData.length > 0) {
                     LOGGER.info("TTS received {} bytes for mob {}", pcmData.length, mobId);
@@ -233,9 +241,9 @@ public class TtsManager {
         pcmBuffer.put(pcmData).flip();
 
         Minecraft.getInstance().execute(() -> {
-            // Double-check generation on the render thread; another speak() may have
-            // arrived between the TTS thread queuing this and the render thread running it.
-            if (generation != speakGeneration.get()) return;
+            // Double-check this mob's generation on the render thread
+            AtomicInteger counter = mobGenerations.get(mobId);
+            if (counter == null || counter.get() != generation) return;
 
             // Look up the mob's current position in the world
             Minecraft mc = Minecraft.getInstance();
@@ -249,8 +257,8 @@ public class TtsManager {
             float y = (float) (mob.getY() + mob.getBbHeight() * 0.6);
             float z = (float) mob.getZ();
 
-            // Stop and clean up any previous source before starting the new one
-            stopActiveSource();
+            // Stop only this mob's previous source — other mobs keep playing
+            stopMobSource(mobId);
 
             // Upload PCM data to an OpenAL buffer
             int alBuf = AL10.alGenBuffers();
@@ -270,73 +278,84 @@ public class TtsManager {
 
             AL10.alSourcePlay(alSrc);
 
-            activeAlSource = alSrc;
-            activeAlBuffer = alBuf;
-            activeAlGeneration = generation;
-            activeAlMobId = mobId;
+            activeSources.put(mobId, new MobSource(alSrc, alBuf, generation));
         });
     }
 
     /**
-     * Called every client tick from ClientInit. Updates volume and position for the active
-     * source, and cleans up sources that have finished or been superseded.
+     * Called every client tick from ClientInit. Iterates all active mob sources,
+     * updating their 3D position and volume, and cleaning up any that have finished
+     * or been superseded by a newer speak() call.
      * Must be called on the render thread (where the OpenAL context is current).
      */
     public static void tick() {
-        if (activeAlSource == 0) return;
+        if (activeSources.isEmpty()) return;
 
-        // If a newer speak() arrived, stop the current source immediately
-        if (activeAlGeneration != speakGeneration.get()) {
-            stopActiveSource();
-            return;
-        }
-
-        // If the source finished playing naturally, clean it up
-        if (AL10.alGetSourcei(activeAlSource, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
-            stopActiveSource();
-            return;
-        }
-
-        // Update source position and gain each tick so panning and volume stay accurate
-        // as both the player and the mob move around.
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || activeAlMobId == null) return;
+        if (mc.level == null || mc.player == null) return;
 
-        Mob mob = ClientEntityFinder.getEntityByUUID(mc.level, activeAlMobId);
-        if (mob == null) return;
+        List<UUID> finished = new ArrayList<>();
 
-        // Keep the source glued to the mob as it moves
-        float x = (float) mob.getX();
-        float y = (float) (mob.getY() + mob.getBbHeight() * 0.6);
-        float z = (float) mob.getZ();
-        AL10.alSource3f(activeAlSource, AL10.AL_POSITION, x, y, z);
+        for (Map.Entry<UUID, MobSource> entry : activeSources.entrySet()) {
+            UUID mobId = entry.getKey();
+            MobSource src = entry.getValue();
 
-        // Linear gain: 1.0 within VOICE_REF_DISTANCE, fades to 0.0 at VOICE_MAX_DISTANCE
-        double dist = mc.player.distanceTo(mob);
-        float gain;
-        if (dist <= VOICE_REF_DISTANCE) {
-            gain = 1.0f;
-        } else if (dist >= VOICE_MAX_DISTANCE) {
-            gain = 0.0f;
-        } else {
-            gain = 1.0f - (float) (dist - VOICE_REF_DISTANCE)
-                    / (VOICE_MAX_DISTANCE - VOICE_REF_DISTANCE);
+            // If a newer speak() arrived for this mob, stop it immediately
+            AtomicInteger counter = mobGenerations.get(mobId);
+            if (counter == null || counter.get() != src.generation) {
+                cleanupSource(src);
+                finished.add(mobId);
+                continue;
+            }
+
+            // If the source finished playing naturally, clean it up
+            if (AL10.alGetSourcei(src.alSource, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
+                cleanupSource(src);
+                finished.add(mobId);
+                continue;
+            }
+
+            // Mob may have moved or left render range
+            Mob mob = ClientEntityFinder.getEntityByUUID(mc.level, mobId);
+            if (mob == null) {
+                cleanupSource(src);
+                finished.add(mobId);
+                continue;
+            }
+
+            // Keep the source glued to the mob as it moves
+            float x = (float) mob.getX();
+            float y = (float) (mob.getY() + mob.getBbHeight() * 0.6);
+            float z = (float) mob.getZ();
+            AL10.alSource3f(src.alSource, AL10.AL_POSITION, x, y, z);
+
+            // Linear gain: 1.0 within VOICE_REF_DISTANCE, fades to 0.0 at VOICE_MAX_DISTANCE
+            double dist = mc.player.distanceTo(mob);
+            float gain;
+            if (dist <= VOICE_REF_DISTANCE) {
+                gain = 1.0f;
+            } else if (dist >= VOICE_MAX_DISTANCE) {
+                gain = 0.0f;
+            } else {
+                gain = 1.0f - (float) (dist - VOICE_REF_DISTANCE)
+                        / (VOICE_MAX_DISTANCE - VOICE_REF_DISTANCE);
+            }
+            AL10.alSourcef(src.alSource, AL10.AL_GAIN, gain);
         }
-        AL10.alSourcef(activeAlSource, AL10.AL_GAIN, gain);
+
+        finished.forEach(activeSources::remove);
     }
 
-    /** Stop and delete the active OpenAL source and buffer. Must be on the render thread. */
-    private static void stopActiveSource() {
-        if (activeAlSource != 0) {
-            AL10.alSourceStop(activeAlSource);
-            AL10.alDeleteSources(activeAlSource);
-            activeAlSource = 0;
-        }
-        if (activeAlBuffer != 0) {
-            AL10.alDeleteBuffers(activeAlBuffer);
-            activeAlBuffer = 0;
-        }
-        activeAlGeneration = -1;
-        activeAlMobId = null;
+    /** Stop and delete one mob's OpenAL source. Must be on the render thread. */
+    private static void stopMobSource(UUID mobId) {
+        MobSource src = activeSources.remove(mobId);
+        if (src != null) cleanupSource(src);
+    }
+
+    /** Free the OpenAL source and buffer for a MobSource. Must be on the render thread. */
+    private static void cleanupSource(MobSource src) {
+        AL10.alSourceStop(src.alSource);
+        AL10.alDeleteSources(src.alSource);
+        AL10.alDeleteBuffers(src.alBuffer);
     }
 }

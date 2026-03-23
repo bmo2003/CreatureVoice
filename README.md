@@ -10,8 +10,8 @@ CreatureVoice is a Fabric mod for Minecraft 1.21.7 that replaces all text-based 
 - **Voice Replies:** Mobs reply out loud using ElevenLabs TTS. Each mob has a unique, consistent voice derived from its UUID.
 - **3D Positional Audio:** Sound comes from the mob's location in the world with natural distance fade-out up to 32 blocks.
 - **AI Personalities:** Every mob has a generated personality, backstory, speaking style, and alignment.
-- **Behaviors:** Mobs can Follow, Flee, Attack, Protect, Lead you to locations, and more — all driven by conversation.
-- **Real Location Knowledge:** Mobs know about nearby structures (villages, mineshafts, strongholds, etc.) and can guide you there. They will never make up directions to places they don't know about.
+- **Behaviors:** Mobs can Follow, Flee, Attack, Protect, Lead you to real locations, set buildings on fire, attack specific NPCs, rename themselves, give and receive items, and more — all driven by conversation.
+- **Real Location Knowledge:** Mobs know about nearby structures (villages, mineshafts, strongholds), buildings (detected by their doors), and containers (chests, furnaces, brewing stands, etc.). They will never invent directions to places they don't know about.
 - **Friendship System:** Relationships range from -3 (hostile) to +3 (best friends) and persist across sessions.
 - **Memory:** Mobs remember your past conversations, making each interaction more personal.
 - **Inventory:** Every mob has a random loot inventory. Trade, give gifts, or rob them.

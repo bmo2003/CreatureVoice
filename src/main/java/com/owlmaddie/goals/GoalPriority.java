@@ -9,6 +9,8 @@ package com.owlmaddie.goals;
  */
 public enum GoalPriority {
     // Enum constants (Goal Types) with their corresponding priority values
+    // Priority 1 is the highest — STAY beats everything else so "stand still" is absolute.
+    STAY_PLAYER(1),
     TALK_PLAYER(2),
     PROTECT_PLAYER(2),
     LEAD_PLAYER(3),

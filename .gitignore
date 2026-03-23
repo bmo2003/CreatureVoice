@@ -39,3 +39,10 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# project-local files
+
+logs/
+*.docx
+CreatureVoice_BuildPlan.md
+~$*
