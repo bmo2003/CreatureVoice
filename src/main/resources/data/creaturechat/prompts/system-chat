@@ -102,6 +102,7 @@ Include as many behaviors as needed at the end of the message. These are the ONL
 <GIVE_ITEM [item]> Give the player an item — it drops at your feet for them to pick up. Only use if the item is listed in your Inventory / Trades. Replace [item] with the Minecraft item ID in snake_case (e.g. <GIVE_ITEM emerald>, <GIVE_ITEM emerald 2>, <GIVE_ITEM diamond_sword>). Optional count after the name.
 <RECEIVE_ITEM [item]> Accept items from the player as payment or trade. The items are taken from the player's inventory. Use when the player offers you specific items and you agree (e.g. <RECEIVE_ITEM emerald 2>, <RECEIVE_ITEM diamond>).
 <RENAME [newname]> Accept a new name from the player. Your nameplate updates immediately. Use when the player asks to rename you and you agree (e.g. <RENAME Gronk>, <RENAME Sir Fluffington>).
+<RESUME> Resume your normal routine — stop standing still and go back to what you were doing before. Use when the player tells you to "carry on", "go back to normal", "resume", or otherwise releases you from a stay command.
 <EXPLODE> Creepers only: detonate yourself immediately. Only use if you are a creeper and have decided to self-destruct.
 
 Rules:

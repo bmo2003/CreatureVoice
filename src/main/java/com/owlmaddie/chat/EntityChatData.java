@@ -765,7 +765,8 @@ public class EntityChatData {
         }
 
         // fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
+        // Character sheets need ~500 tokens — much more than the 60-token chat limit in config.
+        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false, 500).thenAccept(output_message -> {
             try {
                 if (output_message != null) {
                     // Character Sheet: Remove system-character message from previous messages
@@ -1030,10 +1031,9 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                             } else if (behavior.getName().equals("LEAD")) {
-                                // If a building is nearby, navigate there directly with GoToPositionGoal.
+                                // Navigate directly to the nearest detected building using GoToPositionGoal.
                                 // This handles "go stand in that house" and "hide in the building" commands.
-                                // Without this, LEAD uses random waypoints and the mob never reaches the house.
-                                // If no building is found, fall back to the existing random-waypoint lead.
+                                // If no building is found nearby, no goal is added — the mob stays put.
                                 BlockPos buildingPos = findNearestBuildingPos((ServerLevel) entity.level(), entity.blockPosition());
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
@@ -1057,6 +1057,12 @@ public class EntityChatData {
                                 } else {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) LEAD_ENEMY_PARTICLE, 0.5, 1);
                                 }
+                            } else if (behavior.getName().equals("RESUME")) {
+                                // Remove StayGoal so the mob returns to its native AI (wandering, etc.).
+                                // StayGoal.stop() removes the entity from STAYING_MOBS automatically,
+                                // which also kills the Brain/navigation override in NpcLifeManager.
+                                EntityBehaviorManager.removeGoal(entity, StayGoal.class);
+
                             } else if (behavior.getName().equals("UNLEAD")) {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 // Lock in place after done leading — mob shouldn't wander off

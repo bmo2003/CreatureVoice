@@ -24,7 +24,7 @@ public class MessageParser {
         List<Behavior> behaviors = new ArrayList<>();
 
         // Integer-argument behaviors (e.g. <FRIENDSHIP 2>) and no-argument behaviors
-        Pattern intPattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|EXPLODE|SET_FIRE)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
+        Pattern intPattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|EXPLODE|SET_FIRE|RESUME)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
         // String-argument behaviors (e.g. <ATTACK_NPC Jax>, <GIVE_ITEM emerald 2>, <RECEIVE_ITEM emerald 2>, <RENAME Gronk>)
         // Capture everything between the behavior name and the closing > as the argument
         Pattern strPattern = Pattern.compile("[<*](ATTACK_NPC|GIVE_ITEM|RECEIVE_ITEM|RENAME)\\s+([^>*]+?)[>*]", Pattern.CASE_INSENSITIVE);

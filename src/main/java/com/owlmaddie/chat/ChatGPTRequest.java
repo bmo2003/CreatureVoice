@@ -144,14 +144,19 @@ public class ChatGPTRequest {
         return message.replace(apiKey, "**********");
     }
 
-    public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatMessage> messageHistory, Boolean jsonMode) {
+    /**
+     * Overload that lets the caller specify a token limit different from the one in config.
+     * Used for character sheet generation, which needs ~500 tokens instead of the 60-token
+     * chat limit. Normal chat calls use the no-override version below.
+     */
+    public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatMessage> messageHistory, Boolean jsonMode, int maxTokensOverride) {
         // Init API & LLM details
         String apiUrl = config.getUrl();
         String apiKey = config.getApiKey();
         String modelName = config.getModel();
         Integer timeout = config.getTimeout() * 1000;
         int maxContextTokens = config.getMaxContextTokens();
-        int maxOutputTokens = config.getMaxOutputTokens();
+        int maxOutputTokens = maxTokensOverride;
         double percentOfContext = config.getPercentOfContext();
 
         return CompletableFuture.supplyAsync(() -> {
@@ -317,6 +322,11 @@ public class ChatGPTRequest {
                 return null;
             }
         });
+    }
+
+    /** Standard chat call — uses the token limit from config (e.g. 60 for single-sentence replies). */
+    public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatMessage> messageHistory, Boolean jsonMode) {
+        return fetchMessageFromChatGPT(config, systemPrompt, contextData, messageHistory, jsonMode, config.getMaxOutputTokens());
     }
 }
 

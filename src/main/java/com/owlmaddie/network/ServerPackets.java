@@ -302,8 +302,13 @@ public class ServerPackets {
         });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
             String entityUUID = entity.getStringUUID();
-            if (entity.getRemovalReason() == Entity.RemovalReason.KILLED && ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
-                LOGGER.debug("Entity killed (" + entityUUID + "), updating death time stamp.");
+            // KILLED  — entity died from damage (e.g. slain by sword)
+            // DISCARDED — entity was replaced/converted (e.g. villager → zombie villager).
+            //             The original entity is gone; record the death so witnesses remember it.
+            Entity.RemovalReason reason = entity.getRemovalReason();
+            boolean isDead = reason == Entity.RemovalReason.KILLED || reason == Entity.RemovalReason.DISCARDED;
+            if (isDead && ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
+                LOGGER.debug("Entity removed (reason={}, uuid={}), recording death timestamp.", reason, entityUUID);
                 ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
             }
         });
