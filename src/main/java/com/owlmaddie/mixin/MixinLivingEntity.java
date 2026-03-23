@@ -100,18 +100,20 @@ public class MixinLivingEntity {
         if (entity instanceof Player) return;
         if (entity instanceof TamableAnimal && ((TamableAnimal) entity).isTame()) return;
 
+        // Broadcast the death message only for named mobs that have a character sheet
         EntityChatData chatData = getChatData(entity);
-        if (chatData == null || chatData.characterSheet.isEmpty()) return;
-
-        // Broadcast the death message for named/known mobs
-        if (entity.hasCustomName()) {
+        if (chatData != null && !chatData.characterSheet.isEmpty() && entity.hasCustomName()) {
             Component deathMessage = entity.getCombatTracker().getDeathMessage();
             ServerPackets.BroadcastMessage(deathMessage);
         }
 
-        // Notify nearby mobs with character sheets so they can react in character
+        // Notify nearby witness mobs regardless of whether the deceased had a character sheet —
+        // witnesses should react to any death nearby, not only deaths of named characters.
+        // Extract the killer's display name so witnesses get richer context ("killed by X").
         if (entity instanceof Mob && world instanceof ServerLevel serverLevel) {
-            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(serverLevel, (Mob) entity);
+            net.minecraft.world.entity.Entity killer = source.getEntity();
+            String killerName = (killer != null) ? killer.getDisplayName().getString() : null;
+            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(serverLevel, (Mob) entity, killerName);
         }
     }
 }

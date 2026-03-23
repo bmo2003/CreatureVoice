@@ -580,17 +580,26 @@ public class NpcLifeManager {
      * so they can react naturally in character (mourn, cheer, flee, etc.).
      * Only one witness reacts per death to keep API costs low.
      */
-    public static void checkDeathWitnesses(ServerLevel level, Mob deceased) {
+    /**
+     * @param killerName  Display name of whoever caused the death, or null if unknown.
+     *                    Threaded in from MixinLivingEntity so the memory string is
+     *                    richer ("killed by Player972") rather than just "killed nearby".
+     */
+    public static void checkDeathWitnesses(ServerLevel level, Mob deceased, String killerName) {
         EntityChatData deceasedData = ChatDataManager.getServerInstance()
                 .getOrCreateChatData(deceased.getStringUUID());
         String deceasedName = extractMobName(deceasedData, deceased);
 
-        // Record so ALL nearby mobs know about the death in their next conversation,
-        // even if they're too far away or busy to actively react right now.
-        recordEvent(deceased.getX(), deceased.getY(), deceased.getZ(),
-                deceasedName + " was killed nearby");
+        // Build a descriptive death string — include the killer if we know who it was.
+        String deathDescription = (killerName != null && !killerName.isBlank())
+                ? deceasedName + " was killed by " + killerName
+                : deceasedName + " was killed nearby";
 
-        AABB searchBox = deceased.getBoundingBox().inflate(16.0); // increased from 10
+        // Record so ALL nearby mobs have this event in their next conversation context
+        // for the next 60 seconds, even if they're too far away to be active witnesses.
+        recordEvent(deceased.getX(), deceased.getY(), deceased.getZ(), deathDescription);
+
+        AABB searchBox = deceased.getBoundingBox().inflate(32.0);
         List<Mob> witnesses = level.getEntitiesOfClass(Mob.class, searchBox);
 
         // Need at least one player nearby to use as context for the LLM call
@@ -600,26 +609,33 @@ public class NpcLifeManager {
         boolean activeReactionFired = false;
         for (Mob witness : witnesses) {
             if (witness.getUUID().equals(deceased.getUUID())) continue;
-            if (witness.distanceTo(deceased) > 16.0f) continue;
+            if (witness.distanceTo(deceased) > 32.0f) continue;
 
             EntityChatData witnessData = ChatDataManager.getServerInstance()
                     .getOrCreateChatData(witness.getStringUUID());
-            if (witnessData.characterSheet.isEmpty()) continue;
 
-            // Store the death permanently in this mob's memory so it is never forgotten.
-            // This runs for every nearby witness regardless of whether they speak aloud.
-            String deathMemory = deceasedName + " was killed nearby";
-            if (!witnessData.witnessedDeaths.contains(deathMemory)) {
-                witnessData.witnessedDeaths.add(deathMemory);
+            // Always store the permanent death memory — even for mobs that have not been
+            // spoken to yet. When the player first talks to them the memory will already
+            // be there, so they can reference the death in that first conversation.
+            if (!witnessData.witnessedDeaths.contains(deathDescription)) {
+                witnessData.witnessedDeaths.add(deathDescription);
             }
+
+            // Active in-character reactions need a character sheet. Skip mobs that
+            // haven't been generated yet — they'll still have the permanent memory above.
+            if (witnessData.characterSheet.isEmpty()) continue;
 
             // Fire one active voice/text reaction (first eligible witness only).
             if (!activeReactionFired && witnessData.status != ChatDataManager.ChatStatus.PENDING) {
                 net.minecraft.server.level.ServerPlayer contextPlayer = players.stream()
                         .min(Comparator.comparingDouble(p -> (double) p.distanceTo(witness)))
                         .orElse(players.get(0));
-                String trigger = "<witnesses " + deceasedName + " die nearby>";
-                LOGGER.info("Death witness: {} sees {} die", witness.getType().toShortString(), deceasedName);
+                String trigger = killerName != null && !killerName.isBlank()
+                        ? "<witnesses " + deceasedName + " being killed by " + killerName + ">"
+                        : "<witnesses " + deceasedName + " die nearby>";
+                LOGGER.info("Death witness: {} sees {} die (killer: {})",
+                        witness.getType().toShortString(), deceasedName,
+                        killerName != null ? killerName : "unknown");
                 ServerPackets.generate_chat("English", witnessData, contextPlayer, witness, trigger, true);
                 activeReactionFired = true; // one active reaction per death keeps costs low
             }

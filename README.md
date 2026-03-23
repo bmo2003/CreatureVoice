@@ -33,19 +33,26 @@ Two API keys are required and must be placed in a `creaturechat.json` file in yo
 
 ### LLM Setup (required for mob AI)
 
-An LLM endpoint is required to generate mob personalities and chat responses. Configure it in-game:
+An LLM endpoint is required to generate mob personalities and chat responses. Add the following fields to your `creaturechat.json`:
 
-```
-/creaturechat key set <YOUR-OPENAI-OR-COMPATIBLE-KEY>
-/creaturechat url set "https://api.openai.com/v1/chat/completions"
-/creaturechat model set gpt-4o-mini
+```json
+{
+  "deepgramApiKey": "YOUR_DEEPGRAM_KEY",
+  "elevenLabsApiKey": "YOUR_ELEVENLABS_KEY",
+  "apiKey": "YOUR_OPENAI_OR_COMPATIBLE_KEY",
+  "apiUrl": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-4o-mini"
+}
 ```
 
 For free/local models via [Ollama](https://ollama.com/) + [LiteLLM](https://litellm.vercel.app/):
-```
-/creaturechat url set "http://localhost:8000/v1/chat/completions"
-/creaturechat model set ollama/llama3
-/creaturechat timeout set 360
+
+```json
+{
+  "apiUrl": "http://localhost:8000/v1/chat/completions",
+  "model": "ollama/llama3",
+  "httpTimeout": 360
+}
 ```
 
 ### Controls
@@ -56,26 +63,12 @@ For free/local models via [Ollama](https://ollama.com/) + [LiteLLM](https://lite
 | **Right-click** on chat bubble | Minimize / restore the bubble |
 | **E** near mob | Open mob inventory |
 
-### In-game Commands
-
-| Command | Description |
-|---------|-------------|
-| `/creaturechat key set <key>` | Set the LLM API key |
-| `/creaturechat url set "<url>"` | Set the LLM endpoint URL |
-| `/creaturechat model set <model>` | Set the LLM model name |
-| `/creaturechat timeout set <seconds>` | Set HTTP request timeout |
-| `/creaturechat whitelist <type \| all \| clear>` | Show bubbles for entity type |
-| `/creaturechat blacklist <type \| all \| clear>` | Hide bubbles for entity type |
-| `/story set "<text>"` | Set a world story included in all prompts |
-| `/story display \| clear` | Show or clear the current story |
-
 ### Installation
 
 1. Install [Fabric Loader & Fabric API](https://fabricmc.net/use/)
 2. Drop `creaturevoice-*.jar` and `fabric-api-*.jar` into `.minecraft/mods`
-3. Create `creaturechat.json` with your API keys (see Voice Setup above)
+3. Create `creaturechat.json` in your Minecraft run directory with your API keys (see setup sections above)
 4. Launch Minecraft with the Fabric profile
-5. Configure your LLM key in-game
 
 ### Building from Source
 

@@ -772,17 +772,19 @@ public class EntityChatData {
                     // Character Sheet: Remove system-character message from previous messages
                     previousMessages.clear();
 
-                    // Add NEW CHARACTER sheet & greeting
+                    // Add NEW CHARACTER sheet & greeting (or respond directly to the player's
+                    // first words if they spoke before generation finished).
                     this.characterSheet = output_message;
-                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A")).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
-                    this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
-
-                    // If the player spoke while we were generating the character, replay their
-                    // message now so they don't have to say it twice.
                     String pending = this.pendingVoiceMessage;
                     this.pendingVoiceMessage = null;
                     if (pending != null && !pending.isBlank()) {
+                        // Player already spoke — skip the canned greeting and respond in character
+                        // directly to their words. This prevents the mob from "speaking twice".
                         this.generateMessage(userLanguage, player, pending, is_auto_message);
+                    } else {
+                        // Player hasn't said anything yet — show the short intro greeting.
+                        String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A")).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
+                        this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
                     }
 
                 } else {

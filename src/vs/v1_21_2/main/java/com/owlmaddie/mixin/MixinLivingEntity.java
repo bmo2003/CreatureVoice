@@ -84,7 +84,11 @@ public class MixinLivingEntity {
             PlayerData pd = data.getPlayerData(serverPlayer.getDisplayName().getString());
             pd.lastDamageFriendship = pd.friendship;
             pd.wordsmithDamaged = true;
-            if (!data.characterSheet.isEmpty()) {
+            // Only fire a new LLM call if the mob is not already waiting on a response.
+            // Without this check, rapid hits send one request per swing and the API
+            // rate-limits with HTTP 429 errors.
+            if (!data.characterSheet.isEmpty()
+                    && data.status != ChatDataManager.ChatStatus.PENDING) {
                 ItemStack weapon = serverPlayer.getMainHandItem();
                 String weaponName = weapon.isEmpty()
                         ? "with fists"
@@ -98,6 +102,11 @@ public class MixinLivingEntity {
                         + " " + weaponName + ">";
                 ServerPackets.generate_chat("N/A", data, serverPlayer, mob, msg, true);
             }
+
+            // Let nearby witnesses with character sheets react to the attack
+            if (self.level() instanceof ServerLevel serverLevel) {
+                com.owlmaddie.npc.NpcLifeManager.checkWitnesses(serverLevel, serverPlayer, mob);
+            }
         }
     }
 
@@ -109,24 +118,23 @@ public class MixinLivingEntity {
         LivingEntity entity = (LivingEntity) (Object) this;
         Level world = entity.level();
 
-        if (!world.isClientSide() && entity.hasCustomName()) {
-            // Skip tamed entities and players
-            if (entity instanceof TamableAnimal && ((TamableAnimal) entity).isTame()) {
-                return;
-            }
+        if (world.isClientSide()) return;
+        if (entity instanceof Player) return;
+        if (entity instanceof TamableAnimal && ((TamableAnimal) entity).isTame()) return;
 
-            if (entity instanceof Player) {
-                return;
-            }
+        // Broadcast death message only for named mobs with a character sheet
+        EntityChatData chatData = getChatData(entity);
+        if (chatData != null && !chatData.characterSheet.isEmpty() && entity.hasCustomName()) {
+            Component deathMessage = entity.getCombatTracker().getDeathMessage();
+            ServerPackets.BroadcastMessage(deathMessage);
+        }
 
-            // Get chatData for the entity
-            EntityChatData chatData = getChatData(entity);
-            if (chatData != null && !chatData.characterSheet.isEmpty()) {
-                // Get the original death message
-                Component deathMessage = entity.getCombatTracker().getDeathMessage();
-                // Broadcast the death message to all players in the world
-                ServerPackets.BroadcastMessage(deathMessage);
-            }
+        // Notify nearby witnesses for any mob death — not just named ones.
+        // Pass the killer's name so witnesses get richer context ("killed by X").
+        if (entity instanceof Mob && world instanceof ServerLevel serverLevel) {
+            Entity killer = source.getEntity();
+            String killerName = (killer != null) ? killer.getDisplayName().getString() : null;
+            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(serverLevel, (Mob) entity, killerName);
         }
     }
 }
