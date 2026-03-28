@@ -24,14 +24,29 @@ public class MessageParser {
         List<Behavior> behaviors = new ArrayList<>();
 
         // Integer-argument behaviors (e.g. <FRIENDSHIP 2>) and no-argument behaviors
-        Pattern intPattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|EXPLODE|SET_FIRE|RESUME)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
-        // String-argument behaviors (e.g. <ATTACK_NPC Jax>, <GIVE_ITEM emerald 2>, <RECEIVE_ITEM emerald 2>, <RENAME Gronk>)
+        Pattern intPattern = Pattern.compile("[<*](FOLLOW|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|EXPLODE|SET_FIRE|RESUME)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
+        // String-argument behaviors (e.g. <ATTACK_NPC Jax>, <GIVE_ITEM emerald 2>, <RECEIVE_ITEM emerald 2>, <RENAME Gronk>, <SPEAK_TO Quinten>)
         // Capture everything between the behavior name and the closing > as the argument
-        Pattern strPattern = Pattern.compile("[<*](ATTACK_NPC|GIVE_ITEM|RECEIVE_ITEM|RENAME)\\s+([^>*]+?)[>*]", Pattern.CASE_INSENSITIVE);
+        Pattern strPattern = Pattern.compile("[<*](ATTACK_NPC|GIVE_ITEM|RECEIVE_ITEM|RENAME|SPEAK_TO)\\s+([^>*]+?)[>*]", Pattern.CASE_INSENSITIVE);
+
+        // Zero-th pass: extract LEAD with optional destination string arg.
+        // Handles <LEAD> (no arg) and <LEAD water> / <LEAD village> (with arg).
+        // Must run BEFORE the string-arg pass to avoid collision.
+        Pattern leadPattern = Pattern.compile("[<*]LEAD(?:\\s+([^>*]+?))?[>*]", Pattern.CASE_INSENSITIVE);
+        Matcher leadMatcher = leadPattern.matcher(input);
+        StringBuilder afterLeadPass = new StringBuilder();
+        while (leadMatcher.find()) {
+            String destArg = leadMatcher.group(1);
+            String stringArgument = (destArg != null) ? destArg.trim() : "";
+            behaviors.add(new Behavior("LEAD", stringArgument));
+            LOGGER.debug("Found behavior: LEAD with destination: '{}'", stringArgument);
+            leadMatcher.appendReplacement(afterLeadPass, "");
+        }
+        leadMatcher.appendTail(afterLeadPass);
 
         // First pass: extract ATTACK_NPC with string arg (replace with placeholder to avoid
         // interfering with the second pass on the same string)
-        Matcher strMatcher = strPattern.matcher(input);
+        Matcher strMatcher = strPattern.matcher(afterLeadPass.toString());
         StringBuilder afterStrPass = new StringBuilder();
         while (strMatcher.find()) {
             String behaviorName = strMatcher.group(1).toUpperCase();

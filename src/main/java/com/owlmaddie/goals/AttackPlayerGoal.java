@@ -5,6 +5,8 @@ package com.owlmaddie.goals;
 
 import com.owlmaddie.controls.DamageHelper;
 import java.util.EnumSet;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
@@ -24,6 +26,13 @@ import static com.owlmaddie.network.ServerPackets.ATTACK_PARTICLE;
  * For passive entities like chickens (or hostile entities in creative mode), damage is simulated with particles.
  */
 public class AttackPlayerGoal extends PlayerBaseGoal {
+    /**
+     * Populated in start(), cleared in stop(). Read by NpcLifeManager every server tick
+     * (END_SERVER_TICK) to re-issue moveTo AFTER Brain.tick() has run for villagers —
+     * same Brain-override fix used by GoToPositionGoal and FleePlayerGoal.
+     */
+    public static final ConcurrentHashMap<UUID, AttackPlayerGoal> ATTACK_MOBS = new ConcurrentHashMap<>();
+
     protected final Mob attackerEntity;
     protected final double speed;
     protected final boolean forceAttack; // when true, skip native-attack checks (used for ATTACK_NPC)
@@ -58,7 +67,17 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
     }
 
     @Override
+    public void start() {
+        // Register so NpcLifeManager can re-issue navigation after Brain.tick()
+        ATTACK_MOBS.put(attackerEntity.getUUID(), this);
+    }
+
+    @Override
     public void stop() {
+        ATTACK_MOBS.remove(attackerEntity.getUUID());
+        attackerEntity.getNavigation().stop();
+        // Clear the mob's target so native goals don't resume attacking a dead entity
+        attackerEntity.setTarget(null);
     }
 
     private boolean isGoalActive() {
@@ -78,8 +97,9 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         // Without this, monsters like zombies or skeletons would fail the goal because
         // canAttack(target)=true makes hasNativeAttacksButCannotTarget=false, so isGoalActive
         // returns false and the goal never runs its tick loop.
+        // Uses 200-block range (squared) so NPCs track distant targets the same way SPEAK_TO does.
         if (forceAttack) {
-            return isNearby;
+            return this.attackerEntity.distanceToSqr(this.targetEntity) < 200.0 * 200.0;
         }
 
         // Check if the attacker is nearby and no native attacks
@@ -182,5 +202,9 @@ public class AttackPlayerGoal extends PlayerBaseGoal {
         // decrement cool down
         cooldownTimer--;
     }
+
+    public Mob getAttacker()        { return attackerEntity; }
+    public LivingEntity getTarget() { return targetEntity; }
+    public double getSpeed()        { return speed; }
 
 }

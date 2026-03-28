@@ -193,7 +193,7 @@ public class EntityTypePersonalities {
                 "Merchant-focused. Trade-obsessed. Refers to their profession constantly. Always trying to make a deal.", null);
         add("minecraft:iron_golem", "English", false,
                 "Stoic protector. Few words. Deeply loyal to the village. Gentle giant underneath the stone exterior.",
-                "Max 6 words. Stoic and protective.");
+                "Max 15 words. Stoic and protective. Short sentences.");
         add("minecraft:wandering_trader", "English", false,
                 "Enthusiastic salesperson. Has seen everywhere. Name-drops exotic locations. Speaks entirely in sales pitches.", null);
         add("minecraft:camel", "English", false,

@@ -84,11 +84,19 @@ public class MixinLivingEntity {
             PlayerData pd = data.getPlayerData(serverPlayer.getDisplayName().getString());
             pd.lastDamageFriendship = pd.friendship;
             pd.wordsmithDamaged = true;
-            // Only fire a new LLM call if the mob is not already waiting on a response.
-            // Without this check, rapid hits send one request per swing and the API
-            // rate-limits with HTTP 429 errors.
+            // Only fire a new LLM call if:
+            //   (a) the mob has a character sheet,
+            //   (b) it is not already waiting on a response (PENDING), AND
+            //   (c) at least 5 seconds have passed since the last attack-response call.
+            // Without (c), rapid sword swings send one API call per swing. Flash-Lite
+            // responds in ~1 second, so the entity returns to DISPLAY before the next
+            // swing, letting (b) pass every time and drowning each TTS clip with the next.
+            long nowMs = System.currentTimeMillis();
+            boolean attackCooldownOk = (nowMs - data.lastAttackResponseTime) >= 5_000L;
             if (!data.characterSheet.isEmpty()
-                    && data.status != ChatDataManager.ChatStatus.PENDING) {
+                    && data.status != ChatDataManager.ChatStatus.PENDING
+                    && attackCooldownOk) {
+                data.lastAttackResponseTime = nowMs;
                 ItemStack weapon = serverPlayer.getMainHandItem();
                 String weaponName = weapon.isEmpty()
                         ? "with fists"
@@ -130,11 +138,15 @@ public class MixinLivingEntity {
         }
 
         // Notify nearby witnesses for any mob death — not just named ones.
-        // Pass the killer's name so witnesses get richer context ("killed by X").
-        if (entity instanceof Mob && world instanceof ServerLevel serverLevel) {
+        // Capture who the deceased was attacking BEFORE die() clears their target,
+        // so witnesses can recognise "player saved me" when the victim was attacking them.
+        if (entity instanceof Mob mob && world instanceof ServerLevel serverLevel) {
             Entity killer = source.getEntity();
             String killerName = (killer != null) ? killer.getDisplayName().getString() : null;
-            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(serverLevel, (Mob) entity, killerName);
+            java.util.UUID killerUUID = (killer != null) ? killer.getUUID() : null;
+            net.minecraft.world.entity.LivingEntity deceasedTarget = mob.getTarget();
+            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(
+                    serverLevel, mob, killerName, killerUUID, deceasedTarget);
         }
     }
 }

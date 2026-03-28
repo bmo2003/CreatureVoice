@@ -18,7 +18,7 @@ public class Randomizer {
     public enum RandomType { ADJECTIVE, SPEAKING_STYLE, CLASS, ALIGNMENT }
     public enum ErrorType { GENERAL, CONNECTION, CODE401, CODE403, CODE429, CODE500, CODE503 }
 
-    public static final String DISCORD_LINK = "discord.creaturechat.com";
+    public static final String DISCORD_LINK = "discord.gg/m9dvPFmN3e";
 
     private static final List<TR> NO_RESPONSE = List.of(
             new TR("no_response.0", "<no response>"),

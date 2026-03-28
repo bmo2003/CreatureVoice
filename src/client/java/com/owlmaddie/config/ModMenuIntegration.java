@@ -19,7 +19,7 @@ import java.util.ArrayList;
  *
  * Sections:
  *   Voice Input  — Deepgram API key
- *   Voice Output — ElevenLabs API key
+ *   Voice Output — Chatterbox TTS server URL
  *   Backend      — LLM API key, URL, model
  *   Gameplay     — chat bubbles, whitelist/blacklist, auto-response tuning
  *
@@ -54,11 +54,11 @@ public class ModMenuIntegration implements ModMenuApi {
             ConfigCategory voiceOutput = builder.getOrCreateCategory(Component.literal("Voice Output"));
 
             voiceOutput.addEntry(entry
-                    .startStrField(Component.literal("ElevenLabs API Key"), config.getElevenLabsApiKey())
-                    .setDefaultValue("")
-                    .setTooltip(Component.literal("Your ElevenLabs API key for text-to-speech voices."),
-                                Component.literal("Get one at elevenlabs.io — Starter plan covers typical use."))
-                    .setSaveConsumer(config::setElevenLabsApiKey)
+                    .startStrField(Component.literal("Chatterbox Server URL"), config.getChatterboxUrl())
+                    .setDefaultValue("http://localhost:4123")
+                    .setTooltip(Component.literal("URL of your local Chatterbox TTS server."),
+                                Component.literal("Run chatterbox-tts-api locally — free, unlimited, no API key needed."))
+                    .setSaveConsumer(config::setChatterboxUrl)
                     .build());
 
             // ── Backend ───────────────────────────────────────────────────────────

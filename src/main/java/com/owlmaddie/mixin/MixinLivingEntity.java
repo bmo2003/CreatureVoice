@@ -80,7 +80,15 @@ public class MixinLivingEntity {
                 boolean isIndirect = attacker != null && attacker != source.getDirectEntity();
                 String directness = isIndirect ? "indirectly" : "directly";
 
-                String attackedMessage = "<" + player.getDisplayName().getString() + " attacked you " + directness + " with " + weaponName + ">";
+                // Include the NPC's current health so the LLM can judge whether to comply with threats
+                float hp = thisEntity.getHealth();
+                float maxHp = thisEntity.getMaxHealth();
+                float hpPct = hp / maxHp;
+                String healthLabel = hpPct <= 0.25f ? "CRITICAL"
+                                   : hpPct <= 0.50f ? "LOW"
+                                   : hpPct <= 0.75f ? "MODERATE"
+                                   : "HEALTHY";
+                String attackedMessage = "<" + player.getDisplayName().getString() + " attacked you " + directness + " with " + weaponName + ", your health is now " + healthLabel + " (" + Math.round(hp) + "/" + Math.round(maxHp) + ")>";
                 ServerPackets.generate_chat("N/A", chatData, player, (Mob) thisEntity, attackedMessage, true);
             }
 
@@ -110,10 +118,16 @@ public class MixinLivingEntity {
         // Notify nearby witness mobs regardless of whether the deceased had a character sheet —
         // witnesses should react to any death nearby, not only deaths of named characters.
         // Extract the killer's display name so witnesses get richer context ("killed by X").
-        if (entity instanceof Mob && world instanceof ServerLevel serverLevel) {
+        if (entity instanceof Mob mob && world instanceof ServerLevel serverLevel) {
             net.minecraft.world.entity.Entity killer = source.getEntity();
             String killerName = (killer != null) ? killer.getDisplayName().getString() : null;
-            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(serverLevel, (Mob) entity, killerName);
+            java.util.UUID killerUUID = (killer != null) ? killer.getUUID() : null;
+            // Pass the deceased mob's current attack target so witnesses who WERE the
+            // target can get a personalised "you were just saved" trigger — unless the
+            // witness IS the killer (self-defense, not a rescue).
+            net.minecraft.world.entity.LivingEntity deceasedTarget = mob.getTarget();
+            com.owlmaddie.npc.NpcLifeManager.checkDeathWitnesses(
+                    serverLevel, mob, killerName, killerUUID, deceasedTarget);
         }
     }
 }

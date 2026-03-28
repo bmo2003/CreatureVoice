@@ -114,10 +114,9 @@ public class ClientInit implements ClientModInitializer {
             BubbleRenderer.drawTextAboveEntities(ctx, tickCounter, delta);
         });
 
-        // Load API keys and fetch ElevenLabs voices when joining a world
+        // Load config and connect to Chatterbox TTS server when joining a world
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             loadApiKeys();
-            TtsManager.fetchVoices();
         });
 
         // Register an event callback for when the client disconnects from a server or changes worlds
@@ -147,11 +146,12 @@ public class ClientInit implements ClientModInitializer {
                         VoiceInputManager.LOGGER.warn("deepgramApiKey not found in {} — voice input disabled", path);
                     }
 
-                    if (obj.has("elevenLabsApiKey")) {
-                        TtsManager.setApiKey(obj.get("elevenLabsApiKey").getAsString());
-                        TtsManager.LOGGER.info("ElevenLabs API key loaded from {}", path);
+                    if (obj.has("chatterboxUrl")) {
+                        TtsManager.setServerUrl(obj.get("chatterboxUrl").getAsString());
+                        TtsManager.LOGGER.info("Chatterbox server URL loaded from {}: {}", path,
+                                obj.get("chatterboxUrl").getAsString());
                     } else {
-                        TtsManager.LOGGER.warn("elevenLabsApiKey not found in {} — TTS disabled", path);
+                        TtsManager.LOGGER.info("chatterboxUrl not found in {} — using default localhost:4123", path);
                     }
 
                     return;

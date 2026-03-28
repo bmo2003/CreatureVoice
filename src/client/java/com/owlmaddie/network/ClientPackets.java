@@ -148,7 +148,7 @@ public class ClientPackets {
                 chatData.sender = sender;
                 chatData.players = players;
 
-                // Speak the new assistant message via ElevenLabs TTS
+                // Speak the new assistant message via Chatterbox TTS
                 if (isNewAssistantMessage) {
                     TtsManager.speak(entityId, message);
                 }

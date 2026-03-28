@@ -3,8 +3,6 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.chat;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
@@ -109,6 +107,11 @@ public class EntityChatData {
     // After generation completes the message is replayed so the player doesn't have to speak twice.
     public transient String pendingVoiceMessage = null;
 
+    // Short-lived log of what nearby NPCs said during this session (7.14 — NPC hears NPCs speak).
+    // Transient: rebuilt each session, not saved to chatdata.json.
+    // Entries format: "[Name] said: \"...\""  Max 5, newest appended at the end.
+    public transient List<String> recentlyHeard = new ArrayList<>();
+
     // Set by generate_character/generate_chat when the entity type has a foreign-language personality.
     // When true, generateMessage injects a subtitle rule into the chat prompt so the entity
     // includes [EN: English translation] tags in every response for the bubble to display.
@@ -120,13 +123,29 @@ public class EntityChatData {
     // regardless of whatever random speaking style the character generator rolled.
     public transient String chatStyleNote = null;
 
-    @SerializedName("playerId")
-    @Expose(serialize = false)
-    private String legacyPlayerId;
+    // Timestamp of the last time this entity's own attack-response LLM call fired.
+    // Used by MixinLivingEntity to enforce a 5-second cooldown so rapid sword swings
+    // don't generate one API call per hit, drowning out each response with the next.
+    public transient long lastAttackResponseTime = 0L;
 
-    @SerializedName("friendship")
-    @Expose(serialize = false)
-    public Integer legacyFriendship;
+    // Timestamp of the last player-initiated message to this entity (not auto-messages).
+    // Used by NpcLifeManager to suppress initiative/overhear interruptions while the
+    // player is actively conversing with a nearby mob.
+    public transient long lastPlayerChatTime = 0L;
+
+    // True while this mob is on a SPEAK_TO delivery mission. Suppresses overhear reactions
+    // so the messenger doesn't react to the target's reply as an eavesdropper — it reports
+    // back to the player via the return-trip callback instead.
+    public transient boolean onDeliveryMission = false;
+
+    // Monotonically-increasing LLM call counter. Each call to generateMessage increments this
+    // and captures the value before the async HTTP request fires. When the response returns, it
+    // checks whether the counter still matches — if another call fired in the meantime the counter
+    // will have advanced, so the stale response is silently discarded instead of overwriting the
+    // newer one. This prevents the "what's all this commotion" race where an auto-witness trigger
+    // and a player message both fly at the same time and the older result lands last.
+    public transient java.util.concurrent.atomic.AtomicInteger llmGenId =
+            new java.util.concurrent.atomic.AtomicInteger(0);
 
     // The map to store data for each player interacting with this entity
     public Map<String, PlayerData> players;
@@ -142,12 +161,8 @@ public class EntityChatData {
         this.auto_generated = 0;
         this.previousMessages = new ArrayList<>();
         this.witnessedDeaths = new ArrayList<>();
-        this.born = System.currentTimeMillis();;
+        this.born = System.currentTimeMillis();
         this.autoBucket = null;
-
-        // Old, unused migrated properties
-        this.legacyPlayerId = null;
-        this.legacyFriendship = null;
     }
 
     // Post-deserialization initialization
@@ -158,58 +173,42 @@ public class EntityChatData {
         if (this.witnessedDeaths == null) {
             this.witnessedDeaths = new ArrayList<>(); // Migrate old saves that predate this field
         }
-        if (this.legacyPlayerId != null && !this.legacyPlayerId.isEmpty()) {
-            this.migrateData();
-        }
-    }
 
-    // Migrate old data into the new structure
-    private void migrateData() {
-        // Ensure the blank player data entry exists
-        PlayerData blankPlayerData = this.players.computeIfAbsent("", k -> new PlayerData());
+        // Initialize the LLM generation counter — Gson uses Unsafe.allocateInstance() which
+        // skips field initializers, so transient fields are always null after deserialization.
+        this.llmGenId = new java.util.concurrent.atomic.AtomicInteger(0);
 
-        // Update the previousMessages arraylist and add timestamps if missing
-        if (this.previousMessages != null) {
-            for (ChatMessage message : this.previousMessages) {
-                if (message.timestamp == null) {
-                    message.timestamp = System.currentTimeMillis();
-                }
-                if (message.name == null || message.name.isEmpty()) {
-                    message.name = "";
+        // Any entity saved mid-request (status=PENDING) has no active LLM call after
+        // a reload — recover to the last ASSISTANT message so the spinner clears.
+        // If no ASSISTANT message exists, reset to NONE so the entity regenerates cleanly.
+        if (this.status == ChatDataManager.ChatStatus.PENDING) {
+            String lastAssistant = null;
+            if (this.previousMessages != null) {
+                for (int i = this.previousMessages.size() - 1; i >= 0; i--) {
+                    ChatMessage cm = this.previousMessages.get(i);
+                    if (cm.sender == ChatDataManager.ChatSender.ASSISTANT) {
+                        lastAssistant = cm.message;
+                        break;
+                    }
                 }
             }
+            if (lastAssistant != null) {
+                this.currentMessage = lastAssistant;
+                this.sender = ChatDataManager.ChatSender.ASSISTANT;
+                this.status = ChatDataManager.ChatStatus.DISPLAY;
+            } else {
+                // No prior response — entity was mid-generation; reset to NONE for a fresh start
+                this.status = ChatDataManager.ChatStatus.NONE;
+            }
         }
-        blankPlayerData.friendship = this.legacyFriendship;
-        if (this.born == null) {
-            this.born = System.currentTimeMillis();;
-        }
-
-        // Clean up old player data
-        this.legacyPlayerId = null;
-        this.legacyFriendship = null;
     }
 
     // Get the player data (or fallback to the blank player)
     public PlayerData getPlayerData(String playerName) {
         if (this.players == null) {
-            return new PlayerData();
+            this.players = new HashMap<>();
         }
-
-        // Check if the playerId exists in the players map
-        if (this.players.containsKey("")) {
-            // If a blank migrated legacy entity is found, always return this
-            return this.players.get("");
-
-        } else if (this.players.containsKey(playerName)) {
-            // Return a specific player's data
-            return this.players.get(playerName);
-
-        } else {
-            // Return a blank player data
-            PlayerData newPlayerData = new PlayerData();
-            this.players.put(playerName, newPlayerData);
-            return newPlayerData;
-        }
+        return this.players.computeIfAbsent(playerName, k -> new PlayerData());
     }
 
     // Generate light version of chat data (no previous messages)
@@ -244,7 +243,16 @@ public class EntityChatData {
         // Add PLAYER context information
         Map<String, String> contextData = new HashMap<>();
         contextData.put("player_name", player.getDisplayName().getString());
-        contextData.put("player_health", Math.round(player.getHealth()) + "/" + Math.round(player.getMaxHealth()));
+        // Show player health with a qualitative label so the LLM immediately grasps severity
+        // without having to calculate percentages.
+        float playerHp = player.getHealth();
+        float playerMaxHp = player.getMaxHealth();
+        float playerHpPct = playerHp / playerMaxHp;
+        String playerHealthLabel = playerHpPct <= 0.25f ? "Critical"
+                                 : playerHpPct <= 0.50f ? "Low"
+                                 : playerHpPct <= 0.75f ? "Moderate"
+                                 : "Healthy";
+        contextData.put("player_health", playerHealthLabel + " (" + Math.round(playerHp) + "/" + Math.round(playerMaxHp) + ")");
         contextData.put("player_hunger", String.valueOf(player.getFoodData().getFoodLevel()));
         contextData.put("player_held_item", String.valueOf(player.getMainHandItem().getItem().toString()));
         contextData.put("player_biome", player.level().getBiome(player.blockPosition()).unwrapKey().get().location().getPath());
@@ -299,15 +307,38 @@ public class EntityChatData {
         };
         contextData.put("world_moon_phase", moonPhaseDescription);
 
-        // Get Entity details
+        // Dimension — tells the NPC whether they are in the Overworld, Nether, or End
+        String dimPath = player.level().dimension().location().getPath();
+        String dimension = switch (dimPath) {
+            case "the_nether" -> "The Nether";
+            case "the_end"    -> "The End";
+            default           -> "The Overworld";
+        };
+        contextData.put("world_dimension", dimension);
+
+        // Get Entity details — the mob may have despawned between character gen and
+        // message gen (async race), so guard against null to avoid NPE.
         Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel)player.level(), UUID.fromString(entityId));
+        if (entity == null) {
+            LOGGER.warn("Entity {} despawned before context could be built — aborting", entityId);
+            return null;
+        }
         if (entity.getCustomName() == null) {
             contextData.put("entity_name", "");
         } else {
             contextData.put("entity_name", entity.getCustomName().getString());
         }
         contextData.put("entity_type", entity.getType().getDescription().getString());
-        contextData.put("entity_health", Math.round(entity.getHealth()) + "/" + Math.round(entity.getMaxHealth()));
+        // Show entity health with a qualitative label so the LLM immediately grasps severity
+        // without having to calculate percentages.
+        float entityHp = entity.getHealth();
+        float entityMaxHp = entity.getMaxHealth();
+        float entityHpPct = entityHp / entityMaxHp;
+        String entityHealthLabel = entityHpPct <= 0.25f ? "Critical"
+                                 : entityHpPct <= 0.50f ? "Low"
+                                 : entityHpPct <= 0.75f ? "Moderate"
+                                 : "Healthy";
+        contextData.put("entity_health", entityHealthLabel + " (" + Math.round(entityHp) + "/" + Math.round(entityMaxHp) + ")");
         contextData.put("entity_personality", getCharacterProp("Personality"));
         contextData.put("entity_speaking_style", getCharacterProp("Speaking Style / Tone"));
         contextData.put("entity_likes", getCharacterProp("Likes"));
@@ -354,6 +385,11 @@ public class EntityChatData {
         contextData.put("nearby_buildings",
                 findNearbyBuildings((ServerLevel) entity.level(), entity.blockPosition()));
 
+        // Nearby world features — nether portals, large water bodies, lava pools, beacons.
+        // Detected by block sampling so the mob can reference them in conversation.
+        contextData.put("nearby_world_features",
+                findNearbyWorldFeatures((ServerLevel) entity.level(), entity.blockPosition()));
+
         // Nearby NPCs — other mobs with character sheets that this entity can name-drop.
         // Injected into World Info so the LLM knows who else is around.
         contextData.put("nearby_npcs", buildNearbyNpcsContext(entity, (ServerLevel) player.level()));
@@ -376,6 +412,13 @@ public class EntityChatData {
         }
         contextData.put("recent_events", events.length() > 0 ? events.toString() : "none");
 
+        // Things this NPC personally heard other nearby NPCs say during this session.
+        // Populated by NpcLifeManager.broadcastNpcSpeech whenever any NPC in range responds.
+        String heardCtx = (this.recentlyHeard == null || this.recentlyHeard.isEmpty())
+                ? "none"
+                : String.join("; ", this.recentlyHeard);
+        contextData.put("recently_heard_nearby", heardCtx);
+
         return contextData;
     }
 
@@ -387,21 +430,29 @@ public class EntityChatData {
      */
     /** Public accessor so ServerPackets can inject nearby NPC names during character generation. */
     public static String buildNearbyNpcsContext(Mob entity, ServerLevel level) {
-        AABB searchBox = entity.getBoundingBox().inflate(32.0);
-        List<Mob> nearby = level.getEntitiesOfClass(Mob.class, searchBox);
+        // Active range: up to 64 blocks — NPC can see, hear, and interact with these
+        // Distant range: 64–200 blocks — NPC has general awareness ("I know they live to the north")
+        AABB closeBox   = entity.getBoundingBox().inflate(64.0);
+        AABB distantBox = entity.getBoundingBox().inflate(200.0);
+        List<Mob> allNearby = level.getEntitiesOfClass(Mob.class, distantBox);
         List<String> entries = new ArrayList<>();
-        for (Mob other : nearby) {
+
+        for (Mob other : allNearby) {
             if (other.getUUID().equals(entity.getUUID())) continue;
             float dist = other.distanceTo(entity);
-            if (dist > 32.0f) continue;
+            if (dist > 200.0f) continue;
             EntityChatData data = ChatDataManager.getServerInstance()
                     .getOrCreateChatData(other.getStringUUID());
             if (!data.characterSheet.isEmpty()) {
-                String name = data.getCharacterProp("Name");
+                String name     = data.getCharacterProp("Name");
                 if (name.isEmpty()) name = other.getType().getDescription().getString();
                 String typeName = other.getType().getDescription().getString();
-                int distBlocks = Math.round(dist);
-                entries.add(name + " (" + typeName + ", ~" + distBlocks + " blocks)");
+                int distBlocks  = Math.round(dist);
+                if (dist <= 64.0f) {
+                    entries.add(name + " (" + typeName + ", ~" + distBlocks + " blocks)");
+                } else {
+                    entries.add(name + " (" + typeName + ", ~" + distBlocks + " blocks, distant)");
+                }
             }
         }
         return entries.isEmpty() ? "none" : String.join(", ", entries);
@@ -465,6 +516,22 @@ public class EntityChatData {
             }
         } catch (Exception ignored) {}
 
+        // Inventory contents from the mob's 15-slot SimpleContainer
+        try {
+            net.minecraft.world.Container mobInv =
+                    ((com.owlmaddie.inventory.ChatInventory) entity).creaturechat$getInventory();
+            List<String> invItems = new java.util.ArrayList<>();
+            for (int s = 0; s < mobInv.getContainerSize(); s++) {
+                ItemStack slot = mobInv.getItem(s);
+                if (!slot.isEmpty()) {
+                    invItems.add(formatItemStack(slot));
+                }
+            }
+            if (!invItems.isEmpty()) {
+                inv.append("Inventory: ").append(String.join(", ", invItems)).append(". ");
+            }
+        } catch (Exception ignored) {}
+
         return inv.length() == 0 ? "nothing notable" : inv.toString().trim();
     }
 
@@ -474,6 +541,82 @@ public class EntityChatData {
         String raw = stack.getItem().toString().replace("minecraft:", "").replace("_", " ");
         int count = stack.getCount();
         return count > 1 ? count + "x " + raw : raw;
+    }
+
+    /**
+     * Returns true if two names are close enough to be a voice transcription match.
+     * Handles common Deepgram mishearings like "Pepp" for "Pip", "Quinten" for "Quinton".
+     * Uses Levenshtein edit distance — allows 1 edit for names <= 4 chars, 2 for longer names.
+     */
+    private static boolean fuzzyNameMatch(String a, String b) {
+        if (a.isEmpty() || b.isEmpty()) return false;
+        if (a.equals(b)) return true;
+        if (a.contains(b) || b.contains(a)) return true;
+        int dist = levenshteinDistance(a, b);
+        // Voice transcription commonly swaps vowels and adds/drops letters
+        // (e.g. "Pip"→"Pepp", "Quinton"→"Quinten"). Allow up to 2 edits
+        // for all names — false positives are unlikely in a small NPC pool.
+        return dist <= 2;
+    }
+
+    /**
+     * Finds the best matching mob by name in the search area.
+     * Exact matches always win (returns immediately). Fuzzy matches only apply
+     * to entities with generated character sheets, preventing generic mob type
+     * names like "Pig" from matching character names like "Pip".
+     */
+    private static Mob findBestNamedMob(String targetName, Mob searcher,
+                                        net.minecraft.server.level.ServerLevel level,
+                                        net.minecraft.world.phys.AABB searchBox) {
+        String lowerTarget = targetName.trim().toLowerCase(java.util.Locale.ENGLISH);
+        Mob bestFuzzy = null;
+        int bestDist = Integer.MAX_VALUE;
+
+        for (Mob nearby : level.getEntitiesOfClass(Mob.class, searchBox)) {
+            if (nearby.getUUID().equals(searcher.getUUID())) continue;
+
+            EntityChatData nearbyData = ChatDataManager.getServerInstance()
+                    .getOrCreateChatData(nearby.getStringUUID());
+            String sheetName = com.owlmaddie.npc.NpcLifeManager
+                    .extractMobNamePublic(nearbyData, nearby).toLowerCase(java.util.Locale.ENGLISH);
+            String displayName = nearby.getDisplayName().getString()
+                    .toLowerCase(java.util.Locale.ENGLISH);
+            String firstName = sheetName.split("\\s+")[0];
+
+            // Exact match on any name — immediate win
+            if (displayName.equals(lowerTarget) || firstName.equals(lowerTarget)
+                    || sheetName.equals(lowerTarget)) {
+                return nearby;
+            }
+
+            // Fuzzy match only for entities with a generated character sheet.
+            // This prevents generic mob type names ("Pig") from matching "Pip".
+            if (!nearbyData.characterSheet.isEmpty()) {
+                int dist = Math.min(levenshteinDistance(firstName, lowerTarget),
+                        levenshteinDistance(sheetName, lowerTarget));
+                if (dist <= 2 && dist < bestDist) {
+                    bestDist = dist;
+                    bestFuzzy = nearby;
+                }
+            }
+        }
+        return bestFuzzy;
+    }
+
+    /** Standard Levenshtein edit distance between two strings. */
+    private static int levenshteinDistance(String s, String t) {
+        int m = s.length(), n = t.length();
+        int[] prev = new int[n + 1], curr = new int[n + 1];
+        for (int j = 0; j <= n; j++) prev[j] = j;
+        for (int i = 1; i <= m; i++) {
+            curr[0] = i;
+            for (int j = 1; j <= n; j++) {
+                int cost = s.charAt(i - 1) == t.charAt(j - 1) ? 0 : 1;
+                curr[j] = Math.min(Math.min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
+            }
+            int[] tmp = prev; prev = curr; curr = tmp;
+        }
+        return prev[n];
     }
 
     /**
@@ -509,16 +652,26 @@ public class EntityChatData {
         // [display name, tag path] — tag path must match a structure tag in data/minecraft/tags/structure/
         // Village variants (village_plains, village_desert, etc.) all start with "village".
         String[][] structuresToCheck = {
-            {"Village",          "village"},
-            {"Mineshaft",        "mineshaft"},
-            {"Stronghold",       "stronghold"},
-            {"Ruined Portal",    "ruined_portal"},
-            {"Desert Temple",    "desert_pyramid"},
-            {"Jungle Temple",    "jungle_temple"},
-            {"Ocean Monument",   "monument"},
-            {"Woodland Mansion", "mansion"},
-            {"Nether Fortress",  "fortress"},
-            {"Ancient City",     "ancient_city"},
+            // Overworld structures
+            {"Village",           "village"},
+            {"Pillager Outpost",  "pillager_outpost"},
+            {"Mineshaft",         "mineshaft"},
+            {"Stronghold",        "stronghold"},
+            {"Ancient City",      "ancient_city"},
+            {"Trial Chambers",    "trial_chambers"},
+            {"Ruined Portal",     "ruined_portal"},
+            {"Desert Temple",     "desert_pyramid"},
+            {"Jungle Temple",     "jungle_temple"},
+            {"Ocean Monument",    "monument"},
+            {"Woodland Mansion",  "mansion"},
+            {"Shipwreck",         "shipwreck"},
+            {"Swamp Hut",         "swamp_hut"},
+            {"Igloo",             "igloo"},
+            // Nether structures (silently skipped when not in the Nether)
+            {"Nether Fortress",   "fortress"},
+            {"Bastion Remnant",   "bastion_remnant"},
+            // End structures (silently skipped when not in the End)
+            {"End City",          "end_city"},
         };
 
         List<String> found = new ArrayList<>();
@@ -684,6 +837,175 @@ public class EntityChatData {
     }
 
     /**
+     * Scans for notable world features near the mob that are not covered by the structure
+     * or building systems: nether portals, large water bodies (lakes/rivers/oceans), lava
+     * pools, and beacons.
+     *
+     * Portal and beacon detection look for specific blocks in a radius.
+     * Water and lava detection sample the area at 3-block steps and require a minimum
+     * hit count so single cauldrons/puddles/small pockets are ignored.
+     * Water and lava scanning are skipped in the Nether where both are too common to be useful.
+     */
+    private static String findNearbyWorldFeatures(ServerLevel level, BlockPos origin) {
+        List<String> found = new ArrayList<>();
+        String dimPath = level.dimension().location().getPath();
+        boolean inNether = dimPath.equals("the_nether");
+
+        // --- Nether Portal: 80-block XZ radius, entity Y ± 20, step 3 XZ / step 2 Y ---
+        // Portals exist in all dimensions; always scan.
+        {
+            final int RADIUS = 80;
+            final int Y_RANGE = 20;
+            BlockPos nearestPortal = null;
+            int nearestDist = Integer.MAX_VALUE;
+
+            for (int x = -RADIUS; x <= RADIUS; x += 3) {
+                for (int z = -RADIUS; z <= RADIUS; z += 3) {
+                    if (x * x + z * z > RADIUS * RADIUS) continue;
+                    for (int dy = -Y_RANGE; dy <= Y_RANGE; dy += 2) {
+                        BlockPos check = origin.offset(x, dy, z);
+                        if (!level.isLoaded(check)) continue;
+                        if (level.getBlockState(check).is(net.minecraft.world.level.block.Blocks.NETHER_PORTAL)) {
+                            int dist = (int) Math.sqrt(x * x + z * z);
+                            if (dist < nearestDist) {
+                                nearestDist = dist;
+                                nearestPortal = check;
+                            }
+                            break; // one find per XZ column is enough
+                        }
+                    }
+                }
+            }
+
+            if (nearestPortal != null) {
+                int dx = nearestPortal.getX() - origin.getX();
+                int dz = nearestPortal.getZ() - origin.getZ();
+                int dist = (int) Math.sqrt(dx * dx + dz * dz);
+                String loc = dist < 5 ? "you are here" : "~" + dist + " blocks " + compassDirection(dx, dz);
+                found.add("Nether Portal (" + loc + ")");
+            }
+        }
+
+        // --- Water: 50-block XZ radius, Y -5 to +1 of entity, step 2 ---
+        // Step 2 (finer than doors/structures) is needed to reliably detect small sources
+        // like village wells (2x2 pool) that a 3-block step would skip entirely.
+        // Tiers:
+        //   3–24 hits  → "Small water source" (well, fountain, pond, puddle)
+        //   25+ hits   → "Water body"          (lake, river, ocean)
+        // Skipped in the Nether where water does not naturally generate.
+        if (!inNether) {
+            final int RADIUS = 50;
+            int waterCount = 0;
+            long sumX = 0, sumZ = 0;
+
+            for (int x = -RADIUS; x <= RADIUS; x += 2) {
+                for (int z = -RADIUS; z <= RADIUS; z += 2) {
+                    if (x * x + z * z > RADIUS * RADIUS) continue;
+                    for (int dy = -5; dy <= 1; dy++) {
+                        BlockPos check = origin.offset(x, dy, z);
+                        if (!level.isLoaded(check)) continue;
+                        if (level.getBlockState(check).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                            waterCount++;
+                            sumX += x;
+                            sumZ += z;
+                            break; // one water block per XZ column
+                        }
+                    }
+                }
+            }
+
+            if (waterCount >= 3) {
+                int cx = (int) (sumX / waterCount);
+                int cz = (int) (sumZ / waterCount);
+                int dist = (int) Math.sqrt(cx * cx + cz * cz);
+                String label = waterCount >= 25 ? "Water body" : "Small water source";
+                String loc = dist < 5 ? "you are here" : "~" + dist + " blocks " + compassDirection(cx, cz);
+                found.add(label + " (" + loc + ")");
+            }
+        }
+
+        // --- Lava: 40-block XZ radius, Y -5 to +2 of entity, step 3 ---
+        // In the Nether, lava is omnipresent terrain — scanning would always return true and
+        // the direction would be meaningless. Instead, always report it as a fixed fact so the
+        // NPC is never caught saying "no lava here" when standing in the Nether.
+        // Outside the Nether, require 20+ hits to rule out cauldrons and small cave pockets.
+        if (inNether) {
+            found.add("Lava (omnipresent — this is the Nether)");
+        } else {
+            final int RADIUS = 40;
+            final int MIN_HITS = 20;
+            int lavaCount = 0;
+            long sumX = 0, sumZ = 0;
+
+            for (int x = -RADIUS; x <= RADIUS; x += 3) {
+                for (int z = -RADIUS; z <= RADIUS; z += 3) {
+                    if (x * x + z * z > RADIUS * RADIUS) continue;
+                    for (int dy = -5; dy <= 2; dy++) {
+                        BlockPos check = origin.offset(x, dy, z);
+                        if (!level.isLoaded(check)) continue;
+                        if (level.getBlockState(check).is(net.minecraft.world.level.block.Blocks.LAVA)) {
+                            lavaCount++;
+                            sumX += x;
+                            sumZ += z;
+                            break; // one lava block per XZ column
+                        }
+                    }
+                }
+            }
+
+            if (lavaCount >= MIN_HITS) {
+                int cx = (int) (sumX / lavaCount);
+                int cz = (int) (sumZ / lavaCount);
+                int dist = (int) Math.sqrt(cx * cx + cz * cz);
+                String loc = dist < 5 ? "you are here" : "~" + dist + " blocks " + compassDirection(cx, cz);
+                found.add("Lava pool (" + loc + ")");
+            }
+        }
+
+        // --- Beacon: chunk block-entity scan within 64 blocks ---
+        // Beacons are extremely rare player-built structures and always worth reporting.
+        // Reuses the same chunk map approach as the container scan for efficiency.
+        {
+            final int RADIUS = 64;
+            int chunkRadius = (RADIUS >> 4) + 1;
+            int centerChunkX = origin.getX() >> 4;
+            int centerChunkZ = origin.getZ() >> 4;
+            BlockPos nearestBeacon = null;
+            int nearestDist = Integer.MAX_VALUE;
+
+            for (int cx = centerChunkX - chunkRadius; cx <= centerChunkX + chunkRadius; cx++) {
+                for (int cz = centerChunkZ - chunkRadius; cz <= centerChunkZ + chunkRadius; cz++) {
+                    if (!level.isLoaded(new BlockPos(cx << 4, 0, cz << 4))) continue;
+                    net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+                    for (Map.Entry<BlockPos, net.minecraft.world.level.block.entity.BlockEntity> entry
+                            : chunk.getBlockEntities().entrySet()) {
+                        if (!(entry.getValue() instanceof net.minecraft.world.level.block.entity.BeaconBlockEntity))
+                            continue;
+                        BlockPos pos = entry.getKey();
+                        int dx = pos.getX() - origin.getX();
+                        int dz = pos.getZ() - origin.getZ();
+                        int dist = (int) Math.sqrt(dx * dx + dz * dz);
+                        if (dist <= RADIUS && dist < nearestDist) {
+                            nearestDist = dist;
+                            nearestBeacon = pos;
+                        }
+                    }
+                }
+            }
+
+            if (nearestBeacon != null) {
+                int dx = nearestBeacon.getX() - origin.getX();
+                int dz = nearestBeacon.getZ() - origin.getZ();
+                int dist = (int) Math.sqrt(dx * dx + dz * dz);
+                String loc = dist < 5 ? "you are here" : "~" + dist + " blocks " + compassDirection(dx, dz);
+                found.add("Beacon (" + loc + ")");
+            }
+        }
+
+        return found.isEmpty() ? "none detected" : String.join(", ", found);
+    }
+
+    /**
      * Returns the BlockPos of the nearest building entrance within 50 blocks of the origin,
      * or null if no buildings were detected. Used by the LEAD and SET_FIRE behavior handlers
      * to give mobs a real destination instead of random waypoints.
@@ -709,10 +1031,240 @@ public class EntityChatData {
         if (doorPositions.isEmpty()) return null;
 
         List<BlockPos> centres = clusterDoorPositions(doorPositions, 12);
-        // Return the centre closest to the origin
-        return centres.stream()
-                .min(Comparator.comparingInt(p -> (int) p.distSqr(origin)))
-                .orElse(null);
+        // First choice: the nearest building cluster centre that is at least 8 blocks away
+        // (distSqr >= 64) so the mob actually walks somewhere visible.
+        // Fallback: if every building is within 8 blocks, return the farthest one so the mob
+        // still walks somewhere rather than standing still.
+        java.util.Optional<BlockPos> distant = centres.stream()
+                .filter(p -> p.distSqr(origin) >= 64)
+                .min(Comparator.comparingInt(p -> (int) p.distSqr(origin)));
+        BlockPos doorPos = distant.isPresent() ? distant.get()
+                : centres.stream()
+                        .max(Comparator.comparingInt(p -> (int) p.distSqr(origin)))
+                        .orElse(null);
+        if (doorPos == null) return null;
+
+        // Push the nav target 4 blocks into the building interior so the mob walks fully
+        // through the door. GoToPositionGoal's 2.5-block arrival radius means a target only
+        // 2 blocks past the door still leaves the mob parked in the doorway — 4 blocks of
+        // depth guarantees it stops at least 1.5 blocks inside regardless of approach angle.
+        // Using float math avoids the rounding loss that occurs with integer offsets on diagonals.
+        double dx = doorPos.getX() - origin.getX();
+        double dz = doorPos.getZ() - origin.getZ();
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len > 0.5) {
+            double iX = doorPos.getX() + 0.5 + (dx / len) * 4.0;
+            double iZ = doorPos.getZ() + 0.5 + (dz / len) * 4.0;
+            return new BlockPos((int) Math.floor(iX), doorPos.getY(), (int) Math.floor(iZ));
+        }
+        return doorPos;
+    }
+
+    /**
+     * Returns a walkable BlockPos at the edge of the nearest water body within 50 blocks,
+     * or null if no water is found. Finds the nearest water surface block to origin, then
+     * returns an adjacent land block so the mob stands at the bank, not in the water.
+     */
+    public static BlockPos findNearestWaterPos(ServerLevel level, BlockPos origin) {
+        int searchRadius = 50;
+        int minDistSq = Integer.MAX_VALUE;
+        BlockPos bestPos = null;
+
+        for (int x = -searchRadius; x <= searchRadius; x += 2) {
+            for (int z = -searchRadius; z <= searchRadius; z += 2) {
+                if (x * x + z * z > searchRadius * searchRadius) continue;
+                for (int dy = -5; dy <= 1; dy++) {
+                    BlockPos check = origin.offset(x, dy, z);
+                    if (!level.isLoaded(check)) continue;
+                    if (!level.getBlockState(check).is(net.minecraft.world.level.block.Blocks.WATER)) continue;
+                    // Check all four adjacent horizontal blocks for walkable land
+                    for (net.minecraft.core.Direction dir : new net.minecraft.core.Direction[]{
+                            net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH,
+                            net.minecraft.core.Direction.EAST,  net.minecraft.core.Direction.WEST}) {
+                        BlockPos adj   = check.relative(dir);
+                        BlockPos below = adj.below();
+                        if (!level.getBlockState(adj).isSolid()
+                                && level.getBlockState(below).isSolid()
+                                && !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                            int dxx = adj.getX() - origin.getX();
+                            int dzz = adj.getZ() - origin.getZ();
+                            int distSq = dxx * dxx + dzz * dzz;
+                            if (distSq < minDistSq && distSq >= 64) { // min 8 blocks travel
+                                minDistSq = distSq;
+                                bestPos   = adj;
+                            }
+                        }
+                    }
+                    break; // one water block per XZ column is enough
+                }
+            }
+        }
+        return bestPos;
+    }
+
+    /**
+     * Returns the BlockPos of the nearest Nether Portal block within 80 blocks,
+     * or null if none detected.
+     */
+    public static BlockPos findNearestPortalPos(ServerLevel level, BlockPos origin) {
+        final int RADIUS   = 80;
+        final int Y_RANGE  = 20;
+        BlockPos nearest   = null;
+        int nearestDist    = Integer.MAX_VALUE;
+
+        for (int x = -RADIUS; x <= RADIUS; x += 3) {
+            for (int z = -RADIUS; z <= RADIUS; z += 3) {
+                if (x * x + z * z > RADIUS * RADIUS) continue;
+                for (int dy = -Y_RANGE; dy <= Y_RANGE; dy += 2) {
+                    BlockPos check = origin.offset(x, dy, z);
+                    if (!level.isLoaded(check)) continue;
+                    if (level.getBlockState(check).is(net.minecraft.world.level.block.Blocks.NETHER_PORTAL)) {
+                        int dist = (int) Math.sqrt(x * x + z * z);
+                        if (dist < nearestDist) {
+                            nearestDist = dist;
+                            nearest     = check;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return nearest;
+    }
+
+    /**
+     * Returns the BlockPos of the nearest container (chest, barrel, furnace, etc.) within
+     * 30 blocks, or null if none is found. Uses chunk block-entity maps for efficiency.
+     */
+    public static BlockPos findNearestContainerPos(ServerLevel level, BlockPos origin) {
+        int searchRadius = 30;
+        int chunkRadius  = (searchRadius >> 4) + 1;
+        int ccx = origin.getX() >> 4;
+        int ccz = origin.getZ() >> 4;
+        BlockPos nearest  = null;
+        int nearestDistSq = Integer.MAX_VALUE;
+
+        for (int cx = ccx - chunkRadius; cx <= ccx + chunkRadius; cx++) {
+            for (int cz = ccz - chunkRadius; cz <= ccz + chunkRadius; cz++) {
+                if (!level.isLoaded(new BlockPos(cx << 4, 0, cz << 4))) continue;
+                net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+                for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.entity.BlockEntity> entry
+                        : chunk.getBlockEntities().entrySet()) {
+                    BlockPos pos = entry.getKey();
+                    int dx = pos.getX() - origin.getX();
+                    int dz = pos.getZ() - origin.getZ();
+                    int distSq = dx * dx + dz * dz;
+                    if (distSq > searchRadius * searchRadius) continue;
+                    net.minecraft.world.level.block.entity.BlockEntity be = entry.getValue();
+                    boolean isContainer =
+                            be instanceof net.minecraft.world.level.block.entity.ChestBlockEntity ||
+                            be instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity ||
+                            be instanceof net.minecraft.world.level.block.entity.FurnaceBlockEntity ||
+                            be instanceof net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity ||
+                            be instanceof net.minecraft.world.level.block.entity.HopperBlockEntity ||
+                            be instanceof net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
+                    if (isContainer && distSq < nearestDistSq) {
+                        nearestDistSq = distSq;
+                        nearest       = pos;
+                    }
+                }
+            }
+        }
+        return nearest;
+    }
+
+    /**
+     * Returns the nearest outdoor position (sky-visible) within 30 blocks of the origin,
+     * or null if no open-air position was found. Used when a mob is told to "go outside"
+     * or "exit the building" — scans outward in expanding rings for the first surface
+     * block that can see the sky.
+     */
+    public static BlockPos findNearestOutsidePos(ServerLevel level, BlockPos origin) {
+        int originY = origin.getY();
+
+        // If already outside, move a few blocks away so the mob visibly walks somewhere
+        if (level.canSeeSky(origin.above())) {
+            java.util.Random rng = new java.util.Random();
+            for (int attempt = 0; attempt < 16; attempt++) {
+                int dx = rng.nextInt(17) - 8; // -8 to +8
+                int dz = rng.nextInt(17) - 8;
+                if (dx == 0 && dz == 0) continue;
+                BlockPos surface = level.getHeightmapPos(
+                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        origin.offset(dx, 0, dz));
+                // Must be at ground level (within 4 blocks of origin Y) — not on a rooftop
+                if (level.canSeeSky(surface.above()) && Math.abs(surface.getY() - originY) <= 4) {
+                    return surface;
+                }
+            }
+            return null;
+        }
+
+        // Inside — scan outward in expanding rings for the nearest sky-visible ground-level spot.
+        // The heightmap returns the TOP of whatever is there, so positions within the building
+        // footprint return the ROOF (y=70) instead of ground (y=63). Filter by Y proximity
+        // to ensure we find an actual walkable outdoor position, not the rooftop.
+        for (int r = 1; r <= 30; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.abs(dx) != r && Math.abs(dz) != r) continue; // only check perimeter
+                    BlockPos surface = level.getHeightmapPos(
+                            net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                            origin.offset(dx, 0, dz));
+                    if (level.canSeeSky(surface.above()) && Math.abs(surface.getY() - originY) <= 4) {
+                        return surface;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the BlockPos of the nearest named structure matching the keyword within
+     * 200 blocks, or null if none found. The keyword is matched against known structure
+     * display names (village, mineshaft, stronghold, portal, etc.).
+     */
+    public static BlockPos findNearestStructurePos(ServerLevel level, BlockPos origin, String keyword) {
+        String lower = keyword.toLowerCase(java.util.Locale.ENGLISH);
+        // Map keyword fragments to Minecraft structure tag paths
+        String[][] structureMap = {
+            {"village",    "village"},
+            {"outpost",    "pillager_outpost"},
+            {"mineshaft",  "mineshaft"},
+            {"stronghold", "stronghold"},
+            {"ancient",    "ancient_city"},
+            {"trial",      "trial_chambers"},
+            {"ruined",     "ruined_portal"},
+            {"desert",     "desert_pyramid"},
+            {"jungle",     "jungle_temple"},
+            {"monument",   "monument"},
+            {"ocean",      "monument"},
+            {"mansion",    "mansion"},
+            {"woodland",   "mansion"},
+            {"shipwreck",  "shipwreck"},
+            {"swamp",      "swamp_hut"},
+            {"witch",      "swamp_hut"},
+            {"igloo",      "igloo"},
+            {"fortress",   "fortress"},
+            {"nether fort","fortress"},
+            {"bastion",    "bastion_remnant"},
+            {"end city",   "end_city"},
+        };
+
+        for (String[] entry : structureMap) {
+            if (lower.contains(entry[0])) {
+                try {
+                    net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.structure.Structure> tag =
+                            net.minecraft.tags.TagKey.create(
+                                    net.minecraft.core.registries.Registries.STRUCTURE,
+                                    net.minecraft.resources.ResourceLocation.parse("minecraft:" + entry[1]));
+                    BlockPos pos = level.findNearestMapStructure(tag, origin, 200, false);
+                    return pos;
+                } catch (Exception ignored) {}
+            }
+        }
+        return null;
     }
 
     /** Greedy spatial clustering: groups door positions within clusterDist of each seed. */
@@ -756,6 +1308,11 @@ public class EntityChatData {
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+        if (contextData == null) {
+            // Entity despawned between character gen trigger and now — abort silently
+            this.status = ChatDataManager.ChatStatus.DISPLAY;
+            return;
+        }
 
         // Inject nearby NPC names so evil/dark characters can develop grudges against real neighbours
         if (nearbyNpcs != null && !nearbyNpcs.isBlank()) {
@@ -814,7 +1371,7 @@ public class EntityChatData {
                 Component link = Component.literal(Randomizer.DISCORD_LINK)
                         .withStyle(ChatFormatting.BLUE)
                         .withStyle(style -> style
-                                .withClickEvent(ClickEventHelper.openUrl("http://" + Randomizer.DISCORD_LINK))
+                                .withClickEvent(ClickEventHelper.openUrl("https://" + Randomizer.DISCORD_LINK))
                                 .withUnderlined(true));
 
                 TR randomError = Randomizer.getRandomError(type);
@@ -843,7 +1400,21 @@ public class EntityChatData {
     }
 
     // Generate greeting
+    /** Overload used by the character-sheet generation callback — no slot to release. */
     public void generateMessage(String userLanguage, ServerPlayer player, String userMessage, boolean is_auto_message) {
+        generateMessage(userLanguage, player, userMessage, is_auto_message, false);
+    }
+
+    /**
+     * Start an LLM chat call for this entity.
+     *
+     * @param releaseOnComplete when {@code true}, calls
+     *   {@link com.owlmaddie.network.ServerPackets#releaseAndTryNext()} when the
+     *   response (or error) arrives, releasing one slot in the chat concurrency queue.
+     *   Pass {@code true} when called from {@code generate_chat}; {@code false} when
+     *   called from the character-sheet generation callback (that path has no slot).
+     */
+    public void generateMessage(String userLanguage, ServerPlayer player, String userMessage, boolean is_auto_message, boolean releaseOnComplete) {
         String systemPrompt = "system-chat";
         if (is_auto_message) {
             // Increment an auto-generated message
@@ -862,6 +1433,11 @@ public class EntityChatData {
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+        if (contextData == null) {
+            // Entity despawned between trigger and now — abort silently
+            this.status = ChatDataManager.ChatStatus.DISPLAY;
+            return;
+        }
 
         // Apply the entity-type speaking style constraint (word limits, speech patterns).
         // Injected into STRICT OUTPUT RULES (chat_style_note) so the LLM sees it as a
@@ -916,8 +1492,25 @@ public class EntityChatData {
             previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
         }
 
+        // Capture the current generation ID before we fire the async HTTP request.
+        // If another LLM call starts for this same entity before this one returns, the counter
+        // advances and this response will be discarded inside the callback below.
+        // Gson deserializes via Unsafe.allocateInstance(), bypassing field initializers,
+        // so transient fields may be null on entities loaded from chatdata.json.
+        if (this.llmGenId == null) this.llmGenId = new java.util.concurrent.atomic.AtomicInteger(0);
+        final int myGenId = this.llmGenId.incrementAndGet();
+
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
+            try {
+            // Stale-response guard: if a newer LLM call fired while we were waiting (e.g. a
+            // player message arrived during a witness-reaction delay), discard this result.
+            // We still fall through to the finally block to release the chat slot.
+            if (this.llmGenId.get() != myGenId) {
+                LOGGER.info("Discarding stale LLM response for entity {} (gen {} superseded by {})",
+                        entityId, myGenId, this.llmGenId.get());
+                return;
+            }
             try {
                 if (output_message != null) {
                     // Chat Message: Parse message for behaviors
@@ -1033,21 +1626,112 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                             } else if (behavior.getName().equals("LEAD")) {
-                                // Navigate directly to the nearest detected building using GoToPositionGoal.
-                                // This handles "go stand in that house" and "hide in the building" commands.
-                                // If no building is found nearby, no goal is added — the mob stays put.
-                                BlockPos buildingPos = findNearestBuildingPos((ServerLevel) entity.level(), entity.blockPosition());
+                                // --- Destination routing ---
+                                // The LLM outputs <LEAD> or <LEAD [destination]>.
+                                // We resolve the destination to a BlockPos (or mob entity) and launch
+                                // GoToPositionGoal (or GoToEntityGoal for NPC targets).
+                                String dest = behavior.getStringArgument() != null
+                                        ? behavior.getStringArgument().trim().toLowerCase(java.util.Locale.ENGLISH)
+                                        : "";
+                                ServerLevel leadLevel = (ServerLevel) entity.level();
+                                BlockPos leadOrigin   = entity.blockPosition();
+
+                                // Lambda captures for the arrival callback
+                                final EntityChatData selfData   = this;
+                                final ServerPlayer   leadPlayer = player;
+
+                                // Resolve the destination to a NavigationTarget (pos or entity)
+                                BlockPos destPos    = null;
+                                net.minecraft.world.entity.Mob destMob = null;
+
+                                if (dest.contains("outside") || dest.contains("exit") || dest.contains("outdoors")
+                                        || dest.contains("leave") || dest.contains("open air")) {
+                                    destPos = findNearestOutsidePos(leadLevel, leadOrigin);
+                                    if (destPos == null) LOGGER.warn("LEAD: no outside position found within 30 blocks");
+                                } else if (dest.contains("water") || dest.contains("lake") || dest.contains("river")
+                                        || dest.contains("ocean") || dest.contains("pond") || dest.contains("well")) {
+                                    destPos = findNearestWaterPos(leadLevel, leadOrigin);
+                                    if (destPos == null) LOGGER.warn("LEAD: no water found within 50 blocks");
+                                } else if (dest.contains("portal") || dest.contains("nether")) {
+                                    destPos = findNearestPortalPos(leadLevel, leadOrigin);
+                                    if (destPos == null) LOGGER.warn("LEAD: no nether portal found within 80 blocks");
+                                } else if (dest.contains("chest") || dest.contains("container") || dest.contains("storage")
+                                        || dest.contains("barrel") || dest.contains("furnace")) {
+                                    destPos = findNearestContainerPos(leadLevel, leadOrigin);
+                                    if (destPos == null) LOGGER.warn("LEAD: no container found within 30 blocks");
+                                } else if (dest.contains("village") || dest.contains("outpost") || dest.contains("temple")
+                                        || dest.contains("stronghold") || dest.contains("mineshaft") || dest.contains("mansion")
+                                        || dest.contains("monument") || dest.contains("shipwreck") || dest.contains("fortress")
+                                        || dest.contains("bastion") || dest.contains("igloo") || dest.contains("ancient")
+                                        || dest.contains("trial") || dest.contains("ruined")) {
+                                    destPos = findNearestStructurePos(leadLevel, leadOrigin, dest);
+                                    if (destPos == null) LOGGER.warn("LEAD: no structure matching '{}' found within 200 blocks", dest);
+                                } else if (!dest.isEmpty() && !dest.equals("building") && !dest.equals("house")) {
+                                    // Check if the destination matches a known nearby NPC name
+                                    AABB npcSearch = entity.getBoundingBox().inflate(200.0);
+                                    destMob = findBestNamedMob(dest, entity, leadLevel, npcSearch);
+                                    if (destMob == null) {
+                                        // Unknown destination — fall back to nearest building
+                                        LOGGER.warn("LEAD: destination '{}' not matched to NPC or known location — falling back to building", dest);
+                                        destPos = findNearestBuildingPos(leadLevel, leadOrigin);
+                                    }
+                                } else {
+                                    // Default: building / house
+                                    destPos = findNearestBuildingPos(leadLevel, leadOrigin);
+                                }
+
+                                // Clear competing goals — including any in-progress SPEAK_TO or
+                                // previous LEAD navigation. Without removing GoToEntityGoal, a
+                                // SPEAK_TO delivery goal and a new LEAD goal can both be active at
+                                // the same priority, causing them to both fire arrival callbacks at
+                                // the same location and produce conflicting "I'm delivering / I'm
+                                // arriving" messages simultaneously.
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, StayGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
-                                // Only navigate if an actual building was found — no random wandering
-                                if (buildingPos != null) {
+                                EntityBehaviorManager.removeGoal(entity, com.owlmaddie.goals.GoToEntityGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, com.owlmaddie.goals.GoToPositionGoal.class);
+
+                                if (destMob != null) {
+                                    // Navigate to a specific NPC
+                                    final net.minecraft.world.entity.Mob finalDestMob = destMob;
+                                    Runnable onNpcArrival = () -> {
+                                        if (!selfData.characterSheet.isEmpty()
+                                                && selfData.status != com.owlmaddie.chat.ChatDataManager.ChatStatus.PENDING) {
+                                            com.owlmaddie.network.ServerPackets.generate_chat(
+                                                    "English", selfData, leadPlayer, entity,
+                                                    "<arrives near " + finalDestMob.getDisplayName().getString()
+                                                            + ", turns to face the player>", true);
+                                        }
+                                        // No StayGoal — mob resumes normal behavior after leading the player
+                                    };
                                     EntityBehaviorManager.addGoal(entity,
-                                            new GoToPositionGoal(entity, buildingPos, entitySpeedMedium),
+                                            new com.owlmaddie.goals.GoToEntityGoal(entity, destMob, entitySpeedMedium, onNpcArrival),
                                             GoalPriority.LEAD_PLAYER);
+                                    LOGGER.info("LEAD: {} heading toward NPC '{}'", entity.getType().toShortString(),
+                                            destMob.getDisplayName().getString());
+
+                                } else if (destPos != null) {
+                                    // Navigate to a BlockPos
+                                    final BlockPos finalDest = destPos;
+                                    Runnable onPosArrival = () -> {
+                                        if (!selfData.characterSheet.isEmpty()
+                                                && selfData.status != com.owlmaddie.chat.ChatDataManager.ChatStatus.PENDING) {
+                                            com.owlmaddie.network.ServerPackets.generate_chat(
+                                                    "English", selfData, leadPlayer, entity,
+                                                    "<arrives at destination, turns to face the player>", true);
+                                        }
+                                    };
+                                    EntityBehaviorManager.addGoal(entity,
+                                            new GoToPositionGoal(entity, finalDest, entitySpeedMedium, onPosArrival),
+                                            GoalPriority.LEAD_PLAYER);
+                                    LOGGER.info("LEAD: {} heading toward {} at {}", entity.getType().toShortString(), dest.isEmpty() ? "building" : dest, finalDest);
+                                } else {
+                                    LOGGER.warn("LEAD: no destination found for '{}' — mob stays put", dest);
                                 }
+
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
                                     playerData.attacking = false;
@@ -1094,23 +1778,8 @@ public class EntityChatData {
                                 // another mob the same way it attacks the player when <ATTACK> fires.
                                 String targetName = behavior.getStringArgument();
                                 if (targetName != null && !targetName.isBlank()) {
-                                    // Expanded search: 32 blocks, same as overhear range
-                                    AABB searchBox = entity.getBoundingBox().inflate(32.0);
-                                    String lowerTarget = targetName.trim().toLowerCase();
-                                    Mob foundTarget = null;
-                                    for (Mob nearby : ((ServerLevel) entity.level()).getEntitiesOfClass(Mob.class, searchBox)) {
-                                        if (nearby.getUUID().equals(entity.getUUID())) continue;
-                                        String displayName = nearby.getDisplayName().getString().toLowerCase();
-                                        EntityChatData nearbyData = com.owlmaddie.chat.ChatDataManager
-                                                .getServerInstance().getOrCreateChatData(nearby.getStringUUID());
-                                        String sheetName = com.owlmaddie.npc.NpcLifeManager
-                                                .extractMobNamePublic(nearbyData, nearby).toLowerCase();
-                                        if (displayName.contains(lowerTarget) || sheetName.contains(lowerTarget)
-                                                || lowerTarget.contains(sheetName.split("\\s+")[0])) {
-                                            foundTarget = nearby;
-                                            break;
-                                        }
-                                    }
+                                    AABB searchBox = entity.getBoundingBox().inflate(200.0);
+                                    Mob foundTarget = findBestNamedMob(targetName, entity, (ServerLevel) entity.level(), searchBox);
                                     if (foundTarget != null) {
                                         // forceAttack=true bypasses the native-attack check that
                                         // normally gates the goal for monsters. Without it, a zombie
@@ -1127,7 +1796,7 @@ public class EntityChatData {
                                         EntityBehaviorManager.addGoal(entity, attackNpcGoal, GoalPriority.ATTACK_PLAYER);
                                         LOGGER.info("ATTACK_NPC: {} targeting {}", entity.getType().toShortString(), targetName);
                                     } else {
-                                        LOGGER.info("ATTACK_NPC: could not find '{}' near {} (searched 32 blocks)", targetName, entity.getType().toShortString());
+                                        LOGGER.info("ATTACK_NPC: could not find '{}' near {} (searched 200 blocks)", targetName, entity.getType().toShortString());
                                     }
                                 }
 
@@ -1227,6 +1896,25 @@ public class EntityChatData {
                                                     remaining -= take;
                                                 }
                                             }
+                                            int taken = receiveCount - remaining;
+                                            if (taken > 0) {
+                                                // Add received items to the mob's actual inventory
+                                                net.minecraft.world.Container mobInv =
+                                                        ((com.owlmaddie.inventory.ChatInventory) entity).creaturechat$getInventory();
+                                                ItemStack received = new ItemStack(wantedItem, taken);
+                                                // Try to stack into existing slots first, then empty slots
+                                                for (int s = 0; s < mobInv.getContainerSize() && !received.isEmpty(); s++) {
+                                                    ItemStack existing = mobInv.getItem(s);
+                                                    if (existing.isEmpty()) {
+                                                        mobInv.setItem(s, received.copy());
+                                                        received.setCount(0);
+                                                    } else if (existing.is(wantedItem) && existing.getCount() < existing.getMaxStackSize()) {
+                                                        int add = Math.min(received.getCount(), existing.getMaxStackSize() - existing.getCount());
+                                                        existing.grow(add);
+                                                        received.shrink(add);
+                                                    }
+                                                }
+                                            }
                                             if (remaining == 0) {
                                                 LOGGER.info("RECEIVE_ITEM: {} took {}x {} from player", entity.getType().toShortString(), receiveCount, itemName);
                                             } else {
@@ -1254,6 +1942,141 @@ public class EntityChatData {
                                             "(?i)(- ?Name:\\s*).*",
                                             "$1" + java.util.regex.Matcher.quoteReplacement(finalNewName));
                                     LOGGER.info("RENAME: {} renamed to '{}'", entity.getType().toShortString(), finalNewName);
+                                }
+
+                            } else if (behavior.getName().equals("SPEAK_TO")) {
+                                // The messenger NPC walks to a named target NPC (up to 200 blocks away),
+                                // delivers the message on arrival, then walks back to the player and
+                                // reports what happened — so the player can hear the result via TTS.
+                                String targetName = behavior.getStringArgument();
+                                if (targetName != null && !targetName.isBlank()) {
+                                    AABB searchBox = entity.getBoundingBox().inflate(200.0);
+                                    Mob foundTarget = findBestNamedMob(targetName, entity, (ServerLevel) entity.level(), searchBox);
+                                    if (foundTarget != null) {
+                                        // Use the player's actual last message as the delivery intent.
+                                        // result.getCleanedMessage() is Bly's travel confirmation to the player
+                                        // ("I know where Edgar lives. I'll go tell him.") — not message content.
+                                        // The player's last USER message IS what they wanted delivered.
+                                        // Iterate backward to find it (ASSISTANT response not yet added).
+                                        String playerLastMsg = "";
+                                        for (int pi = previousMessages.size() - 1; pi >= 0; pi--) {
+                                            ChatMessage cm = previousMessages.get(pi);
+                                            if (cm.sender == ChatDataManager.ChatSender.USER) {
+                                                playerLastMsg = cm.message;
+                                                break;
+                                            }
+                                        }
+                                        if (playerLastMsg.isEmpty()) playerLastMsg = result.getCleanedMessage();
+                                        String messengerWords = playerLastMsg;
+
+                                        String messengerName = com.owlmaddie.npc.NpcLifeManager
+                                                .extractMobNamePublic(this, entity);
+
+                                        // Capture final references for use inside the lambdas
+                                        final Mob          deliverTo      = foundTarget;
+                                        final String       deliverToName  = foundTarget.getDisplayName().getString();
+                                        final String       intent         = messengerWords;
+                                        final String       mName          = messengerName;
+                                        final ServerPlayer pRef           = player;
+                                        final float        speed          = entitySpeedMedium;
+
+                                        // --- onArrival: fires when messenger reaches the target NPC ---
+                                        Runnable onArrival = () -> {
+                                            EntityChatData targetData = ChatDataManager.getServerInstance()
+                                                    .getOrCreateChatData(deliverTo.getStringUUID());
+
+                                            // Determine what happened at the target, so we can report back
+                                            String returnTrigger;
+
+                                            boolean targetIsFighting = deliverTo.getTarget() != null;
+                                            if (targetIsFighting) {
+                                                // Target is in combat — skip delivery entirely so we don't
+                                                // interrupt their fight. Messenger will report back to player.
+                                                returnTrigger = "<just tried to deliver a message to "
+                                                        + deliverToName + " on behalf of "
+                                                        + pRef.getDisplayName().getString()
+                                                        + " but they were in the middle of a fight and couldn't be reached>";
+                                                LOGGER.info("SPEAK_TO: {} skipped delivery to {} — target is fighting",
+                                                        mName, deliverToName);
+
+                                            } else if (!targetData.characterSheet.isEmpty()
+                                                    && targetData.status != ChatDataManager.ChatStatus.PENDING) {
+                                                // Deliver the message — target NPC will react and speak.
+                                                // Format: "Bly arrived to pass on a message from Player695,
+                                                // who said: [player's actual words]" — Edgar gets the real content.
+                                                String deliveryTrigger = "<" + mName
+                                                        + " arrived to pass on a message from "
+                                                        + pRef.getDisplayName().getString()
+                                                        + ", who said: " + intent + ">";
+                                                LOGGER.info("SPEAK_TO: {} delivered message to {}",
+                                                        mName, deliverToName);
+                                                // is_auto_message=false so this bypasses the token-bucket
+                                                // rate limiter — delivery is player-directed, not NPC initiative.
+                                                ServerPackets.generate_chat("English", targetData,
+                                                        pRef, deliverTo, deliveryTrigger, false);
+                                                // Prompt the messenger to describe how Edgar reacted —
+                                                // this plays as TTS at the player's location when Bly returns,
+                                                // so the player hears a summary of the exchange even if they
+                                                // were too far from Edgar to hear Edgar's response directly.
+                                                returnTrigger = "<just returned from delivering a message to "
+                                                        + deliverToName + " for " + pRef.getDisplayName().getString()
+                                                        + ". Briefly describe in your own words how "
+                                                        + deliverToName + " seemed to react — were they pleased,"
+                                                        + " annoyed, confused, or indifferent? One sentence only.>";
+
+                                            } else {
+                                                // Target had no character sheet or was busy generating
+                                                returnTrigger = "<just tried to deliver a message to "
+                                                        + deliverToName + " on behalf of "
+                                                        + pRef.getDisplayName().getString()
+                                                        + " but they didn't seem able to respond>";
+                                                LOGGER.info("SPEAK_TO: {} could not deliver to {} — no sheet or PENDING",
+                                                        mName, deliverToName);
+                                            }
+
+                                            // --- onReturn: fires when messenger gets back to the player ---
+                                            // The player hears the messenger's TTS report at the player's location.
+                                            final String finalReturnTrigger = returnTrigger;
+                                            Runnable onReturn = () -> {
+                                                // Delivery mission complete — re-enable overhear
+                                                EntityChatData.this.onDeliveryMission = false;
+
+                                                // Only report if not already mid-conversation.
+                                                // is_auto_message=false bypasses the rate limiter —
+                                                // this is a player-directed action, not NPC initiative.
+                                                // generate_chat adds a TalkPlayerGoal to keep the mob
+                                                // in place while reporting — no StayGoal needed.
+                                                if (EntityChatData.this.status != ChatDataManager.ChatStatus.PENDING) {
+                                                    ServerPackets.generate_chat("English",
+                                                            EntityChatData.this, pRef, entity,
+                                                            finalReturnTrigger, false);
+                                                }
+                                            };
+
+                                            // Head back to the player — uses LivingEntity target so ServerPlayer works
+                                            EntityBehaviorManager.addGoal(entity,
+                                                    new com.owlmaddie.goals.GoToEntityGoal(
+                                                            entity, pRef, speed, onReturn),
+                                                    GoalPriority.LEAD_PLAYER);
+                                            LOGGER.info("SPEAK_TO: {} heading back to player after delivery",
+                                                    mName);
+                                        };
+
+                                        // Mark messenger as on delivery so overhear skips them
+                                        EntityChatData.this.onDeliveryMission = true;
+
+                                        EntityBehaviorManager.removeGoal(entity, StayGoal.class);
+                                        EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                        EntityBehaviorManager.addGoal(entity,
+                                                new com.owlmaddie.goals.GoToEntityGoal(
+                                                        entity, foundTarget, entitySpeedMedium, onArrival),
+                                                GoalPriority.LEAD_PLAYER);
+                                        LOGGER.info("SPEAK_TO: {} heading toward '{}' to deliver message (searching up to 200 blocks)",
+                                                entity.getType().toShortString(), targetName);
+                                    } else {
+                                        LOGGER.info("SPEAK_TO: could not find '{}' near {} (searched 200 blocks)",
+                                                targetName, entity.getType().toShortString());
+                                    }
                                 }
 
                             } else if (behavior.getName().equals("SET_FIRE")) {
@@ -1395,6 +2218,18 @@ public class EntityChatData {
                                 }
 
                                 playerData.friendship = new_friendship;
+
+                                // If the NPC has turned genuinely hostile (friendship -2 or worse),
+                                // release any StayGoal that was previously issued. Without this, a mob
+                                // that overhears a threat or has its friendship drop mid-stay will remain
+                                // frozen even though it wants to flee or attack. FLEE/ATTACK behaviors
+                                // already remove StayGoal themselves, but the LLM sometimes outputs only
+                                // FRIENDSHIP -2 without a movement behavior (e.g. Edgar's overhear case).
+                                if (new_friendship <= -2 && new_friendship < old_friendship) {
+                                    EntityBehaviorManager.removeGoal(entity, StayGoal.class);
+                                    LOGGER.info("FRIENDSHIP dropped to {} — releasing StayGoal so NPC can react", new_friendship);
+                                }
+
                                 if (playerData.attacking) {
                                     EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                     AdvancementHelper.calmTheStorm(player);
@@ -1449,7 +2284,7 @@ public class EntityChatData {
                 Component link = Component.literal(Randomizer.DISCORD_LINK)
                         .withStyle(ChatFormatting.BLUE)
                         .withStyle(style -> style
-                                .withClickEvent(ClickEventHelper.openUrl("http://" + Randomizer.DISCORD_LINK))
+                                .withClickEvent(ClickEventHelper.openUrl("https://" + Randomizer.DISCORD_LINK))
                                 .withUnderlined(true));
 
                 TR randomError = Randomizer.getRandomError(type);
@@ -1473,6 +2308,13 @@ public class EntityChatData {
                 }
 
                 player.displayClientMessage(INFO_HELP_LINK.comp(link), false);
+            }
+            } finally {
+                // Always release the chat concurrency slot so the next queued chat can start,
+                // regardless of whether this response was stale, successful, or an error.
+                if (releaseOnComplete) {
+                    com.owlmaddie.network.ServerPackets.releaseAndTryNext();
+                }
             }
         });
     }
@@ -1511,27 +2353,28 @@ public class EntityChatData {
             truncatedMessage = truncatedMessage.replaceAll("\\*[^*]*\\s[^*]*\\*\\s*", "").trim(); // multi-word: remove
             truncatedMessage = truncatedMessage.replaceAll("\\*([^*\\s]+)\\*", "$1").trim();       // single-word: unwrap
 
-            // Keep only the first complete sentence. Behavior tags (e.g. <LEAD>) are preserved
+            // Keep up to 3 complete sentences. Behavior tags (e.g. <LEAD>) are preserved
             // by splitting them off first, truncating the speech, then re-appending.
-            // This prevents the model from monologuing regardless of token limits.
+            // This prevents the model from monologuing while still allowing natural dialogue.
             java.util.regex.Matcher tagMatcher = java.util.regex.Pattern
                     .compile("(\\s*<[^>]+>)+\\s*$").matcher(truncatedMessage);
             String trailingTags = tagMatcher.find() ? tagMatcher.group().trim() : "";
             String speechOnly = tagMatcher.replaceAll("").trim();
 
-            // Find the end of the first sentence that contains at least 4 words.
-            // This prevents short exclamations like "Oh!" from being treated as the
-            // full response when the actual sentence follows immediately after.
+            // Find the end of up to 3 sentences. Short exclamations like "Oh!" don't
+            // count as a full sentence unless they have 4+ words.
             int cutPoint = -1;
+            int sentenceCount = 0;
             java.util.regex.Matcher sentenceMatcher = java.util.regex.Pattern
                     .compile("(?<!\\.)\\.(?!\\.)|[!?]").matcher(speechOnly);
             while (sentenceMatcher.find()) {
                 int candidate = sentenceMatcher.end();
                 String fragment = speechOnly.substring(0, candidate).trim();
-                // Accept this cut point only if the fragment has at least 4 words
+                // Only count as a sentence if the fragment has at least 4 words total
                 if (fragment.split("\\s+").length >= 4) {
+                    sentenceCount++;
                     cutPoint = candidate;
-                    break;
+                    if (sentenceCount >= 3) break;
                 }
             }
             if (cutPoint > 0) {

@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 
 /**
@@ -30,6 +31,11 @@ public class ChatGPTRequest {
     private static final Gson GSON = new Gson();
     public static String lastErrorMessage;
     public static int lastErrorCode = 0;
+
+    // Global limit on simultaneous LLM HTTP calls. Without this, witness reactions,
+    // initiative events, and SPEAK_TO all fire at once and the API returns HTTP errors.
+    // 3 permits means at most 3 calls run in parallel; extras wait their turn.
+    private static final Semaphore LLM_CONCURRENCY = new Semaphore(3);
 
     static class ChatGPTRequestMessage {
         String role;
@@ -69,6 +75,58 @@ public class ChatGPTRequest {
         public ResponseFormat(String type) {
             this.type = type;
         }
+    }
+
+    // ── Gemini native REST API types ──────────────────────────────────────────
+    // Used when apiUrl contains "generativelanguage.googleapis.com".
+    // Sends thinkingBudget=0 to disable dynamic thinking so thinking tokens
+    // are never billed as output tokens.
+
+    static class GeminiPart {
+        String text;
+    }
+
+    static class GeminiContent {
+        String role;
+        List<GeminiPart> parts;
+    }
+
+    static class GeminiThinkingConfig {
+        int thinkingBudget;
+    }
+
+    static class GeminiGenerationConfig {
+        int maxOutputTokens;
+        float temperature;
+        GeminiThinkingConfig thinkingConfig;
+    }
+
+    static class GeminiSystemInstruction {
+        List<GeminiPart> parts = new ArrayList<>();
+    }
+
+    static class GeminiRequestPayload {
+        GeminiSystemInstruction system_instruction;
+        List<GeminiContent> contents = new ArrayList<>();
+        GeminiGenerationConfig generationConfig;
+    }
+
+    static class GeminiCandidate {
+        GeminiContent content;
+    }
+
+    // Token-usage fields from Gemini's usageMetadata block.
+    // thoughtsTokenCount is only present when thinkingBudget > 0; absence = 0 thinking tokens.
+    static class GeminiUsageMetadata {
+        int promptTokenCount;
+        int candidatesTokenCount;
+        int thoughtsTokenCount;
+        int totalTokenCount;
+    }
+
+    static class GeminiNativeResponse {
+        List<GeminiCandidate> candidates;
+        GeminiUsageMetadata   usageMetadata;
     }
 
     public static String removeQuotes(String str) {
@@ -160,11 +218,179 @@ public class ChatGPTRequest {
         double percentOfContext = config.getPercentOfContext();
 
         return CompletableFuture.supplyAsync(() -> {
+            // Wait for a concurrency permit before making the HTTP call.
+            // This prevents the API from seeing a burst of simultaneous requests
+            // (e.g. witness reactions + SPEAK_TO + initiative all firing at once).
+            LLM_CONCURRENCY.acquireUninterruptibly();
             lastErrorCode = 0;
             HttpURLConnection connection = null;
             try {
                 // Replace placeholders
                 String systemMessage = replacePlaceholders(systemPrompt, contextData);
+
+                // ── Native Gemini branch ──────────────────────────────────────────────────
+                // When the configured URL points at generativelanguage.googleapis.com we switch
+                // to the native Gemini REST format.  The OpenAI-compat shim does not allow
+                // disabling dynamic thinking, so we would be billed for thinking tokens as
+                // output tokens.  The native format lets us set thinkingBudget=0.
+                if (apiUrl.contains("generativelanguage.googleapis.com")) {
+                    // Build the same trimmed message history the OpenAI path would use
+                    List<ChatGPTRequestMessage> rawMessages = new ArrayList<>();
+                    int remainingContextTokens =
+                            (int) ((maxContextTokens - maxOutputTokens) * percentOfContext);
+                    int usedTokens = estimateTokenSize("system: " + systemMessage);
+
+                    for (int i = messageHistory.size() - 1; i >= 0; i--) {
+                        ChatMessage chatMessage = messageHistory.get(i);
+                        String senderName = chatMessage.sender.toString().toLowerCase(Locale.ENGLISH);
+                        String messageText = replacePlaceholders(chatMessage.message, contextData);
+                        int messageTokens = estimateTokenSize(senderName + ": " + messageText);
+                        if (usedTokens + messageTokens > remainingContextTokens) break;
+                        rawMessages.add(new ChatGPTRequestMessage(senderName, messageText));
+                        usedTokens += messageTokens;
+                    }
+                    Collections.reverse(rawMessages);
+
+                    // Build system_instruction
+                    GeminiSystemInstruction sysInst = new GeminiSystemInstruction();
+                    GeminiPart sysPart = new GeminiPart();
+                    sysPart.text = systemMessage;
+                    sysInst.parts.add(sysPart);
+
+                    // Build generationConfig with thinkingBudget=0
+                    GeminiThinkingConfig thinkingCfg = new GeminiThinkingConfig();
+                    thinkingCfg.thinkingBudget = 0;
+                    GeminiGenerationConfig genCfg = new GeminiGenerationConfig();
+                    genCfg.maxOutputTokens = maxOutputTokens;
+                    genCfg.temperature = 0.7f;
+                    genCfg.thinkingConfig = thinkingCfg;
+
+                    // Convert roles: "assistant" → "model" for Gemini, ensure alternating turns
+                    GeminiRequestPayload geminiPayload = new GeminiRequestPayload();
+                    geminiPayload.system_instruction = sysInst;
+                    geminiPayload.generationConfig   = genCfg;
+
+                    String lastGeminiRole = null;
+                    for (ChatGPTRequestMessage msg : rawMessages) {
+                        String geminiRole = "assistant".equals(msg.role) ? "model" : "user";
+                        if (geminiRole.equals(lastGeminiRole)) continue; // skip consecutive same role
+                        GeminiContent gc = new GeminiContent();
+                        gc.role = geminiRole;
+                        GeminiPart gp = new GeminiPart();
+                        gp.text = msg.content;
+                        gc.parts = new ArrayList<>();
+                        gc.parts.add(gp);
+                        geminiPayload.contents.add(gc);
+                        lastGeminiRole = geminiRole;
+                    }
+                    // Gemini requires contents to start with a "user" turn
+                    if (!geminiPayload.contents.isEmpty()
+                            && !"user".equals(geminiPayload.contents.get(0).role)) {
+                        geminiPayload.contents.remove(0);
+                    }
+                    if (geminiPayload.contents.isEmpty()) {
+                        GeminiContent fallback = new GeminiContent();
+                        fallback.role = "user";
+                        GeminiPart fp = new GeminiPart();
+                        fp.text = "Hello";
+                        fallback.parts = new ArrayList<>();
+                        fallback.parts.add(fp);
+                        geminiPayload.contents.add(fallback);
+                    }
+
+                    // Native endpoint: always /v1beta/models/{model}:generateContent
+                    String nativeUrl = "https://generativelanguage.googleapis.com/v1beta/models/"
+                            + modelName + ":generateContent";
+
+                    URL geminiUrl = new URL(nativeUrl);
+                    connection = (HttpURLConnection) geminiUrl.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setRequestProperty("x-goog-api-key", apiKey); // no Bearer prefix
+                    connection.setRequestProperty("Accept", "application/json");
+                    connection.setRequestProperty("Accept-Encoding", "gzip");
+                    connection.setDoOutput(true);
+                    connection.setConnectTimeout(timeout);
+                    connection.setReadTimeout(timeout);
+
+                    Gson gsonGemini = new Gson();
+                    byte[] geminiInput = gsonGemini.toJson(geminiPayload).getBytes(StandardCharsets.UTF_8);
+                    connection.setFixedLengthStreamingMode(geminiInput.length);
+                    try (OutputStream os = connection.getOutputStream()) {
+                        os.write(geminiInput);
+                    }
+
+                    int statusCode = connection.getResponseCode();
+                    if (statusCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
+                        lastErrorCode = statusCode;
+                        InputStream errStream = connection.getErrorStream();
+                        if (errStream == null) {
+                            try { errStream = connection.getInputStream(); } catch (Exception ex) {
+                                lastErrorMessage = sanitizeApiKey("HTTP " + statusCode + ": " + ex.getMessage(), apiKey);
+                                return null;
+                            }
+                        }
+                        if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+                            errStream = new GZIPInputStream(errStream);
+                        }
+                        try (BufferedReader er = new BufferedReader(
+                                new InputStreamReader(errStream, StandardCharsets.UTF_8))) {
+                            StringBuilder eb = new StringBuilder();
+                            String el;
+                            while ((el = er.readLine()) != null) eb.append(el.trim());
+                            String cleanErr = parseAndLogErrorResponse(eb.toString());
+                            String finalMsg = "HTTP " + statusCode
+                                    + (cleanErr != null && !cleanErr.isEmpty() ? ": " + cleanErr : "");
+                            LOGGER.error(finalMsg);
+                            lastErrorMessage = sanitizeApiKey(finalMsg, apiKey);
+                        }
+                        return null;
+                    } else {
+                        lastErrorMessage = null;
+                        lastErrorCode = 0;
+                    }
+
+                    InputStream geminiIn = connection.getInputStream();
+                    if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+                        geminiIn = new GZIPInputStream(geminiIn);
+                    }
+                    try (BufferedReader br = new BufferedReader(
+                            new InputStreamReader(geminiIn, StandardCharsets.UTF_8))) {
+                        StringBuilder resp = new StringBuilder();
+                        String rl;
+                        while ((rl = br.readLine()) != null) resp.append(rl.trim());
+                        GeminiNativeResponse geminiResp =
+                                GSON.fromJson(resp.toString(), GeminiNativeResponse.class);
+                        if (geminiResp != null && geminiResp.candidates != null
+                                && !geminiResp.candidates.isEmpty()) {
+                            // Log token usage so we can verify thinkingBudget=0 is working.
+                            // thoughtsTokenCount should always be 0 when thinkingBudget=0.
+                            if (geminiResp.usageMetadata != null) {
+                                GeminiUsageMetadata u = geminiResp.usageMetadata;
+                                double inputCost  = u.promptTokenCount     * 0.10 / 1_000_000.0;
+                                double outputCost = u.candidatesTokenCount * 0.40 / 1_000_000.0;
+                                LOGGER.info(
+                                    "Gemini usage: input={}tok output={}tok thinking={}tok total={}tok | cost ~${} (input) + ~${} (output)",
+                                    u.promptTokenCount, u.candidatesTokenCount,
+                                    u.thoughtsTokenCount, u.totalTokenCount,
+                                    String.format("%.6f", inputCost),
+                                    String.format("%.6f", outputCost));
+                            }
+                            GeminiCandidate cand = geminiResp.candidates.get(0);
+                            if (cand.content != null && cand.content.parts != null
+                                    && !cand.content.parts.isEmpty()
+                                    && cand.content.parts.get(0).text != null) {
+                                return cand.content.parts.get(0).text;
+                            }
+                        }
+                        LOGGER.warn("Gemini native: empty or unparseable response — raw: {}",
+                                resp.length() > 200 ? resp.substring(0, 200) + "..." : resp.toString());
+                        lastErrorMessage = "Failed to parse Gemini native response";
+                        return null;
+                    }
+                    // End of native Gemini branch — falls through to return null if something missed
+                }
+                // ── End native Gemini branch ──────────────────────────────────────────────
 
                 URL url = new URL(apiUrl);
                 connection = (HttpURLConnection) url.openConnection();
@@ -210,7 +436,7 @@ public class ChatGPTRequest {
 
                 // Convert JSON to String
                 ChatGPTRequestPayload payload = new ChatGPTRequestPayload(
-                        modelName, messages, jsonMode, 1.0f, maxOutputTokens);
+                        modelName, messages, jsonMode, 0.7f, maxOutputTokens);
 
                 Gson gsonInput = new Gson();
                 String jsonInputString = gsonInput.toJson(payload);
@@ -305,7 +531,12 @@ public class ChatGPTRequest {
 
                     ChatGPTResponse chatGPTResponse = GSON.fromJson(response.toString(), ChatGPTResponse.class);
                     if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
-                        return chatGPTResponse.choices.get(0).message.content;
+                        String content = chatGPTResponse.choices.get(0).message.content;
+                        if (content != null) {
+                            return content;
+                        }
+                        // content was null — likely a safety filter block or empty stop from the LLM
+                        LOGGER.warn("LLM returned null content (possible safety filter or empty stop)");
                     }
                     lastErrorMessage = "Failed to parse response";
                     return null;
@@ -320,6 +551,9 @@ public class ChatGPTRequest {
                 lastErrorMessage = sanitizeApiKey("Failed to request message: " + e.getMessage(), apiKey);
                 lastErrorCode = 0;
                 return null;
+            } finally {
+                // Always release the concurrency permit so the next queued call can proceed
+                LLM_CONCURRENCY.release();
             }
         });
     }

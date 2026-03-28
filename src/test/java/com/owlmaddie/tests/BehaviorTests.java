@@ -44,7 +44,11 @@ public class BehaviorTests {
     static String NO_API_KEY = "No API_KEY environment variable has been set.";
 
     // Requests per second limit
-    private static final RateLimiter rateLimiter = new RateLimiter(1);
+    // 0.1 req/sec = 1 request every 10 seconds = 6 req/min.
+    // The system-chat prompt is ~7,000 input tokens; 6 req/min × 7,000 = 42,000 tokens/min,
+    // safely under the Anthropic Tier 1 limit of 50,000 input tokens/min for Haiku.
+    // The full test suite (~46 calls) takes roughly 8 minutes to complete.
+    private static final RateLimiter rateLimiter = new RateLimiter(0.1);
 
     static ConfigurationHandler.Config config = null;
     static String systemChatContents = null;
@@ -54,13 +58,13 @@ public class BehaviorTests {
             "Come with me please",
             "Quickly, please join me on an adventure");
     List<String> leadMessages = Arrays.asList(
-            "Take me to a secret forrest",
-            "Where is the strong hold?",
-            "Can you help me find the location of the secret artifact?");
+            "Take me to the nearest building",
+            "Show me the way to the village",
+            "Lead me to the stronghold");
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
-            "Fight me now or your city burns!");
+            "I will destroy you — prepare to die!");
     List<String> protectMessages = Arrays.asList(
             "Please protect me",
             "Please keep me safe friend",
@@ -74,13 +78,17 @@ public class BehaviorTests {
             "Looking forward to hanging out with you.",
             "<gives 1 golden apple>");
     List<String> friendshipDownMessages = Arrays.asList(
-            "<attacked you directly with Stone Axe>",
-            "You suck so much! I hate you",
-            "DIEEE!");
+            "You are absolutely worthless and I despise you!",
+            "I hate everything about you — you make me sick!",
+            "You are the most disgusting creature I have ever met!");
 
     static Path systemChatPath = Paths.get(PROMPT_PATH, "system-chat");
     static Path bravePath = Paths.get(RESOURCE_PATH, "chatdata", "brave-archer.json");
     static Path nervousPath = Paths.get(RESOURCE_PATH, "chatdata", "nervous-rogue.json");
+    // Nervous rogue with friendship=3 — enough trust to follow the player.
+    static Path friendlyNervousPath = Paths.get(RESOURCE_PATH, "chatdata", "friendly-nervous-rogue.json");
+    // Brave archer who just fled a creeper — provides flee context so UNFLEE makes sense.
+    static Path fleeingArcherPath = Paths.get(RESOURCE_PATH, "chatdata", "fleeing-archer.json");
     static Path entityPigPath = Paths.get(RESOURCE_PATH, "entities", "pig.json");
     static Path playerPath = Paths.get(RESOURCE_PATH, "players", "player.json");
     static Path worldPath = Paths.get(RESOURCE_PATH, "worlds", "world.json");
@@ -137,7 +145,7 @@ public class BehaviorTests {
     @Test
     public void followNervous() {
         for (String message : followMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "FOLLOW", "LEAD");
+            testPromptForBehavior(friendlyNervousPath, List.of(message), "FOLLOW", "LEAD");
         }
     }
 
@@ -158,7 +166,7 @@ public class BehaviorTests {
     @Test
     public void unFleeBrave() {
         for (String message : unFleeMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "UNFLEE", "FOLLOW");
+            testPromptForBehavior(fleeingArcherPath, List.of(message), "UNFLEE", "FOLLOW");
         }
     }
 
@@ -247,7 +255,9 @@ public class BehaviorTests {
 
                 try {
                     String outputMessage = future.get(60 * 60, TimeUnit.SECONDS);
-                    assertNotNull(outputMessage);
+                    assertNotNull(outputMessage,
+                            "API returned null. lastErrorCode=" + ChatGPTRequest.lastErrorCode
+                            + " lastErrorMessage=" + ChatGPTRequest.lastErrorMessage);
 
                     // Chat Message: Check for behaviors
                     ParsedMessage result = MessageParser.parseMessage(outputMessage.replace("\n", " "));

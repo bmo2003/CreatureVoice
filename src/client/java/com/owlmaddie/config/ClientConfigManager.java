@@ -68,7 +68,7 @@ public class ClientConfigManager {
 
         // Re-apply settings immediately so changes take effect without rejoining
         VoiceInputManager.setApiKey(config.getDeepgramApiKey());
-        TtsManager.setApiKey(config.getElevenLabsApiKey());
+        TtsManager.setServerUrl(config.getChatterboxUrl());
         // Sync the chat-bubbles flag so the in-world bubble renderer updates right away
         BubbleRenderer.showAllBubbles = config.getChatBubbles();
         // Sync realism mode so excluded mobs hide their bubble UI immediately

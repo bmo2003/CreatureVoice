@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package com.owlmaddie.voice;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.owlmaddie.utils.ClientEntityFinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Mob;
@@ -19,39 +16,49 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * TtsManager converts mob speech text to audio using the ElevenLabs Flash TTS API,
+ * TtsManager converts mob speech text to audio using a local Chatterbox TTS server,
  * then plays it back as 3D positional audio via OpenAL so the sound comes from the
  * mob's location in the world with natural distance falloff.
  *
- * Voice assignment: each mob gets a deterministic voice derived from its UUID, so the
- * same mob always sounds the same and nearby mobs have different voices.
+ * Speech queue: only ONE mob speaks at a time. When multiple NPCs respond (overhear
+ * reactions, mob-to-mob chat), their TTS requests fire immediately in the background
+ * so the audio data is ready, but actual OpenAL playback is queued. The next mob's
+ * audio starts only after the current speaker finishes. This prevents the cacophony
+ * of multiple NPCs talking over each other simultaneously.
  *
- * Threading: HTTP requests run on a dedicated background thread. All OpenAL operations
- * (buffer creation, source positioning, playback) are scheduled on the render thread
- * where Minecraft's OpenAL context is current. A tick() method polled each client tick
- * cleans up finished or interrupted sources.
+ * Voice assignment: each mob gets a deterministic voice from 28 pre-built Chatterbox
+ * voices, derived from its UUID so the same mob always sounds the same.
+ *
+ * Chatterbox runs locally — no cloud API, no usage limits, no API key needed.
+ * Install: pip install chatterbox-tts, then run chatterbox-tts-api or similar server.
  */
 public class TtsManager {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturevoice");
 
-    private static String apiKey = "";
+    // Chatterbox server URL (default: localhost:4123 for chatterbox-tts-api)
+    private static String serverUrl = "http://localhost:4123";
 
-    // Ordered list of ElevenLabs voice IDs fetched on world join
-    private static final List<String> voiceIds = new ArrayList<>();
+    // 28 pre-built Chatterbox voice names from devnen/Chatterbox-TTS-Server
+    // Each mob gets a deterministic voice by hashing its UUID against this list
+    private static final String[] VOICES = {
+        "Abigail", "Adrian", "Alexander", "Alice", "Austin", "Axel",
+        "Connor", "Cora", "Elena", "Eli", "Emily", "Everett",
+        "Gabriel", "Gianna", "Henry", "Ian", "Jade", "Jeremiah",
+        "Jordan", "Julian", "Layla", "Leonardo", "Michael", "Miles",
+        "Olivia", "Ryan", "Taylor", "Thomas"
+    };
 
-    // Background thread for ElevenLabs HTTP requests — single thread so fetchVoices()
-    // always completes before the first speak() runs, since both share the same queue.
+    // Background thread for Chatterbox HTTP requests — single thread so TTS requests
+    // are serialized (one at a time), preventing the server from being overwhelmed.
     private static final ExecutorService ttsThread = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "CreatureVoice-TTS");
         t.setDaemon(true);
@@ -62,10 +69,29 @@ public class TtsManager {
     // mob's in-flight or playing audio, leaving other mobs' audio untouched.
     private static final Map<UUID, AtomicInteger> mobGenerations = new ConcurrentHashMap<>();
 
-    // Per-mob active OpenAL state. Only accessed on the render thread.
-    private static final Map<UUID, MobSource> activeSources = new HashMap<>();
+    // Currently playing OpenAL source (only ONE at a time). Accessed on render thread only.
+    private static MobSource currentSpeaker = null;
+    private static UUID currentSpeakerId = null;
 
-    /** Bundles the OpenAL handles and generation stamp for one mob's active audio. */
+    // Queue of ready-to-play audio waiting for the current speaker to finish.
+    // Thread-safe because TTS thread adds entries and render thread consumes them.
+    private static final ConcurrentLinkedQueue<QueuedAudio> playbackQueue = new ConcurrentLinkedQueue<>();
+
+    /** Holds PCM audio data ready for OpenAL playback, waiting in the speech queue. */
+    private static class QueuedAudio {
+        final UUID mobId;
+        final byte[] pcmData;
+        final int sampleRate;
+        final int generation;
+        QueuedAudio(UUID mobId, byte[] pcmData, int sampleRate, int generation) {
+            this.mobId = mobId;
+            this.pcmData = pcmData;
+            this.sampleRate = sampleRate;
+            this.generation = generation;
+        }
+    }
+
+    /** Bundles the OpenAL handles and generation stamp for the currently playing mob. */
     private static class MobSource {
         final int alSource;
         final int alBuffer;
@@ -73,146 +99,107 @@ public class TtsManager {
         MobSource(int src, int buf, int gen) { alSource = src; alBuffer = buf; generation = gen; }
     }
 
-    // Sample rate matching ElevenLabs pcm_24000 output format
-    private static final int SAMPLE_RATE = 24000;
-
     // Voice audio fades linearly from full volume at VOICE_REF_DISTANCE to silence
     // at VOICE_MAX_DISTANCE. We control gain manually so it actually reaches zero
     // (OpenAL's built-in inverse model asymptotes and never fully silences).
     private static final float VOICE_REF_DISTANCE = 3.0f;   // full volume within 3 blocks
     private static final float VOICE_MAX_DISTANCE = 32.0f;  // silent at 32 blocks
 
-    /** Store the ElevenLabs API key. Called from ClientInit on world join. */
-    public static void setApiKey(String key) {
-        apiKey = key != null ? key.trim() : "";
-    }
-
-    /**
-     * Fetch the full list of available ElevenLabs voices and cache their IDs.
-     * Submitted to the TTS thread so any queued speak() calls wait until this completes.
-     */
-    public static void fetchVoices() {
-        if (apiKey.isEmpty()) return;
-        ttsThread.submit(() -> {
-            try {
-                URL url = new URL("https://api.elevenlabs.io/v1/voices");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("xi-api-key", apiKey);
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(10000);
-
-                int status = conn.getResponseCode();
-                if (status != 200) {
-                    LOGGER.error("Failed to fetch ElevenLabs voices: HTTP {}", status);
-                    return;
-                }
-
-                String body = new String(conn.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-                JsonArray voices = JsonParser.parseString(body)
-                        .getAsJsonObject()
-                        .getAsJsonArray("voices");
-
-                synchronized (voiceIds) {
-                    voiceIds.clear();
-                    for (JsonElement v : voices) {
-                        voiceIds.add(v.getAsJsonObject().get("voice_id").getAsString());
-                    }
-                }
-                LOGGER.info("Loaded {} ElevenLabs voices", voiceIds.size());
-
-            } catch (Exception e) {
-                LOGGER.error("Failed to fetch ElevenLabs voices: {}", e.getMessage());
-            }
-        });
+    /** Set the Chatterbox server URL. Called from ClientInit on world join. */
+    public static void setServerUrl(String url) {
+        if (url != null && !url.isBlank()) {
+            // Strip trailing slash for consistency
+            serverUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        }
+        LOGGER.info("Chatterbox TTS server set to: {}", serverUrl);
     }
 
     /**
      * Deterministically pick a voice for a mob by hashing its UUID.
-     * The same UUID always maps to the same index, so the same mob always has the same voice.
+     * The same UUID always maps to the same voice name, so the same mob always
+     * sounds the same and nearby mobs have different voices.
      */
-    private static String getVoiceId(UUID mobId) {
-        synchronized (voiceIds) {
-            if (voiceIds.isEmpty()) return null;
-            long hash = mobId.getLeastSignificantBits() ^ mobId.getMostSignificantBits();
-            int index = (int) (Math.abs(hash) % voiceIds.size());
-            return voiceIds.get(index);
-        }
+    private static String getVoiceName(UUID mobId) {
+        long hash = mobId.getLeastSignificantBits() ^ mobId.getMostSignificantBits();
+        int index = (int) (Math.abs(hash) % VOICES.length);
+        return VOICES[index];
     }
 
     /**
-     * Strip behavior tags and asterisk emotes from text before sending to ElevenLabs.
+     * Strip behavior tags and asterisk emotes from text before sending to TTS.
      * Tags like <LEAD> or <FRIENDSHIP 2> are for game logic, not speech.
      */
     private static String cleanForSpeech(String text) {
         text = text.replaceAll("<[^>]+>", "");                     // remove <TAG> tokens
-        text = text.replaceAll("\\[EN:[^\\]]*\\]?", "");           // remove [EN: subtitle] tags (TTS speaks native language only, closing ] optional)
+        text = text.replaceAll("\\[EN:[^\\]]*\\]?", "");           // remove [EN: subtitle] tags
+        text = text.replaceAll("\\([^)]*\\)", "");                 // remove (parenthetical actions)
         text = text.replaceAll("\\*[^*]*\\s[^*]*\\*\\s*", "");    // multi-word *emote* → remove
         text = text.replaceAll("\\*([^*\\s]+)\\*", "$1");         // single-word *emphasis* → unwrap
         return text.trim();
     }
 
     /**
-     * Convert mob speech text to audio and play it at the mob's 3D world position.
-     * Interrupts any currently playing mob speech immediately.
-     * Safe to call from any thread — network and OpenAL work is dispatched internally.
+     * Convert mob speech text to audio and queue it for playback. The TTS HTTP request
+     * fires immediately so the audio data is ready, but actual OpenAL playback waits
+     * until no other mob is currently speaking.
+     *
+     * If this mob already has audio playing or queued, the old audio is cancelled so
+     * only the newest message is heard.
      *
      * @param mobId   the mob's UUID, used to pick a consistent voice and locate it in the world
      * @param rawText the LLM response text (may contain behavior tags)
      */
     public static void speak(UUID mobId, String rawText) {
-        if (apiKey.isEmpty()) {
-            LOGGER.warn("No ElevenLabs API key set — TTS disabled");
-            return;
-        }
-
         // Advance only this mob's generation counter. Any in-flight request for this
         // mob will be discarded, but other mobs' audio continues uninterrupted.
         AtomicInteger genCounter = mobGenerations.computeIfAbsent(mobId, k -> new AtomicInteger(0));
         int myGeneration = genCounter.incrementAndGet();
 
         ttsThread.submit(() -> {
-            String voiceId = getVoiceId(mobId);
-            if (voiceId == null) {
-                LOGGER.warn("No voices loaded — skipping TTS for {}", mobId);
-                return;
-            }
+            String voiceName = getVoiceName(mobId);
 
             String text = cleanForSpeech(rawText);
             if (text.isBlank()) return;
 
             try {
-                byte[] pcmData = requestTts(voiceId, text);
+                byte[] wavData = requestTts(voiceName, text);
 
                 // Discard if a newer speak() for this same mob arrived while we were waiting
                 AtomicInteger counter = mobGenerations.get(mobId);
                 if (counter == null || counter.get() != myGeneration) return;
 
-                if (pcmData != null && pcmData.length > 0) {
-                    LOGGER.info("TTS received {} bytes for mob {}", pcmData.length, mobId);
-                    schedulePlayback(pcmData, mobId, myGeneration);
+                if (wavData != null && wavData.length > 44) {
+                    // Parse WAV header to extract raw PCM data and sample rate
+                    WavInfo wav = parseWav(wavData);
+                    if (wav != null) {
+                        LOGGER.info("TTS received {} PCM bytes for mob {} (voice={}, {}Hz) — queuing",
+                                wav.pcmData.length, mobId, voiceName, wav.sampleRate);
+                        playbackQueue.add(new QueuedAudio(mobId, wav.pcmData, wav.sampleRate, myGeneration));
+                    }
                 }
             } catch (Exception e) {
-                LOGGER.error("TTS error for mob {}: {}", mobId, e.getMessage());
+                LOGGER.error("TTS error for mob {} (voice={}): {}", mobId, voiceName, e.getMessage());
             }
         });
     }
 
-    /** POST text to ElevenLabs and return raw PCM bytes (24 kHz 16-bit mono LE), or null on failure. */
-    private static byte[] requestTts(String voiceId, String text) throws IOException {
-        URL url = new URL("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId
-                + "?output_format=pcm_24000");
+    /**
+     * POST text to the Chatterbox server using the OpenAI-compatible speech endpoint.
+     * Returns raw WAV bytes, or null on failure.
+     */
+    private static byte[] requestTts(String voiceName, String text) throws IOException {
+        URL url = new URL(serverUrl + "/v1/audio/speech");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
-        conn.setRequestProperty("xi-api-key", apiKey);
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setDoOutput(true);
         conn.setConnectTimeout(10000);
-        conn.setReadTimeout(30000);
+        conn.setReadTimeout(60000); // local GPU inference can take a few seconds
 
         JsonObject body = new JsonObject();
-        body.addProperty("text", text);
-        body.addProperty("model_id", "eleven_flash_v2_5");
+        body.addProperty("input", text);
+        body.addProperty("voice", voiceName);
+        body.addProperty("response_format", "wav");
 
         try (OutputStream os = conn.getOutputStream()) {
             os.write(body.toString().getBytes(StandardCharsets.UTF_8));
@@ -222,134 +209,200 @@ public class TtsManager {
         if (status != 200) {
             InputStream err = conn.getErrorStream();
             String errBody = err != null ? new String(err.readAllBytes(), StandardCharsets.UTF_8) : "(no body)";
-            LOGGER.error("ElevenLabs HTTP {}: {}", status, errBody);
+            LOGGER.error("Chatterbox HTTP {}: {}", status, errBody);
             return null;
         }
 
         return conn.getInputStream().readAllBytes();
     }
 
-    /**
-     * Wraps the raw PCM bytes in a direct ByteBuffer and schedules OpenAL playback
-     * on the render thread where Minecraft's OpenAL context is current.
-     */
-    private static void schedulePlayback(byte[] pcmData, UUID mobId, int generation) {
-        // Allocate a direct buffer — OpenAL requires native memory, not heap memory.
-        // ByteOrder.LITTLE_ENDIAN matches the ElevenLabs pcm_24000 output format.
-        ByteBuffer pcmBuffer = ByteBuffer.allocateDirect(pcmData.length)
-                .order(ByteOrder.LITTLE_ENDIAN);
-        pcmBuffer.put(pcmData).flip();
-
-        Minecraft.getInstance().execute(() -> {
-            // Double-check this mob's generation on the render thread
-            AtomicInteger counter = mobGenerations.get(mobId);
-            if (counter == null || counter.get() != generation) return;
-
-            // Look up the mob's current position in the world
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level == null) return;
-
-            Mob mob = ClientEntityFinder.getEntityByUUID(mc.level, mobId);
-            if (mob == null) return;  // mob left render range, skip
-
-            // Position the audio near the mob's mouth (60% up its bounding box)
-            float x = (float) mob.getX();
-            float y = (float) (mob.getY() + mob.getBbHeight() * 0.6);
-            float z = (float) mob.getZ();
-
-            // Stop only this mob's previous source — other mobs keep playing
-            stopMobSource(mobId);
-
-            // Upload PCM data to an OpenAL buffer
-            int alBuf = AL10.alGenBuffers();
-            AL10.alBufferData(alBuf, AL10.AL_FORMAT_MONO16, pcmBuffer, SAMPLE_RATE);
-
-            // Create a positional source and attach the buffer
-            int alSrc = AL10.alGenSources();
-            AL10.alSourcei(alSrc, AL10.AL_BUFFER, alBuf);
-
-            // Set the 3D position — OpenAL uses this for directional panning (left/right ear)
-            // relative to the listener, which Minecraft keeps at the camera position.
-            AL10.alSource3f(alSrc, AL10.AL_POSITION, x, y, z);
-
-            // Disable OpenAL's built-in distance attenuation — we set AL_GAIN manually
-            // each tick so the volume fades linearly to true zero rather than asymptoting.
-            AL10.alSourcef(alSrc, AL10.AL_ROLLOFF_FACTOR, 0.0f);
-
-            AL10.alSourcePlay(alSrc);
-
-            activeSources.put(mobId, new MobSource(alSrc, alBuf, generation));
-        });
+    /** Parsed WAV file info: raw PCM data, sample rate, and bits per sample. */
+    private static class WavInfo {
+        final byte[] pcmData;
+        final int sampleRate;
+        final int bitsPerSample;
+        WavInfo(byte[] pcm, int rate, int bits) { pcmData = pcm; sampleRate = rate; bitsPerSample = bits; }
     }
 
     /**
-     * Called every client tick from ClientInit. Iterates all active mob sources,
-     * updating their 3D position and volume, and cleaning up any that have finished
-     * or been superseded by a newer speak() call.
+     * Parse a WAV file to extract the raw PCM data, sample rate, and bit depth.
+     * Handles standard RIFF WAV format. If the audio is 32-bit float, it gets
+     * converted to 16-bit signed integer for OpenAL compatibility.
+     */
+    private static WavInfo parseWav(byte[] wavData) {
+        try {
+            ByteBuffer buf = ByteBuffer.wrap(wavData).order(ByteOrder.LITTLE_ENDIAN);
+
+            // RIFF header: "RIFF" + size + "WAVE"
+            if (buf.remaining() < 12) return null;
+            buf.position(0);
+            int riff = buf.getInt(); // "RIFF"
+            buf.getInt(); // file size
+            int wave = buf.getInt(); // "WAVE"
+
+            int sampleRate = 24000;
+            int bitsPerSample = 16;
+            int audioFormat = 1; // 1=PCM, 3=IEEE float
+
+            // Find "fmt " and "data" chunks
+            byte[] pcmData = null;
+            while (buf.remaining() >= 8) {
+                int chunkId = buf.getInt();
+                int chunkSize = buf.getInt();
+
+                if (chunkId == 0x20746D66) { // "fmt " in little-endian
+                    int startPos = buf.position();
+                    audioFormat = buf.getShort() & 0xFFFF;
+                    int channels = buf.getShort() & 0xFFFF; // should be 1 (mono)
+                    sampleRate = buf.getInt();
+                    buf.getInt(); // byte rate
+                    buf.getShort(); // block align
+                    bitsPerSample = buf.getShort() & 0xFFFF;
+                    buf.position(startPos + chunkSize); // skip any extra fmt bytes
+                } else if (chunkId == 0x61746164) { // "data" in little-endian
+                    pcmData = new byte[chunkSize];
+                    buf.get(pcmData);
+                } else {
+                    // Skip unknown chunk
+                    buf.position(buf.position() + chunkSize);
+                }
+            }
+
+            if (pcmData == null) return null;
+
+            // If 32-bit float (format 3), convert to 16-bit signed integer for OpenAL
+            if (audioFormat == 3 && bitsPerSample == 32) {
+                pcmData = float32ToInt16(pcmData);
+                bitsPerSample = 16;
+            }
+
+            return new WavInfo(pcmData, sampleRate, bitsPerSample);
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse WAV: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** Convert 32-bit float PCM samples to 16-bit signed integer PCM. */
+    private static byte[] float32ToInt16(byte[] floatData) {
+        int numSamples = floatData.length / 4;
+        byte[] int16Data = new byte[numSamples * 2];
+        ByteBuffer floatBuf = ByteBuffer.wrap(floatData).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer int16Buf = ByteBuffer.wrap(int16Data).order(ByteOrder.LITTLE_ENDIAN);
+
+        for (int i = 0; i < numSamples; i++) {
+            float sample = floatBuf.getFloat();
+            // Clamp to [-1.0, 1.0] then scale to 16-bit range
+            sample = Math.max(-1.0f, Math.min(1.0f, sample));
+            int16Buf.putShort((short) (sample * 32767.0f));
+        }
+        return int16Data;
+    }
+
+    /**
+     * Called every client tick from ClientInit. Manages the speech queue:
+     * - If no mob is currently speaking and the queue has entries, start the next one
+     * - If a mob is speaking, update its 3D position and volume
+     * - Clean up finished audio and advance to the next queued speaker
      * Must be called on the render thread (where the OpenAL context is current).
      */
     public static void tick() {
-        if (activeSources.isEmpty()) return;
-
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) return;
-
-        List<UUID> finished = new ArrayList<>();
-
-        for (Map.Entry<UUID, MobSource> entry : activeSources.entrySet()) {
-            UUID mobId = entry.getKey();
-            MobSource src = entry.getValue();
-
-            // If a newer speak() arrived for this mob, stop it immediately
-            AtomicInteger counter = mobGenerations.get(mobId);
-            if (counter == null || counter.get() != src.generation) {
-                cleanupSource(src);
-                finished.add(mobId);
-                continue;
+        if (mc.level == null || mc.player == null) {
+            // World unloaded — clean up everything
+            if (currentSpeaker != null) {
+                cleanupSource(currentSpeaker);
+                currentSpeaker = null;
+                currentSpeakerId = null;
             }
+            playbackQueue.clear();
+            return;
+        }
 
-            // If the source finished playing naturally, clean it up
-            if (AL10.alGetSourcei(src.alSource, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
-                cleanupSource(src);
-                finished.add(mobId);
-                continue;
+        // If someone is currently speaking, check if they're done
+        if (currentSpeaker != null) {
+            // If a newer speak() arrived for this mob, stop immediately
+            AtomicInteger counter = mobGenerations.get(currentSpeakerId);
+            boolean superseded = (counter == null || counter.get() != currentSpeaker.generation);
+
+            // Check if playback finished naturally
+            boolean finished = AL10.alGetSourcei(currentSpeaker.alSource, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING;
+
+            // Check if the mob left render range
+            Mob mob = ClientEntityFinder.getEntityByUUID(mc.level, currentSpeakerId);
+            boolean gone = (mob == null);
+
+            if (superseded || finished || gone) {
+                cleanupSource(currentSpeaker);
+                currentSpeaker = null;
+                currentSpeakerId = null;
+            } else {
+                // Update 3D position and volume for the current speaker
+                float x = (float) mob.getX();
+                float y = (float) (mob.getY() + mob.getBbHeight() * 0.6);
+                float z = (float) mob.getZ();
+                AL10.alSource3f(currentSpeaker.alSource, AL10.AL_POSITION, x, y, z);
+
+                double dist = mc.player.distanceTo(mob);
+                float gain;
+                if (dist <= VOICE_REF_DISTANCE) {
+                    gain = 1.0f;
+                } else if (dist >= VOICE_MAX_DISTANCE) {
+                    gain = 0.0f;
+                } else {
+                    gain = 1.0f - (float) (dist - VOICE_REF_DISTANCE)
+                            / (VOICE_MAX_DISTANCE - VOICE_REF_DISTANCE);
+                }
+                AL10.alSourcef(currentSpeaker.alSource, AL10.AL_GAIN, gain);
             }
+        }
 
-            // Mob may have moved or left render range
-            Mob mob = ClientEntityFinder.getEntityByUUID(mc.level, mobId);
-            if (mob == null) {
-                cleanupSource(src);
-                finished.add(mobId);
-                continue;
-            }
+        // If nobody is speaking, try to start the next queued audio
+        if (currentSpeaker == null) {
+            startNextInQueue(mc);
+        }
+    }
 
-            // Keep the source glued to the mob as it moves
+    /**
+     * Pulls the next valid entry from the playback queue and starts OpenAL playback.
+     * Skips entries whose generation has been superseded (mob spoke again while queued).
+     */
+    private static void startNextInQueue(Minecraft mc) {
+        while (!playbackQueue.isEmpty()) {
+            QueuedAudio next = playbackQueue.poll();
+            if (next == null) break;
+
+            // Skip if this mob's generation was superseded while waiting in the queue
+            AtomicInteger counter = mobGenerations.get(next.mobId);
+            if (counter == null || counter.get() != next.generation) continue;
+
+            // Skip if the mob left render range
+            Mob mob = ClientEntityFinder.getEntityByUUID(mc.level, next.mobId);
+            if (mob == null) continue;
+
+            // Start playback
+            ByteBuffer pcmBuffer = ByteBuffer.allocateDirect(next.pcmData.length)
+                    .order(ByteOrder.LITTLE_ENDIAN);
+            pcmBuffer.put(next.pcmData).flip();
+
             float x = (float) mob.getX();
             float y = (float) (mob.getY() + mob.getBbHeight() * 0.6);
             float z = (float) mob.getZ();
-            AL10.alSource3f(src.alSource, AL10.AL_POSITION, x, y, z);
 
-            // Linear gain: 1.0 within VOICE_REF_DISTANCE, fades to 0.0 at VOICE_MAX_DISTANCE
-            double dist = mc.player.distanceTo(mob);
-            float gain;
-            if (dist <= VOICE_REF_DISTANCE) {
-                gain = 1.0f;
-            } else if (dist >= VOICE_MAX_DISTANCE) {
-                gain = 0.0f;
-            } else {
-                gain = 1.0f - (float) (dist - VOICE_REF_DISTANCE)
-                        / (VOICE_MAX_DISTANCE - VOICE_REF_DISTANCE);
-            }
-            AL10.alSourcef(src.alSource, AL10.AL_GAIN, gain);
+            int alBuf = AL10.alGenBuffers();
+            AL10.alBufferData(alBuf, AL10.AL_FORMAT_MONO16, pcmBuffer, next.sampleRate);
+
+            int alSrc = AL10.alGenSources();
+            AL10.alSourcei(alSrc, AL10.AL_BUFFER, alBuf);
+            AL10.alSource3f(alSrc, AL10.AL_POSITION, x, y, z);
+            AL10.alSourcef(alSrc, AL10.AL_ROLLOFF_FACTOR, 0.0f);
+            AL10.alSourcePlay(alSrc);
+
+            currentSpeaker = new MobSource(alSrc, alBuf, next.generation);
+            currentSpeakerId = next.mobId;
+            LOGGER.info("TTS playing for mob {} (voice={})", next.mobId, getVoiceName(next.mobId));
+            return; // started one — wait for it to finish before starting another
         }
-
-        finished.forEach(activeSources::remove);
-    }
-
-    /** Stop and delete one mob's OpenAL source. Must be on the render thread. */
-    private static void stopMobSource(UUID mobId) {
-        MobSource src = activeSources.remove(mobId);
-        if (src != null) cleanupSource(src);
     }
 
     /** Free the OpenAL source and buffer for a MobSource. Must be on the render thread. */

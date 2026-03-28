@@ -15,6 +15,7 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Endermite;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -55,7 +56,20 @@ public class FollowPlayerGoal extends PlayerBaseGoal {
     }
 
     @Override
+    public void start() {
+        // For hostile mobs: clear attack target so they stop being aggressive while following
+        if (this.entity instanceof Monster) {
+            this.entity.setTarget(null);
+        }
+    }
+
+    @Override
     public void tick() {
+        // For hostile mobs: keep clearing target each tick to prevent re-targeting
+        // from damage events or other sources
+        if (this.entity instanceof Monster) {
+            this.entity.setTarget(null);
+        }
         if (this.targetEntity instanceof ServerPlayer player) {
             ChatDataManager manager = ChatDataManager.getServerInstance();
             EntityChatData data = manager.getOrCreateChatData(this.entity.getStringUUID());

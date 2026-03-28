@@ -4,5 +4,7 @@
   "world_is_raining": "no",
   "world_is_thundering": "no",
   "world_moon_phase": "Waning Gibbous",
-  "world_time": "19:01"
+  "world_time": "19:01",
+  "nearby_buildings": "A small house to the north",
+  "nearby_structures": "A village to the east, a stronghold to the west"
 }

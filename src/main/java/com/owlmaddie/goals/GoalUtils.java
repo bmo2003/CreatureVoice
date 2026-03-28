@@ -17,4 +17,9 @@ public class GoalUtils {
         MixinMobEntityAccessor mixingEntity = (MixinMobEntityAccessor)mobEntity;
         return mixingEntity.getGoalSelector();
     }
+
+    public static GoalSelector getTargetSelector(Mob mobEntity) {
+        MixinMobEntityAccessor mixingEntity = (MixinMobEntityAccessor)mobEntity;
+        return mixingEntity.getTargetSelector();
+    }
 }

@@ -52,6 +52,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Set;
 
 /**
@@ -61,6 +63,26 @@ import java.util.Set;
 public class ServerPackets {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     public static MinecraftServer serverInstance;
+
+    // ── Chat concurrency queue ────────────────────────────────────────────────
+    // At most 2 NPC chats can generate a response at the same time.
+    // Extra requests wait in chatQueue and start as soon as a slot opens up.
+    // This prevents a burst of simultaneous LLM calls when many NPCs react at once.
+    private static final int MAX_ACTIVE_CHATS = 2;
+    private static final AtomicInteger activeChats = new AtomicInteger(0);
+    private static final ConcurrentLinkedQueue<Runnable> chatQueue = new ConcurrentLinkedQueue<>();
+
+    /**
+     * Called by EntityChatData when an LLM response finishes (success or error).
+     * Releases one chat slot and starts the next queued request, if any.
+     */
+    public static void releaseAndTryNext() {
+        activeChats.decrementAndGet();
+        Runnable next = chatQueue.poll();
+        if (next != null) {
+            next.run();
+        }
+    }
 
     // ── Realism Mode: mobs that walk on two legs (bipedal) ───────────────────
     // When Realism Mode is enabled in config, only these mob types can speak or
@@ -510,6 +532,11 @@ public class ServerPackets {
         LOGGER.info("generate_chat: entityType={} subtitleMode={} nativeLanguage={} chatStyleNote={}",
                 entityTypeId, chatData.subtitleMode, chatData.nativeLanguage, chatData.chatStyleNote);
 
+        // Stamp player interaction time so initiative/overhear don't interrupt this conversation
+        if (!is_auto_message) {
+            chatData.lastPlayerChatTime = System.currentTimeMillis();
+        }
+
         // Overhearing: when a player speaks (not an auto-message), queue an overhear
         // check rather than firing immediately. The check will fire AFTER the target
         // mob's LLM response arrives (in BroadcastEntityMessage), so the bystander
@@ -518,8 +545,19 @@ public class ServerPackets {
             com.owlmaddie.npc.NpcLifeManager.queueOverhear(serverLevel, player, entity, message);
         }
 
-        // Add new message
-        chatData.generateMessage(userLanguage, player, message, is_auto_message);
+        // Try to claim one of the 2 available chat slots. If both are taken, queue
+        // this request — it will start automatically when a slot opens (releaseAndTryNext).
+        if (activeChats.incrementAndGet() > MAX_ACTIVE_CHATS) {
+            activeChats.decrementAndGet();
+            final String queuedLang = userLanguage;
+            chatQueue.add(() -> generate_chat(queuedLang, chatData, player, entity, message, is_auto_message));
+            LOGGER.info("Chat queued for entity {} ({} waiting in line)", chatData.entityId, chatQueue.size());
+            return;
+        }
+
+        // Slot claimed — start the LLM call. Pass releaseOnComplete=true so
+        // EntityChatData calls releaseAndTryNext() when the response arrives.
+        chatData.generateMessage(userLanguage, player, message, is_auto_message, true);
     }
 
     // Writing a Map<String, PlayerData> to the buffer
@@ -547,6 +585,35 @@ public class ServerPackets {
                 && chatData.sender == ChatDataManager.ChatSender.ASSISTANT) {
             com.owlmaddie.npc.NpcLifeManager.firePendingOverhear(
                     java.util.UUID.fromString(chatData.entityId));
+
+            // 7.14 — Broadcast this NPC's speech to nearby mobs so they can "hear" it.
+            // Find the speaker mob, extract a clean message, and add it to the recentlyHeard
+            // list of every nearby NPC with a character sheet.
+            java.util.UUID speakerId = java.util.UUID.fromString(chatData.entityId);
+            for (ServerLevel world : serverInstance.getAllLevels()) {
+                net.minecraft.world.entity.Entity e = world.getEntity(speakerId);
+                if (e instanceof Mob speakerMob) {
+                    com.owlmaddie.chat.EntityChatData speakerData =
+                            ChatDataManager.getServerInstance().getOrCreateChatData(chatData.entityId);
+                    String speakerName = com.owlmaddie.npc.NpcLifeManager
+                            .extractMobNamePublic(speakerData, speakerMob);
+                    // Strip behavior tags and subtitle markers so only the spoken words are stored
+                    String cleanMsg = chatData.currentMessage
+                            .replaceAll("<[^>]+>", "")
+                            .replaceAll("\\[EN:[^\\]]*\\]?", "")
+                            .trim();
+                    if (!cleanMsg.isEmpty()) {
+                        // Only allow active NPC reactions when the speech was player-initiated
+                        // (auto_generated == 0). NPC-triggered speech (overhear reactions,
+                        // witness reactions, mob-to-mob chat) should NOT trigger further reactions
+                        // — that causes infinite chain reactions where NPCs talk over each other.
+                        boolean allowReactions = chatData.auto_generated == 0;
+                        com.owlmaddie.npc.NpcLifeManager.broadcastNpcSpeech(
+                                speakerMob, speakerName, cleanMsg, world, allowReactions);
+                    }
+                    break; // found the level — no need to keep searching
+                }
+            }
         }
 
         for (ServerLevel world : serverInstance.getAllLevels()) {
@@ -642,7 +709,7 @@ public class ServerPackets {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             // Check if the player is an operator
             if (server.getPlayerList().isOp(player.getGameProfile())) {
-                ServerPackets.SendClickableError(player, message, "http://discord.creaturechat.com");
+                ServerPackets.SendClickableError(player, message, "https://discord.gg/m9dvPFmN3e");
             }
         }
     }
